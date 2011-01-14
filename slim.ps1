@@ -1,3 +1,23 @@
+######################################################################################
+#The latest source code is available at http://github.com/konstantinvlasenko/PowerSlim
+#Copyright 2011 by the author(s). All rights reserved 
+######################################################################################
+$slimver = "Slim -- V0.1`n"
+$slimnull = "000004:null:"
+$slimvoid = "/__VOID__/"
+$slimexception = "__EXCEPTION__:"
+
+function Get-Instructions($slimchunk){
+	$exp = $slimchunk -replace "\d{6}:", "" -replace ":\]", "]" -replace ":", "," -replace "\[", "@(" -replace "\]", ")" -replace "([^\(\)@,]+)", "'$&'"
+	Invoke-Expression $exp
+}
+
+function SlimException-NoClass($class){
+	$slimexception + "NO_CLASS " + $class
+}
+
+new-alias noclass SlimException-NoClass
+
 function Get-SlimLength($obj){
 	if($obj -is [system.array]){
 		$obj.Count.ToString("d6")
@@ -8,8 +28,12 @@ function Get-SlimLength($obj){
 }
 new-alias slimlen Get-SlimLength
 
+function ischunk($msg){
+	$msg.StartsWith('[') -and $msg.EndsWith(']')
+}
+
 function send_slim_version($stream){
-	$version = [text.encoding]::ascii.getbytes("Slim -- V0.1`n")
+	$version = [text.encoding]::ascii.getbytes($slimver)
 	$stream.Write($version, 0, $version.Length)
 }
 
@@ -19,14 +43,10 @@ function get_message($stream){
 	[text.encoding]::utf8.getstring($b, 7, $n-7)
 }
 
-function ischunk($msg){
-	$msg.StartsWith('[') -and $msg.EndsWith(']')
-}
-
 function Invoke-SlimMake($ins){
 	switch ($ins[3]){
 		"Script" {Set-Variable -Name Script -Value $ins[4] -Scope Global; $ins[0], "OK"}
-		default {$ins[0], "__EXCEPTION__:NO_CLASS $($ins[3])"}
+		default {$ins[0], noclass $ins[3]}
 	}	
 }
 
@@ -36,13 +56,13 @@ function PropertyTo-Slim($obj,$prop){
 		$slimview += slimlen $($obj.$prop) + ":" + $($obj.$prop).ToString() + ":]"
 	}
 	else{
-		$slimview += "000004:null:]"
+		$slimview += $slimnull + "]"
 	}
 	slimlen $slimview + ":" + $slimview + ":"
 }
 
 function Invoke-SlimCall($ins){
-	$result = "/__VOID__/"
+	$result = $slimvoid
 	if($ins[3] -eq "query"){
 		$list = @(Invoke-Expression $Script)
 		$result = "[" + slimlen $list + ":"
@@ -70,11 +90,6 @@ function Process-Instruction($ins){
 	$s = '[000002:' + slimlen $result[0] + ':' + $result[0] + ':' + slimlen $result[1] + ':' + $result[1] + ':]'
 	slimlen $s + ":" + $s + ":"
 
-}
-
-function Get-Instructions($msg){
-	$exp = $msg -replace "\d{6}:", "" -replace ":\]", "]" -replace ":", "," -replace "\[", "@(" -replace "\]", ")" -replace "([^\(\)@,]+)", "'$&'"
-	Invoke-Expression $exp
 }
 
 function pack_results($results){
