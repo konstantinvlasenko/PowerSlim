@@ -1,0 +1,10 @@
+PowerSlim - An implementation of FitNesse Slim in PowerShell
+
+Example:
+
+!define TEST_SYSTEM (slim)
+!define COMMAND_PATTERN (PowerShell C:\slim.ps1)
+
+!|Query:Script|get-service *Time|
+|DisplayName|Status|
+|Windows Time|Running|
