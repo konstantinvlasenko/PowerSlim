@@ -1,3 +1,13 @@
+function Get-SlimLength($obj){
+	if($obj -is [system.array]){
+		$obj.Count.ToString("d6")
+	}
+	else{
+		$obj.ToString().Length.ToString("d6")
+	}
+}
+new-alias slimlen Get-SlimLength
+
 function send_slim_version($stream){
 	$version = [text.encoding]::ascii.getbytes("Slim -- V0.1`n")
 	$stream.Write($version, 0, $version.Length)
@@ -21,27 +31,27 @@ function Invoke-SlimMake($ins){
 }
 
 function PropertyTo-Slim($obj,$prop){
-	$slimview = "[000002:" + $prop.Length.ToString("d6") + ":" + $prop+ ":"
+	$slimview = "[000002:" + slimlen $prop + ":" + $prop+ ":"
 	if($($obj.$prop) -ne $null){
-		$slimview += $($obj.$prop).ToString().Length.ToString("d6") + ":" + $($obj.$prop).ToString() + ":]"
+		$slimview += slimlen $($obj.$prop) + ":" + $($obj.$prop).ToString() + ":]"
 	}
 	else{
 		$slimview += "000004:null:]"
 	}
-	$slimview.Length.ToString("d6") + ":" + $slimview + ":"
+	slimlen $slimview + ":" + $slimview + ":"
 }
 
 function Invoke-SlimCall($ins){
 	$result = "/__VOID__/"
 	if($ins[3] -eq "query"){
 		$list = @(Invoke-Expression $Script)
-		$result = "[" + $list.Length.ToString("d6") + ":"
+		$result = "[" + slimlen $list + ":"
 		foreach ($obj in $list){  
 			$fieldscount = ($obj  | gm -membertype property | measure-object).Count
-			$itemstr = "[" + $fieldscount.ToString("d6") + ":"
+			$itemstr = "[" +  slimlen $fieldscount + ":"
 			$obj  | gm -membertype property | % {$itemstr += PropertyTo-Slim $obj $_.Name }
 			$itemstr += "]"
-			$result += $itemstr.Length.ToString("d6") + ":" + $itemstr + ":"
+			$result += slimlen $itemstr + ":" + $itemstr + ":"
 		} 
 		$result += "]"
 	}
@@ -57,8 +67,8 @@ function Invoke-SlimInstruction($ins){
 
 function Process-Instruction($ins){
 	$result = Invoke-SlimInstruction $ins
-	$s = '[000002:' + $result[0].Length.ToString("d6") + ':' + $result[0] + ':' + $result[1].Length.ToString("d6") + ':' + $result[1] + ':]'
-	$s.Length.ToString("d6") + ":" + $s + ":"
+	$s = '[000002:' + slimlen $result[0] + ':' + $result[0] + ':' + slimlen $result[1] + ':' + $result[1] + ':]'
+	slimlen $s + ":" + $s + ":"
 
 }
 
@@ -68,10 +78,10 @@ function Get-Instructions($msg){
 }
 
 function pack_results($results){
-	$send = "[" + $results.Length.ToString("d6") + ":"
+	$send = "[" + slimlen $results + ":"
 	$results | % {$send += $_}
 	$send += "]"
-	$send.Length.ToString("d6") + ":" + $send
+	slimlen $send + ":" + $send
 }
 
 function process_message($stream){
