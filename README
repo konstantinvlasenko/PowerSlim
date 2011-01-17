@@ -8,3 +8,13 @@ Example:
 !|Query:Script|get-service *Time|
 |DisplayName|Status|
 |Windows Time|Running|
+
+|script|Script|
+|check|eval|6+9|15|
+|eval|$global:y=10|
+|eval|$global:x = 6|
+|check|eval|$x|6|
+|check|eval|$y|10|
+|check|eval|$x+$y|16|
+|check|eval|$x*$y|60|
+|check|eval|"Hello World!"|Hello World!|
