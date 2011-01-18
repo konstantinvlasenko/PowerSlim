@@ -1,0 +1,4 @@
+!define TEST_SYSTEM {slim}
+!define COMMAND_PATTERN (PowerShell C:\powerSLim\slim.ps1)
+
+!contents -R2 -g -p -f -h

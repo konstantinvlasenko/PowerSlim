@@ -1,0 +1,3 @@
+!|Query:Script|get-host|
+|Name|Version|
+|ConsoleHost|2.0|

@@ -1,0 +1,5 @@
+!|script|Script|
+|check|eval|"text with [brackets]"|text with [brackets]|
+|check|eval|"whitespace at the end  "|whitespace at the end!-  -!|
+|check|eval|"there are 'quotes' in text"|there are 'quotes' in text|
+|check|eval|'there are "double quotes" in text'|there are "double quotes" in text|
