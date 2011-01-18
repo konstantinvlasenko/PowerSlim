@@ -8,7 +8,6 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 
 function Get-Instructions($slimchunk){
-	#$exp = $slimchunk -replace "\d{6}:\d{6}:", "" -replace ":\]", "]" -replace ":\d{6}:", "," -replace "\[", "(" -replace "\]", ")" -replace "([^\(\)@,]+)", "'$&'"
 	$exp = $slimchunk -replace "\[\d{6}:\d{6}:", "(" -replace ":\]", ")" -replace ":\d{6}:", "," -replace "'","''" -replace "([^\(\)@,]+)", "'$&'"
 	iex $exp
 }
