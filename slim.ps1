@@ -8,8 +8,9 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 
 function Get-Instructions($slimchunk){
-	$exp = $slimchunk -replace "\d{6}:\d{6}:", "" -replace ":\]", "]" -replace ":\d{6}:", "," -replace "\[", "@(" -replace "\]", ")" -replace "([^\(\)@,]+)", "'$&'"
-	Invoke-Expression $exp
+	#$exp = $slimchunk -replace "\d{6}:\d{6}:", "" -replace ":\]", "]" -replace ":\d{6}:", "," -replace "\[", "(" -replace "\]", ")" -replace "([^\(\)@,]+)", "'$&'"
+	$exp = $slimchunk -replace "\[\d{6}:\d{6}:", "(" -replace ":\]", ")" -replace ":\d{6}:", "," -replace "'","''" -replace "([^\(\)@,]+)", "'$&'"
+	iex $exp
 }
 
 function SlimException-NoClass($class){
@@ -38,7 +39,7 @@ function send_slim_version($stream){
 }
 
 function get_message($stream){
-	$b = new-object byte[] 1024
+	$b = new-object byte[] 4096
 	$n = $stream.Read($b, 0, $b.Length)
 	[text.encoding]::utf8.getstring($b, 7, $n-7)
 }
