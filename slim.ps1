@@ -8,7 +8,7 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 
 function Get-Instructions($slimchunk){
-	$exp = $slimchunk -replace "\[\d{6}:\d{6}:", "(" -replace ":\]", ")" -replace ":\d{6}:", "," -replace "'","''" -replace "([^\(\)@,]+)", "'$&'"
+	$exp = $slimchunk -replace "\[\d{6}:\d{6}:", "(" -replace ":\]", ")" -replace ":\d{6}:", "," -replace "'","''" -replace "([^\(\),]+)", "'$&'"
 	iex $exp
 }
 
@@ -19,7 +19,7 @@ function SlimException-NoClass($class){
 new-alias noclass SlimException-NoClass
 
 function Get-SlimLength($obj){
-	if($obj -is [system.array]){
+	if($obj -is [array]){
 		$obj.Count.ToString("d6")
 	}
 	else{
@@ -60,15 +60,26 @@ function PropertyTo-Slim($obj,$prop){
 	}
 	(slimlen $slimview) + ":" + $slimview + ":"
 }
+
+function ConvertTo-Object($hashtable) 
+{
+   $object = New-Object PSObject
+   $hashtable.GetEnumerator() | % { Add-Member -inputObject $object -memberType NoteProperty -name $_.Name -value $_.Value }
+   $object
+}
+
 function Invoke-SlimCall($ins){
 	$result = $slimvoid
 	if($ins[3] -eq "query"){
 		$list = @(Invoke-Expression $Script)
 		$result = "[" + (slimlen $list) + ":"
-		foreach ($obj in $list){  
-			$fieldscount = ($obj  | gm -membertype property | measure-object).Count
+		foreach ($obj in $list){
+			if($obj -is [hashtable]){
+				$obj = ConvertTo-Object $obj
+			}
+			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
 			$itemstr = "[" +  $fieldscount.ToString("d6") + ":"
-			$obj  | gm -membertype property | % {$itemstr += PropertyTo-Slim $obj $_.Name }
+			$obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
 			$itemstr += "]"
 			$result += (slimlen $itemstr) + ":" + $itemstr + ":"
 		} 
