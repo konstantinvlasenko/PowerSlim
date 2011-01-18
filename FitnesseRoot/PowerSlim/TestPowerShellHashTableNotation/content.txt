@@ -1,3 +1,9 @@
 !|Query:Script|@{"Washington" = 'Olympia'; "Oregon" = "Salem"; California = "Sacramento"}|
 |Washington|Oregon|California|
 |Olympia|Salem|Sacramento|
+
+!|script|Script|
+|eval|$global:x = @{"Washington" = 'Olympia'; "Oregon" = "Salem"; California = "Sacramento"}|
+|check|eval|$x.Washington|Olympia|
+|check|eval|$x.Oregon|Salem|
+|check|eval|$x.California|Sacramento|
