@@ -1,3 +1,11 @@
 *.zip
 fitnesse.jar
-FitNesseRoot/
+
+FitnesseRoot/FitNesse/
+FitnesseRoot/files/
+FitnesseRoot/FrontPage/
+FitnesseRoot/PageFooter/
+FitnesseRoot/PageHeader/
+FitnesseRoot/properties
+FitnesseRoot/updateList
+FitnesseRoot/updateDoNotCopyOverList
