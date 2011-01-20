@@ -3,3 +3,5 @@
 |eval|$global:x = 1941|
 |eval|$global:y = 1945|
 |check|eval|$x + $y|3886|
+|check|eval|$x + $y|3886|
+|check|eval|(@{Name = "User1"; Age = "1"},@{Name = "User2"; Age = "22"})|[[[Age, 1], [Name, User1]], [[Age, 22], [Name, User2]]]|

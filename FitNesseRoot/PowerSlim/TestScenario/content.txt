@@ -1,1 +1,15 @@
-!3 todo
+!* simple scenario
+|scenario|execute|command|check|result|
+|check|eval|@command|@result|
+
+-!|script|
+|execute|10+10+10|check|30|
+*!
+!* one in another
+|scenario|execute|command|twice|result|
+|execute|@command|check|@result|
+|execute|@command|check|@result|
+
+-!|script|
+|execute|"Hello World!"|twice|Hello World!|
+*!

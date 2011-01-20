@@ -61,17 +61,17 @@ function PropertyTo-Slim($obj,$prop){
 	(slimlen $slimview) + ":" + $slimview + ":"
 }
 
-function ConvertTo-Object($hashtable) 
-{
+function ConvertTo-Object($hashtable){
    $object = New-Object PSObject
    $hashtable.GetEnumerator() | % { Add-Member -inputObject $object -memberType NoteProperty -name $_.Name -value $_.Value }
    $object
 }
 
-function Invoke-SlimCall($ins){
-	$result = $slimvoid
-	if($ins[3] -eq "query"){
-		$list = @(Invoke-Expression $Script)
+function ResultTo-Slim($list){
+	if($list -eq $null){
+		$slimvoid
+	}
+	elseif ($list -is [array]){
 		$result = "[" + (slimlen $list) + ":"
 		foreach ($obj in $list){
 			if($obj -is [hashtable]){
@@ -84,13 +84,20 @@ function Invoke-SlimCall($ins){
 			$result += (slimlen $itemstr) + ":" + $itemstr + ":"
 		} 
 		$result += "]"
+		$result
+	}
+	else{
+		$list
+	}
+}
+
+function Invoke-SlimCall($ins){
+	$result = $slimvoid
+	if($ins[3] -eq "query"){
+		$result = ResultTo-Slim @(iex $Script)
 	}
 	elseif($ins[3] -eq "eval"){
-		Set-Variable -Name Script -Value $ins[4] -Scope Global
-		$result = iex $ins[4]
-		if($result -eq $null){
-			$result = $slimvoid
-		}
+		$result = ResultTo-Slim (iex $ins[4])
 	}
 	$ins[0], $result
 }
@@ -110,8 +117,13 @@ function Process-Instruction($ins){
 }
 
 function pack_results($results){
-	$send = "[" + (slimlen $results) + ":"
-	$results | % {$send += $_}
+	if($results -is [array]){
+		$send = "[" + (slimlen $results) + ":"
+		$results | % {$send += $_}
+	}
+	else{
+		$send = "[000001:$results"
+	}
 	$send += "]"
 	(slimlen $send) + ":" + $send
 }
@@ -120,13 +132,19 @@ function process_message($stream){
 	$msg = get_message($stream)
 	if(ischunk($msg)){
 		#$msg | Out-File c:\slim.log
-		$results = Get-Instructions $msg | % { Process-Instruction $_ }
+		$ins = Get-Instructions $msg
+		
+		if($ins[0] -is [array]){
+			$results = $ins | % { Process-Instruction $_ }
+		}
+		else{
+			$results = Process-Instruction $ins
+		}
 		$send = [text.encoding]::utf8.getbytes((pack_results $results))
 		$stream.Write($send, 0, $send.Length)
 	}
 	$msg
 }
-
 $s = New-Object System.Net.Sockets.TcpListener($args[0])
 $s.Start()
 $c = $s.AcceptTcpClient()
@@ -135,4 +153,5 @@ send_slim_version($stream)
 while("bye" -ne (process_message($stream))){};
 $c.Close()
 $s.Stop()
+
  
