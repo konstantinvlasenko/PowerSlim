@@ -125,13 +125,14 @@ function pack_results($results){
 		$send = "[000001:$results"
 	}
 	$send += "]"
-	(slimlen $send) + ":" + $send
+	[text.encoding]::utf8.getbytes($send).Length.ToString("d6") + ":" + $send
+	#(slimlen $send) + ":" + $send
 }
 
 function process_message($stream){
 	$msg = get_message($stream)
 	if(ischunk($msg)){
-		#$msg | Out-File c:\slim.log
+		#$msg | Out-File c:\PowerSlim\slim.log
 		$ins = Get-Instructions $msg
 		
 		if($ins[0] -is [array]){
