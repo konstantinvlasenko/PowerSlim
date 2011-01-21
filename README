@@ -3,4 +3,5 @@ PowerSlim - An implementation of FitNesse Slim in PowerShell
 !define TEST_SYSTEM {slim}
 !define COMMAND_PATTERN (PowerShell -executionpolicy unrestricted -file .\slim.ps1)
 
-Examples are available in the acceptance tests FitnesseRoot/PowerSlim
+Examples are available in the acceptance tests FitnesseRoot/PowerSlim and in the examples FitnesseRoot/ExampleS
+

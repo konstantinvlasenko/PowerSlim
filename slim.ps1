@@ -1,6 +1,6 @@
 ######################################################################################
 #The latest source code is available at http://github.com/konstantinvlasenko/PowerSlim
-#Copyright 2011 by the author(s). All rights reserved 
+#Copyright 2011 by the author(s). All rights reserved
 ######################################################################################
 $slimver = "Slim -- V0.1`n"
 $slimnull = "000004:null:"
