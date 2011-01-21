@@ -1,0 +1,8 @@
+!3 Sphinx is a tool that makes it easy to create intelligent and beautiful documentation
+-!|script|
+|eval|Set-Location 'c:\rmsp\help'|
+
+!|Subset Query:Script|.\make.bat html|
+|Line|
+|!-=~/build succeeded|no targets are out of date/-!|
+|Build finished. The HTML pages are in _build/html.|

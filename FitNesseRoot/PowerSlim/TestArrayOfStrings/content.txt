@@ -1,0 +1,4 @@
+!|Query:Script|!-("String1","String2","String3") | select -skip 1-!|
+|String|
+|String2|
+|String3|

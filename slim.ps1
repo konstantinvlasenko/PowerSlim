@@ -80,7 +80,7 @@ function ConvertTo-Object($hashtable){
 
 function ConvertTo-SimpleObject($obj){
    $object = New-Object PSObject
-   Add-Member -inputObject $object -memberType NoteProperty -name "Line" -value $obj.ToString()
+   Add-Member -inputObject $object -memberType NoteProperty -name $obj.GetType().Name -value $obj.ToString()
    $object
 }
 
@@ -94,10 +94,12 @@ function ResultTo-Slim($list){
 			if($obj -is [hashtable]){
 				$obj = ConvertTo-Object $obj
 			}
-			if($obj -is [string]){
+			if($obj -is [string] -or $obj -is [int]){
 				$obj = ConvertTo-SimpleObject $obj
 			}
+
 			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
+			
 			$itemstr = "[" +  $fieldscount.ToString("d6") + ":"
 			$obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
 			$itemstr += "]"
