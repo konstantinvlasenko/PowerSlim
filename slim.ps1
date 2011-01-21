@@ -50,6 +50,17 @@ function Invoke-SlimMake($ins){
 	}	
 }
 
+function ObjectTo-Slim($obj){
+	$slimview = "[000002:" + (slimlen $prop) + ":" + $prop+ ":"
+	if($($obj.$prop) -eq $null -or $($obj.$prop) -is [system.array]){
+		$slimview += $slimnull + "]"
+	}
+	else{
+		$slimview += (slimlen $($obj.$prop)) + ":" + $($obj.$prop).ToString() + ":]"
+	}
+	(slimlen $slimview) + ":" + $slimview + ":"
+}
+
 function PropertyTo-Slim($obj,$prop){
 	$slimview = "[000002:" + (slimlen $prop) + ":" + $prop+ ":"
 	if($($obj.$prop) -eq $null -or $($obj.$prop) -is [system.array]){
@@ -67,6 +78,12 @@ function ConvertTo-Object($hashtable){
    $object
 }
 
+function ConvertTo-SimpleObject($obj){
+   $object = New-Object PSObject
+   Add-Member -inputObject $object -memberType NoteProperty -name "Line" -value $obj.ToString()
+   $object
+}
+
 function ResultTo-Slim($list){
 	if($list -eq $null){
 		$slimvoid
@@ -77,10 +94,14 @@ function ResultTo-Slim($list){
 			if($obj -is [hashtable]){
 				$obj = ConvertTo-Object $obj
 			}
+			if($obj -is [string]){
+				$obj = ConvertTo-SimpleObject $obj
+			}
 			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
 			$itemstr = "[" +  $fieldscount.ToString("d6") + ":"
 			$obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
 			$itemstr += "]"
+		
 			$result += (slimlen $itemstr) + ":" + $itemstr + ":"
 		} 
 		$result += "]"
@@ -92,14 +113,14 @@ function ResultTo-Slim($list){
 }
 
 function Invoke-SlimCall($ins){
-	$result = $slimvoid
-	if($ins[3] -eq "query"){
-		$result = ResultTo-Slim @(iex $Script)
-	}
-	elseif($ins[3] -eq "eval"){
-		$result = ResultTo-Slim (iex $ins[4])
-	}
-	$ins[0], $result
+	$error.clear()
+	switch ($ins[3]){
+		"query" {$result = @(iex $Script)}
+		"eval" {$result = iex $ins[4]}
+		default {$result = $slimvoid}
+	}	
+	if($error[0] -ne $null){$ins[0], $error[0]}
+	else{$ins[0], (ResultTo-Slim $result)}
 }
 
 function Invoke-SlimInstruction($ins){
@@ -126,7 +147,6 @@ function pack_results($results){
 	}
 	$send += "]"
 	[text.encoding]::utf8.getbytes($send).Length.ToString("d6") + ":" + $send
-	#(slimlen $send) + ":" + $send
 }
 
 function process_message($stream){
