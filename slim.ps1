@@ -8,7 +8,7 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 
 function Get-Instructions($slimchunk){
-	$exp = $slimchunk -replace "'","''" -replace ":\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "("
+	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace ":\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 	iex $exp
 }
 
@@ -121,14 +121,14 @@ function Invoke-SlimCall($fnc){
 function Invoke-SlimInstruction($ins){
 	$ins[0]
 	switch ($ins[1]){
-		"import" {break}
+		"import" {Add-PSSnapin $ins[2]; "OK"; break;}
 		"make" {Set-Script $ins[4]; "OK"; break}
 		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
 	}
 	if($ins[3] -ne "query" -and $ins[3] -ne "table"){
 		Set-Script $ins[4]
-	}	
-	
+	}
+
 	$result = Invoke-SlimCall $ins[3]
 	if($symbol){Set-Variable -Name $symbol -Value $result -Scope Global}
 	$result

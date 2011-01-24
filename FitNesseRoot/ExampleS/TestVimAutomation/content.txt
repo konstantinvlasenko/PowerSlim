@@ -1,0 +1,12 @@
+!define HOST (spb9612)
+!define User (root)
+!define Pswd (12345678)
+
+|Import|
+|VMware.VimAutomation.Core|
+
+!|Script|
+|eval|Connect-VIServer -Server ${HOST} -User ${User} -Password ${Pswd}|
+
+!|Query:Script|Get-VM|
+|Name|PowerState|
