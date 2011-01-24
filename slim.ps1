@@ -2,7 +2,7 @@
 #The latest source code is available at http://github.com/konstantinvlasenko/PowerSlim
 #Copyright 2011 by the author(s). All rights reserved
 ######################################################################################
-$slimver = "Slim -- V0.1`n"
+$slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
@@ -41,13 +41,6 @@ function get_message($stream){
 	$b = new-object byte[] 4096
 	$n = $stream.Read($b, 0, $b.Length)
 	[text.encoding]::utf8.getstring($b, 7, $n-7)
-}
-
-function Invoke-SlimMake($ins){
-	switch ($ins[3]){
-		"Script" {Set-Variable -Name Script -Value $ins[4] -Scope Global; $ins[0], "OK"}
-		default {$ins[0], (noclass $ins[3])}
-	}	
 }
 
 function ObjectTo-Slim($obj){
@@ -137,7 +130,7 @@ function Invoke-SlimInstruction($ins){
 	}	
 	
 	$result = Invoke-SlimCall $ins[3]
-	Set-Variable -Name $symbol -Value $result -Scope Global
+	if($symbol){Set-Variable -Name $symbol -Value $result -Scope Global}
 	$result
 }
 
