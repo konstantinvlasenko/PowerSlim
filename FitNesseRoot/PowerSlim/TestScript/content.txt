@@ -1,4 +1,4 @@
-!|script|Script|
+!|script|
 |check|eval|2000 + 11|2011|
 |eval|$global:x = 1941|
 |eval|$global:y = 1945|
