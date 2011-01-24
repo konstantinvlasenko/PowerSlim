@@ -114,22 +114,35 @@ function ResultTo-Slim($list){
 	}
 }
 
-function Invoke-SlimCall($ins){
+function Invoke-SlimCall($fnc){
 	$error.clear()
-	switch ($ins[3]){
+	switch ($fnc){
 		"query" {$result = @(iex $Script)}
-		"eval" {$result = iex $ins[4]}
+		"eval" {$result = iex $Script}
 		default {$result = $slimvoid}
 	}	
-	if($error[0] -ne $null){$ins[0], $error[0]}
-	else{$ins[0], (ResultTo-Slim $result)}
+	if($error[0] -ne $null){$error[0]}
+	else{ResultTo-Slim $result}
 }
 
 function Invoke-SlimInstruction($ins){
+	$ins[0]
 	switch ($ins[1]){
-		"make" {Invoke-SlimMake $ins}
-		"call" {Invoke-SlimCall $ins}
+		"import" {break}
+		"make" {Set-Script $ins[4]; "OK"; break}
+		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
+	}
+	if($ins[3] -ne "query" -and $ins[3] -ne "table"){
+		Set-Script $ins[4]
 	}	
+	
+	$result = Invoke-SlimCall $ins[3]
+	Set-Variable -Name $symbol -Value $result -Scope Global
+	$result
+}
+
+function Set-Script($s){
+	Set-Variable -Name Script -Value $s -Scope Global
 }
 
 function Process-Instruction($ins){
