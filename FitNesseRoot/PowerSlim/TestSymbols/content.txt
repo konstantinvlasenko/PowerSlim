@@ -1,5 +1,5 @@
 !|Script|
 |$MySymbol=|eval|"Hello"|
 |check|eval|"$MySymbol World!"|Hello World!|
-|eval|$global:NotASymbol = "PowerShell variable"|
+|eval|$NotASymbol = "PowerShell variable"|
 |check|eval|"It is the $NotASymbol"|It is the PowerShell variable|

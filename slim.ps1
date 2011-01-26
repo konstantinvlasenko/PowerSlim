@@ -113,7 +113,7 @@ function Invoke-SlimCall($fnc){
 		"query" {$result = @(iex $Script)}
 		"eval" {$result = iex $Script}
 		default {$result = $slimvoid}
-	}	
+	}
 	if($error[0] -ne $null){$error[0]}
 	else{ResultTo-Slim $result}
 }
@@ -135,7 +135,7 @@ function Invoke-SlimInstruction($ins){
 }
 
 function Set-Script($s){
-	Set-Variable -Name Script -Value $s -Scope Global
+	Set-Variable -Name Script -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
 }
 
 function Process-Instruction($ins){

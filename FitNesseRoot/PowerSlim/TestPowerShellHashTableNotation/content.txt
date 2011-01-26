@@ -3,7 +3,7 @@
 |Olympia|Salem|Sacramento|
 
 !|script|
-|eval|$global:x = @{Washington = 'Olympia'; Oregon = "Salem"; California = "Sacramento"}|
+|eval|$x = @{Washington = 'Olympia'; Oregon = "Salem"; California = "Sacramento"}|
 |check|eval|$x.Washington|Olympia|
 |check|eval|$x.Oregon|Salem|
 |check|eval|$x.California|Sacramento|
