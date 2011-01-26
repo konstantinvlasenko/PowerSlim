@@ -130,11 +130,12 @@ function Invoke-SlimInstruction($ins){
 	}
 
 	$result = Invoke-SlimCall $ins[3]
-	if($symbol){Set-Variable -Name $symbol -Value $result -Scope Global}
+	if($symbol){$global:symbols += @{$symbol=$result}}
 	$result
 }
 
 function Set-Script($s){
+	$symbols.Keys | % {$s=$s -replace "\`$$_",$symbols.item($_) }
 	Set-Variable -Name Script -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
 }
 
