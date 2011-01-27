@@ -6,6 +6,7 @@ $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
+$slimbuffer = new-object byte[] 20480
 
 function Get-Instructions($slimchunk){
 	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace ":\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
@@ -37,10 +38,17 @@ function send_slim_version($stream){
 	$stream.Write($version, 0, $version.Length)
 }
 
+function get_message_length($stream){
+	$b = new-object byte[] 7
+	$stream.Read($b, 0, $b.Length) | out-null
+	[int][text.encoding]::utf8.getstring($b, 0, 6)
+}
+
 function get_message($stream){
-	$b = new-object byte[] 4096
-	$n = $stream.Read($b, 0, $b.Length)
-	[text.encoding]::utf8.getstring($b, 7, $n-7)
+	$size = get_message_length($stream)
+	$offset = 0
+	while($offset -lt $size){$offset += $stream.Read($slimbuffer, $offset, $size)}
+	[text.encoding]::utf8.getstring($slimbuffer, 0, $size)
 }
 
 function ObjectTo-Slim($obj){
@@ -135,7 +143,7 @@ function Invoke-SlimInstruction($ins){
 }
 
 function Set-Script($s){
-	$symbols.Keys | % {$s=$s -replace "\`$$_",$symbols.item($_) }
+	if($symbols){$symbols.Keys | % {$s=$s -replace "\`$$_",$symbols.item($_) }}
 	Set-Variable -Name Script -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
 }
 
@@ -161,7 +169,7 @@ function pack_results($results){
 function process_message($stream){
 	$msg = get_message($stream)
 	if(ischunk($msg)){
-		#$msg | Out-File c:\PowerSlim\slim.log
+		#$msg | Out-File c:\slim.log
 		$ins = Get-Instructions $msg
 		
 		if($ins[0] -is [array]){
