@@ -118,8 +118,8 @@ function ResultTo-Slim($list){
 function Invoke-SlimCall($fnc){
 	$error.clear()
 	switch ($fnc){
-		"query" {$result = @(iex $Script)}
-		"eval" {$result = iex $Script}
+		"query" {$result = @(iex $Script__)}
+		"eval" {$result = iex $Script__}
 		default {$result = $slimvoid}
 	}
 	if($error[0] -ne $null){$error[0]}
@@ -144,7 +144,7 @@ function Invoke-SlimInstruction($ins){
 
 function Set-Script($s){
 	if($symbols){$symbols.Keys | % {$s=$s -replace "\`$$_",$symbols.item($_) }}
-	Set-Variable -Name Script -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
+	Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
 }
 
 function Process-Instruction($ins){
