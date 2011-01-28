@@ -8,4 +8,4 @@
 |eval|function global:test{"Hello World!"}|
 |$x=|eval|"st"|
 |check|eval|te$x|Hello World!|
-|show|eval|$script|
+

@@ -85,7 +85,7 @@ function ConvertTo-SimpleObject($obj){
    $object
 }
 
-function ResultTo-Slim($list){
+function ResultTo-List($list){
 	if($list -eq $null){
 		$slimvoid
 	}
@@ -115,15 +115,29 @@ function ResultTo-Slim($list){
 	}
 }
 
+function ResultTo-String($res){
+	if($res -eq $null){
+		$slimvoid
+	}
+	else{
+		$result = ""
+		foreach ($obj in $res){
+			$result += $obj.ToString()
+			$result += ","
+		}
+		$result.TrimEnd(',')
+	}
+}
+
 function Invoke-SlimCall($fnc){
 	$error.clear()
 	switch ($fnc){
-		"query" {$result = @(iex $Script__)}
-		"eval" {$result = iex $Script__}
+		"query" {$result = ResultTo-List @(iex $Script__)}
+		"eval" {$result = ResultTo-String (iex $Script__)}
 		default {$result = $slimvoid}
 	}
 	if($error[0] -ne $null){$error[0]}
-	else{ResultTo-Slim $result}
+	else{$result}
 }
 
 function Invoke-SlimInstruction($ins){
