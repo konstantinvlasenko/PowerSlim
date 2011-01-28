@@ -7,7 +7,7 @@ $slimnull = "000004:null:"
 $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
-$slimbuffer = new-object byte[] 20480
+$slimbuffer = new-object byte[] 102400
 
 function Get-Instructions($slimchunk){
 	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace "(?S):\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
@@ -158,8 +158,9 @@ function Invoke-SlimInstruction($ins){
 }
 
 function Set-Script($s){
-	if($slimsymbols.Count){$slimsymbols.Keys | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
-	Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
+	if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
+	if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value $s -Scope Global}
+	else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
 }
 
 function Process-Instruction($ins){

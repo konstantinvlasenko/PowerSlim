@@ -1,0 +1,6 @@
+'''!-PowerShell-! variable has the highest priority over the Fitnesse page symbol'''
+!|script|
+|$Param1=|eval|"test1"|
+|$Param2=|eval|2|
+|check|eval|$Param1=1;$Param1+$Param2|3|
+|check|eval|$Param1+1|2|
