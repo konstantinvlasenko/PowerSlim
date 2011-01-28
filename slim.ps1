@@ -6,6 +6,7 @@ $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
+$slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $slimbuffer = new-object byte[] 20480
 
 function Get-Instructions($slimchunk){
@@ -152,12 +153,12 @@ function Invoke-SlimInstruction($ins){
 	}
 
 	$result = Invoke-SlimCall $ins[3]
-	if($symbol){$global:symbols += @{$symbol=$result}}
+	if($symbol){$slimsymbols[$symbol] = $result}
 	$result
 }
 
 function Set-Script($s){
-	if($symbols){$symbols.Keys | % {$s=$s -replace "\`$$_",$symbols.item($_) }}
+	if($slimsymbols.Count){$slimsymbols.Keys | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
 	Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global
 }
 
