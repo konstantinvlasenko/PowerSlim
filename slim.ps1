@@ -9,7 +9,7 @@ $slimexception = "__EXCEPTION__:"
 $slimbuffer = new-object byte[] 20480
 
 function Get-Instructions($slimchunk){
-	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace ":\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
+	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace "(?S):\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 	iex $exp
 }
 
