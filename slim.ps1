@@ -164,7 +164,8 @@ function Set-Script($s){
 }
 
 function Process-Instruction($ins){
-	$result = Invoke-SlimInstruction $ins
+	$t = measure-command {$result = Invoke-SlimInstruction $ins}
+	$Script__ + " : " + $t.TotalSeconds | Out-Default
 	$s = '[000002:' + (slimlen $result[0]) + ':' + $result[0] + ':' + (slimlen $result[1]) + ':' + $result[1] + ':]'
 	(slimlen $s) + ":" + $s + ":"
 
