@@ -146,7 +146,7 @@ function ResultTo-String($res){
 			$result += $obj.ToString()
 			$result += ","
 		}
-		$result.TrimEnd(',')
+		$result.TrimEnd(",")
 	}
 }
 
@@ -158,41 +158,48 @@ function Invoke-SlimCall($fnc){
 		default {$result = $slimvoid}
 	}
 	if($error[0] -ne $null){$error[0]}
-	else{$result}
+	else{$result.TrimEnd("`r`n")}
+}
+
+function Set-Script($s, $fmt){
+	if(!$s){ return }
+	if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
+	$s = [string]::Format( $fmt, $s)
+	if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value $s -Scope Global}
+	else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
+}
+
+function make($ins){
+	if("RScript".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
+		if(!$PowerSlimRemoting__){ "__EXCEPTION__:call Set-PowerSlimRemoting before RScript"; return }
+		if($PowerSlimRemoting__ -eq "VMware.VimAutomation.Core"){
+			Set-Variable -Name QueryFormat__ -Value "Invoke-VMScript ""{0} | ConvertTo-CSV -NoTypeInformation"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])' | ConvertFrom-CSV" -Scope Global
+			Set-Variable -Name EvalFormat__ -Value "Invoke-VMScript ""{0}"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])'" -Scope Global
+		}
+	}
+	"OK"
 }
 
 function Invoke-SlimInstruction($ins){
 	$ins[0]
 	switch ($ins[1]){
 		"import" {Add-PSSnapin $ins[2]; "OK"; return}
-		"make" {Set-Script $ins; "OK"; return}
+		"make" {make $ins; Set-Script $ins[$ins.Count - 1] $QueryFormat__; return}
 		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
 	}
 	if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-		Set-Script $ins
+		Set-Script $ins[4] $EvalFormat__
 	}
-	$result = Invoke-SlimCall $ins[3]
+	
+	$t = measure-command {$result = Invoke-SlimCall $ins[3]}
+	$Script__ + " : " + $t.TotalSeconds | Out-Default
+	
 	if($symbol){$slimsymbols[$symbol] = $result}
 	$result
 }
 
-function Set-Script($ins){
-	$s = $ins[4]
-	if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
-	if("RScript".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
-		if($PowerSlimRemoting__ -eq "VMware.VimAutomation.Core"){
-			Set-Variable -Name Script__ -Value "Invoke-VMScript ""$s | ConvertTo-CSV -NoTypeInformation"" (Get-VM $($ins[5])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[6]) -GuestPassword '$($ins[7])' | ConvertFrom-CSV" -Scope Global
-		}
-	}
-	else{
-		if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value $s -Scope Global}
-		else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
-	}
-}
-
 function Process-Instruction($ins){
-	$t = measure-command {$result = Invoke-SlimInstruction $ins}
-	$Script__ + " : " + $t.TotalSeconds | Out-Default
+	$result = Invoke-SlimInstruction $ins
 	$s = '[000002:' + (slimlen $result[0]) + ':' + $result[0] + ':' + (slimlen $result[1]) + ':' + $result[1] + ':]'
 	(slimlen $s) + ":" + $s + ":"
 
@@ -213,7 +220,9 @@ function pack_results($results){
 function process_message($stream){
 	$msg = get_message($stream)
 	if(ischunk($msg)){
-		#$msg | Out-File c:\slim.log
+		Set-Variable -Name QueryFormat__ -Value "{0}" -Scope Global
+		Set-Variable -Name EvalFormat__ -Value "{0}" -Scope Global
+		#$msg | Out-File c:\powerslim\slim.log -append
 		$ins = Get-Instructions $msg
 		
 		if($ins[0] -is [array]){
@@ -228,13 +237,13 @@ function process_message($stream){
 	$msg
 }
 
-$s = New-Object System.Net.Sockets.TcpListener($args[0])
-$s.Start()
-$c = $s.AcceptTcpClient()
+$server = New-Object System.Net.Sockets.TcpListener($args[0])
+$server.Start()
+$c = $server.AcceptTcpClient()
 $stream = $c.GetStream()
 send_slim_version($stream)
 while("bye" -ne (process_message($stream))){};
 $c.Close()
-$s.Stop()
+$server.Stop()
 
  
