@@ -8,7 +8,27 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $slimbuffer = new-object byte[] 102400
-
+######################################################################################
+#
+#
+######################################################################################
+function Set-PowerSlimRemoting{
+	if("VMware.VimAutomation.Core".Equals($args[0],[System.StringComparison]::OrdinalIgnoreCase)){
+		Set-Variable -Name PowerSlimRemoting__ -Value "VMware.VimAutomation.Core" -Scope Global
+		Add-PSSnapin $PowerSlimRemoting__
+		Set-Variable -Name Host__ -Value $args[1] -Scope Global
+		Set-Variable -Name HostUser__ -Value $args[2] -Scope Global
+		Set-Variable -Name HostPswd__ -Value $args[3] -Scope Global
+		Connect-VIServer -Server $Host__ -User $HostUser__ -Password $HostPswd__
+	}
+	else{
+		"__EXCEPTION__:ABORT_SLIM_TEST:$($args[0]) is not supported"
+	}
+}
+######################################################################################
+#
+#
+######################################################################################
 function Get-Instructions($slimchunk){
 	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace "(?S):\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 	iex $exp
@@ -144,23 +164,30 @@ function Invoke-SlimCall($fnc){
 function Invoke-SlimInstruction($ins){
 	$ins[0]
 	switch ($ins[1]){
-		"import" {Add-PSSnapin $ins[2]; "OK"; break;}
-		"make" {Set-Script $ins[4]; "OK"; break}
+		"import" {Add-PSSnapin $ins[2]; "OK"; return}
+		"make" {Set-Script $ins; "OK"; return}
 		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
 	}
 	if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-		Set-Script $ins[4]
+		Set-Script $ins
 	}
-
 	$result = Invoke-SlimCall $ins[3]
 	if($symbol){$slimsymbols[$symbol] = $result}
 	$result
 }
 
-function Set-Script($s){
+function Set-Script($ins){
+	$s = $ins[4]
 	if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
-	if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value $s -Scope Global}
-	else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
+	if("RScript".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
+		if($PowerSlimRemoting__ -eq "VMware.VimAutomation.Core"){
+			Set-Variable -Name Script__ -Value "Invoke-VMScript ""$s | ConvertTo-CSV -NoTypeInformation"" (Get-VM $($ins[5])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[6]) -GuestPassword '$($ins[7])' | ConvertFrom-CSV" -Scope Global
+		}
+	}
+	else{
+		if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value $s -Scope Global}
+		else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
+	}
 }
 
 function Process-Instruction($ins){
@@ -200,6 +227,7 @@ function process_message($stream){
 	}
 	$msg
 }
+
 $s = New-Object System.Net.Sockets.TcpListener($args[0])
 $s.Start()
 $c = $s.AcceptTcpClient()

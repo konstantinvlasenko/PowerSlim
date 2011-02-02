@@ -1,0 +1,19 @@
+!define ESXHOST (HOSTName)
+!define ESXUSER (root)
+!define ESXPSWD (12345678)
+!define VM (VMName)
+!define GUESTUSER (DOMAIN\Administrator)
+!define GUESTPWD (1)
+
+!* Init remoting
+'''''VMware vSphere PowerCLI''' should be installed.''
+|Script|
+|eval|Set-PowerSlimRemoting VMware.VimAutomation.Core ${ESXHOST} ${ESXUSER} ${ESXPSWD}|
+
+*!
+!* Run script remotely
+''RScript will call '''Invoke-VMScript''' behind the scene in case of '''VMware.VimAutomation.Core''' remoting''
+!|Query:RScript|get-service|${VM}|${GUESTUSER}|${GUESTPWD}|
+|DisplayName|Status|
+
+*!
