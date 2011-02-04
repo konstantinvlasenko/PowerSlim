@@ -1,4 +1,4 @@
-!|Query:Script|!-gc slim.ps1 | select -first 4-!|
+!|Query:Local|!-gc slim.ps1 | select -first 4-!|
 |String|
 |######################################################################################|
 |#The latest source code is available at http://github.com/konstantinvlasenko/PowerSlim|

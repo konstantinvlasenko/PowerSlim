@@ -21,6 +21,9 @@ function Set-PowerSlimRemoting{
 		Set-Variable -Name HostPswd__ -Value $args[3] -Scope Global
 		Connect-VIServer -Server $Host__ -User $HostUser__ -Password $HostPswd__
 	}
+	elseif("PowerSlim.Remoting".Equals($args[0],[System.StringComparison]::OrdinalIgnoreCase)){
+		Set-Variable -Name PowerSlimRemoting__ -Value "PowerSlim.Remoting" -Scope Global
+	}
 	else{
 		"__EXCEPTION__:ABORT_SLIM_TEST:$($args[0]) is not supported"
 	}
@@ -102,7 +105,7 @@ function ConvertTo-Object($hashtable){
 
 function ConvertTo-SimpleObject($obj){
    $object = New-Object PSObject
-   Add-Member -inputObject $object -memberType NoteProperty -name $obj.GetType().Name -value $obj.ToString()
+   Add-Member -inputObject $object -memberType NoteProperty -name "Value" -value $obj.ToString()
    $object
 }
 
@@ -170,8 +173,8 @@ function Set-Script($s, $fmt){
 }
 
 function make($ins){
-	if("RScript".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
-		if(!$PowerSlimRemoting__){ "__EXCEPTION__:call Set-PowerSlimRemoting before RScript"; return }
+	if("Remote".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
+		if(!$PowerSlimRemoting__){ "__EXCEPTION__:call Set-PowerSlimRemoting before Remote"; return }
 		if($PowerSlimRemoting__ -eq "VMware.VimAutomation.Core"){
 			Set-Variable -Name QueryFormat__ -Value "Invoke-VMScript ""{0} | ConvertTo-CSV -NoTypeInformation"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])' | ConvertFrom-CSV" -Scope Global
 			Set-Variable -Name EvalFormat__ -Value "Invoke-VMScript ""{0}"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])'" -Scope Global
@@ -237,8 +240,10 @@ function process_message($stream){
 	$msg
 }
 
+
 $server = New-Object System.Net.Sockets.TcpListener($args[0])
 $server.Start()
+
 $c = $server.AcceptTcpClient()
 $stream = $c.GetStream()
 send_slim_version($stream)

@@ -1,4 +1,4 @@
-!|Query:Script|@{Washington = 'Olympia';Oregon = "Salem";California = "Sacramento"}|
+!|Query:Local|@{Washington = 'Olympia';Oregon = "Salem";California = "Sacramento"}|
 |Washington|Oregon|California|
 |Olympia|Salem|Sacramento|
 
@@ -8,7 +8,7 @@
 |check|eval|$x.Oregon|Salem|
 |check|eval|$x.California|Sacramento|
 
-!|Query:Script|(@{Name = "User1"; Age = "1"},@{Name = "User2"; Age = "22"})|
+!|Query:Local|(@{Name = "User1"; Age = "1"},@{Name = "User2"; Age = "22"})|
 |Name|Age|
 |User1|1|
 |User2|22|

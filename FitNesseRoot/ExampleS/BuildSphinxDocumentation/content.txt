@@ -2,7 +2,7 @@
 -!|script|
 |eval|Set-Location 'c:\rmsp\help'|
 
-!|Subset Query:Script|.\make.bat html|
+!|Subset Query:Local|.\make.bat html|
 |String|
 |!-=~/build succeeded|no targets are out of date/-!|
 |Build finished. The HTML pages are in _build/html.|

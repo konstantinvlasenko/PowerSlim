@@ -12,8 +12,8 @@
 
 *!
 !* Run script remotely
-''RScript will call '''Invoke-VMScript''' behind the scene in case of '''VMware.VimAutomation.Core''' remoting''
-!|Query:RScript|${VM}|${GUESTUSER}|${GUESTPWD}|!-get-service | ? {$_.DisplayName -like '* Time*'}-!|
+'''''Query:Remote''' will call '''Invoke-VMScript''' behind the scene in case of '''VMware.VimAutomation.Core''' remoting''
+!|Query:Remote|${VM}|${GUESTUSER}|${GUESTPWD}|!-get-service | ? {$_.DisplayName -like '* Time*'}-!|
 |DisplayName|Status|
 |Windows Time|Running|
 
