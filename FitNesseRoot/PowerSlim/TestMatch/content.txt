@@ -1,0 +1,10 @@
+|script|
+|check|eval|"10" -match "10"|True|
+|check|eval|$matches[0]|10|
+|check|eval|"11" -match "10"|False|
+|check|eval|$matches[0]|10|
+|check|eval|"11" -match "11"|True|
+|check|eval|$matches[0]|11|
+
+
+

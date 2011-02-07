@@ -160,6 +160,7 @@ function Invoke-SlimCall($fnc){
 		"eval" {$result = ResultTo-String (iex $Script__)}
 		default {$result = $slimvoid}
 	}
+	$global:matches = $matches
 	if($error[0] -ne $null){$error[0]}
 	else{$result.TrimEnd("`r`n")}
 }
