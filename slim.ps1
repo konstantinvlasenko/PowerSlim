@@ -8,30 +8,7 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $slimbuffer = new-object byte[] 102400
-######################################################################################
-#
-#
-######################################################################################
-function Set-PowerSlimRemoting{
-	if("VMware.VimAutomation.Core".Equals($args[0],[System.StringComparison]::OrdinalIgnoreCase)){
-		Set-Variable -Name PowerSlimRemoting__ -Value "VMware.VimAutomation.Core" -Scope Global
-		Add-PSSnapin $PowerSlimRemoting__
-		Set-Variable -Name Host__ -Value $args[1] -Scope Global
-		Set-Variable -Name HostUser__ -Value $args[2] -Scope Global
-		Set-Variable -Name HostPswd__ -Value $args[3] -Scope Global
-		Connect-VIServer -Server $Host__ -User $HostUser__ -Password $HostPswd__
-	}
-	elseif("PowerSlim.Remoting".Equals($args[0],[System.StringComparison]::OrdinalIgnoreCase)){
-		Set-Variable -Name PowerSlimRemoting__ -Value "PowerSlim.Remoting" -Scope Global
-	}
-	else{
-		"__EXCEPTION__:ABORT_SLIM_TEST:$($args[0]) is not supported"
-	}
-}
-######################################################################################
-#
-#
-######################################################################################
+
 function Get-Instructions($slimchunk){
 	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace "(?S):\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 	iex $exp
@@ -176,10 +153,8 @@ function Set-Script($s, $fmt){
 function make($ins){
 	if("Remote".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
 		if(!$PowerSlimRemoting__){ "__EXCEPTION__:call Set-PowerSlimRemoting before Remote"; return }
-		if($PowerSlimRemoting__ -eq "VMware.VimAutomation.Core"){
-			Set-Variable -Name QueryFormat__ -Value "Invoke-VMScript ""{0} | ConvertTo-CSV -NoTypeInformation"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])' | ConvertFrom-CSV" -Scope Global
-			Set-Variable -Name EvalFormat__ -Value "Invoke-VMScript ""{0}"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])'" -Scope Global
-		}
+		Set-Variable -Name QueryFormat__ -Value  (Get-QueryFormat $ins) -Scope Global
+		Set-Variable -Name EvalFormat__ -Value  (Get-EvalFormat $ins) -Scope Global
 	}
 	"OK"
 }
@@ -187,7 +162,7 @@ function make($ins){
 function Invoke-SlimInstruction($ins){
 	$ins[0]
 	switch ($ins[1]){
-		"import" {Add-PSSnapin $ins[2]; "OK"; return}
+		"import" {iex ". .\$($ins[2])" | Out-Default ; "OK"; return}
 		"make" {make $ins; Set-Script $ins[$ins.Count - 1] $QueryFormat__; return}
 		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
 	}
