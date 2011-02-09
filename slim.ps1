@@ -153,8 +153,8 @@ function Set-Script($s, $fmt){
 function make($ins){
 	if("Remote".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
 		if(!$PowerSlimRemoting__){ "__EXCEPTION__:call Set-PowerSlimRemoting before Remote"; return }
-		Set-Variable -Name QueryFormat__ -Value  (Get-QueryFormat $ins) -Scope Global
-		Set-Variable -Name EvalFormat__ -Value  (Get-EvalFormat $ins) -Scope Global
+		$global:QueryFormat__ = Get-QueryFormat $ins
+		$global:EvalFormat__ = Get-EvalFormat $ins
 	}
 	"OK"
 }
@@ -162,7 +162,7 @@ function make($ins){
 function Invoke-SlimInstruction($ins){
 	$ins[0]
 	switch ($ins[1]){
-		"import" {iex ". .\$($ins[2])" | Out-Default ; "OK"; return}
+		"import" {iex ". .\$($ins[2])"; "OK"; return}
 		"make" {make $ins; Set-Script $ins[$ins.Count - 1] $QueryFormat__; return}
 		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
 	}
@@ -199,8 +199,7 @@ function pack_results($results){
 function process_message($stream){
 	$msg = get_message($stream)
 	if(ischunk($msg)){
-		Set-Variable -Name QueryFormat__ -Value "{0}" -Scope Global
-		Set-Variable -Name EvalFormat__ -Value "{0}" -Scope Global
+		$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 		#$msg | Out-File c:\powerslim\slim.log -append
 		$ins = Get-Instructions $msg
 		
@@ -223,6 +222,7 @@ $server.Start()
 $c = $server.AcceptTcpClient()
 $stream = $c.GetStream()
 send_slim_version($stream)
+$c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
 while("bye" -ne (process_message($stream))){};
 $c.Close()
 $server.Stop()
