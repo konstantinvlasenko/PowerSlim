@@ -8,9 +8,9 @@ function script:Set-PowerSlimRemoting{
 }
 
 function script:Get-QueryFormat($ins){
-	"Invoke-VMScript ""{0} | ConvertTo-CSV -NoTypeInformation"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])' | ConvertFrom-CSV"
+	"Invoke-VMScript '{0} | ConvertTo-CSV -NoTypeInformation' (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])' | ConvertFrom-CSV"
 }
 
 function script:Get-EvalFormat($ins){
-	"Invoke-VMScript ""{0}"" (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])'"
+	"Invoke-VMScript '{0}' (Get-VM $($ins[4])) -HostUser $HostUser__ -HostPassword '$HostPswd__' -GuestUser $($ins[5]) -GuestPassword '$($ins[6])'"
 }
