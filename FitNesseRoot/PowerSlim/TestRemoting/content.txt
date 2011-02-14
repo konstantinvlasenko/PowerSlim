@@ -1,0 +1,9 @@
+|import|
+|client.ps1|
+
+|script|Remote|127.0.0.1|
+|eval|$x = 5|
+|eval|$y = 10|
+
+|script|Remote|127.0.0.1|
+|check|eval|$x*$y|50|

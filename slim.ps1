@@ -8,10 +8,19 @@ $slimvoid = "/__VOID__/"
 $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $slimbuffer = new-object byte[] 102400
+$slimbuffersize = 0
 
-function Get-Instructions($slimchunk){
+function Get-SlimTable($slimchunk){
 	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace "(?S):\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 	iex $exp
+}
+
+function Test-OneRowTable($table){
+	!($table[0] -is [array])
+}
+
+function Test-RemoteTable($table){
+	"Remote".Equals($table[0][3],[System.StringComparison]::OrdinalIgnoreCase)
 }
 
 function SlimException-NoClass($class){
@@ -40,16 +49,20 @@ function send_slim_version($stream){
 }
 
 function get_message_length($stream){
-	$b = new-object byte[] 7
-	$stream.Read($b, 0, $b.Length) | out-null
-	[int][text.encoding]::utf8.getstring($b, 0, 6)
+	$stream.Read($slimbuffer, 0, 7) | out-null
+	$global:slimbuffersize = [int][text.encoding]::utf8.getstring($slimbuffer, 0, 6) + 7
+	$slimbuffersize - 7
+}
+
+function read_message($stream){
+	$size = get_message_length($stream)
+	$offset = 0
+	while($offset -lt $size){$offset += $stream.Read($slimbuffer, $offset + 7, $size)}
 }
 
 function get_message($stream){
-	$size = get_message_length($stream)
-	$offset = 0
-	while($offset -lt $size){$offset += $stream.Read($slimbuffer, $offset, $size)}
-	[text.encoding]::utf8.getstring($slimbuffer, 0, $size)
+	read_message($stream)
+	[text.encoding]::utf8.getstring($slimbuffer, 7, $slimbuffersize - 7)
 }
 
 function ObjectTo-Slim($obj){
@@ -152,7 +165,6 @@ function Set-Script($s, $fmt){
 
 function make($ins){
 	if("Remote".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
-		if(!$PowerSlimRemoting__){ "__EXCEPTION__:call Set-PowerSlimRemoting before Remote"; return }
 		$global:QueryFormat__ = Get-QueryFormat $ins
 		$global:EvalFormat__ = Get-EvalFormat $ins
 	}
@@ -198,33 +210,60 @@ function pack_results($results){
 
 function process_message($stream){
 	$msg = get_message($stream)
+	$msg
 	if(ischunk($msg)){
 		$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-		#$msg | Out-File c:\powerslim\slim.log -append
-		$ins = Get-Instructions $msg
-		
-		if($ins[0] -is [array]){
-			$results = $ins | % { Process-Instruction $_ }
-		}
+		$table = Get-SlimTable $msg
+				
+		if(Test-OneRowTable $table){$results = Process-Instruction $table}
 		else{
-			$results = Process-Instruction $ins
+			if(Test-RemoteTable $table){process_table_remotely $table[0][4] $stream; return}
+			else{$results = $table | % { Process-Instruction $_ }}
 		}
+		
 		$send = [text.encoding]::utf8.getbytes((pack_results $results))
 		$stream.Write($send, 0, $send.Length)
 	}
-	$msg
+}
+
+function process_message_ignore_remote($stream){
+	$msg = get_message($stream)
+	if(ischunk($msg)){
+		$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
+		$table = Get-SlimTable $msg
+		
+		$results = $table | % { Process-Instruction $_ }
+		$send = [text.encoding]::utf8.getbytes((pack_results $results))
+		$stream.Write($send, 0, $send.Length)
+	}
 }
 
 
-$server = New-Object System.Net.Sockets.TcpListener($args[0])
-$server.Start()
+function Run-SlimServer($port){
+	$server = New-Object System.Net.Sockets.TcpListener($port)
+	$server.Start()
 
-$c = $server.AcceptTcpClient()
-$stream = $c.GetStream()
-send_slim_version($stream)
-$c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
-while("bye" -ne (process_message($stream))){};
-$c.Close()
-$server.Stop()
+	$c = $server.AcceptTcpClient()
+	$fitnesse = $c.GetStream()
+	send_slim_version($fitnesse)
+	$c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
+	while("bye" -ne (process_message($fitnesse))){};
+	$c.Close()
+	$server.Stop()
+}
 
- 
+function Run-RemoteServer($port){
+	$server = New-Object System.Net.Sockets.TcpListener($port)
+	$server.Start()
+	while($c = $server.AcceptTcpClient()){
+		$slimserver = $c.GetStream()
+		process_message_ignore_remote($slimserver)
+		$slimserver.Close()
+		$c.Close()
+	}
+
+	$server.Stop()
+}
+
+if(!$args[1]){Run-SlimServer $args[0]}
+else{Run-RemoteServer $args[0]}
