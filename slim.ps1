@@ -4,7 +4,8 @@
 ######################################################################################
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
-$slimvoid = "/__VOID__/"
+#$slimvoid = "/__VOID__/"
+$slimvoid = ""
 $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $slimbuffer = new-object byte[] 102400
@@ -255,11 +256,14 @@ function Run-SlimServer($port){
 function Run-RemoteServer($port){
 	$server = New-Object System.Net.Sockets.TcpListener($port)
 	$server.Start()
+	"waiting..." | Out-Default
 	while($c = $server.AcceptTcpClient()){
+		"accepted!" | Out-Default
 		$slimserver = $c.GetStream()
 		process_message_ignore_remote($slimserver)
 		$slimserver.Close()
 		$c.Close()
+		"waiting..." | Out-Default
 	}
 
 	$server.Stop()

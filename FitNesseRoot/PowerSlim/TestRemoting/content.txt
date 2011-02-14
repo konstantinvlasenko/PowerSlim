@@ -1,9 +1,10 @@
+!note You need to run slim remote server: '''!-PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1 35 server-!'''
 |import|
 |client.ps1|
 
-|script|Remote|127.0.0.1|
+|script|Remote|localhost|
 |eval|$x = 5|
 |eval|$y = 10|
 
-|script|Remote|127.0.0.1|
+|script|Remote|localhost|
 |check|eval|$x*$y|50|
