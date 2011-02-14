@@ -165,7 +165,7 @@ function Set-Script($s, $fmt){
 }
 
 function make($ins){
-	if("Remote".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
+	if("ESXI".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
 		$global:QueryFormat__ = Get-QueryFormat $ins
 		$global:EvalFormat__ = Get-EvalFormat $ins
 	}
@@ -238,7 +238,6 @@ function process_message_ignore_remote($stream){
 		$stream.Write($send, 0, $send.Length)
 	}
 }
-
 
 function Run-SlimServer($port){
 	$server = New-Object System.Net.Sockets.TcpListener($port)

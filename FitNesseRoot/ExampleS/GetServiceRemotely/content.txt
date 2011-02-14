@@ -9,7 +9,7 @@
 *!
 !* Init remoting
 |import|
-|vmware.ps1|
+|esxi.ps1|
 
 '''''VMware vSphere PowerCLI''' should be installed.''
 |Script|
@@ -17,8 +17,8 @@
 
 *!
 !* Run script remotely
-'''''Query:Remote''' will call '''Invoke-VMScript''' behind the scene in case of '''VMware.VimAutomation.Core''' remoting''
-!|Query:Remote|${VM}|${GUESTUSER}|${GUESTPWD}|!-get-service | ? {$_.DisplayName -like '* Time*'}-!|
+'''''Query:ESXI''' will call '''Invoke-VMScript''' behind the scene''
+!|Query:ESXI|${VM}|${GUESTUSER}|${GUESTPWD}|!-get-service | ? {$_.DisplayName -like '* Time*'}-!|
 |DisplayName|Status|
 |Windows Time|Running|
 
