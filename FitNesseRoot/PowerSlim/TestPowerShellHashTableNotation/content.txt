@@ -8,10 +8,11 @@
 |check|eval|$x.Oregon|Salem|
 |check|eval|$x.California|Sacramento|
 
+''An additional field '''COMPUTERNAME''' available for each result''
 !|Query:Local|(@{Name = "User1"; Age = "1"},@{Name = "User2"; Age = "22"})|
-|Name|Age|
-|User1|1|
-|User2|22|
+|Name|Age|COMPUTERNAME|
+|User1|1||
+|User2|22||
 
 
 

@@ -2,9 +2,19 @@
 |import|
 |client.ps1|
 
-|script|Remote|localhost|
+|script|Remote|localhost,localhost|
 |eval|$x = 5|
 |eval|$y = 10|
 
-|script|Remote|localhost|
+|script|Remote|localhost,localhost|
 |check|eval|$x*$y|50|
+
+#''An additional field '''COMPUTERNAME''' available for each result''
+#!|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|
+#|Value|COMPUTERNAME|
+#|1||
+#|22||
+#|333||
+#|4444||
+#|55555||
+
