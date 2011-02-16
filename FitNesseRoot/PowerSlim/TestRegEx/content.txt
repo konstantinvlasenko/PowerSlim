@@ -1,0 +1,23 @@
+''This is just the examples. All !-RegEx-! stuff is done on the Fitnesse (java) side''
+
+|script|
+|check|eval|"0"|=~/^0(\s*,0)*$/|
+|check|eval|"0`r`n,0"|=~/^0(\s*,0)*$/|
+|check not|eval|"0`r`n,1603"|=~/^0(\s*,0)*$/|
+
+|script|
+|check|eval|"Hello World"|!-=~/Hello World/-!|
+|check|eval|"Hello"|!-=~/Hello|World/-!|
+|check|eval|"World"|!-=~/Hello|World/-!|
+
+|script|
+|check|eval|""|!-=~/Cannot find path|^$/-!|
+|check|eval|"Remove-Item : Cannot find path 'C:\Export' because it does not exist. "|!-=~/Cannot find path|^$/-!|
+|check not|eval|"Access Denied!"|!-=~/Cannot find path|^$/-!|
+
+''check empty string''
+|script|
+|check|eval|""|=~/^$/|
+|check not|eval|"Not Empty String"|=~/^$/|
+
+

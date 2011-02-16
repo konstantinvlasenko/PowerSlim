@@ -218,7 +218,7 @@ function process_message($stream){
 				
 		if(Test-OneRowTable $table){$results = Process-Instruction $table}
 		else{
-			if(Test-RemoteTable $table){process_table_remotely $table[0][4] $stream; return}
+			if(Test-RemoteTable $table){process_table_remotely $table $stream; return}
 			else{$results = $table | % { Process-Instruction $_ }}
 		}
 		

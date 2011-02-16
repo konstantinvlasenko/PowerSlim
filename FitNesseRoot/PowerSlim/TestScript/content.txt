@@ -1,3 +1,4 @@
+!define reg [^0(, 0)*$]
 |script|
 |check|eval|"text"|text|
 |check|eval|2000 + 11|2011|
@@ -7,3 +8,4 @@
 |check|eval|$x + $y|3886|
 |check|eval|$x,$y|1941,1945|
 |check|eval|(@{Name = "User1"; Age = "1"},@{Name = "User2"; Age = "22"})|System.Collections.Hashtable,System.Collections.Hashtable|
+
