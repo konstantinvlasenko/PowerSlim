@@ -2,11 +2,11 @@
 |import|
 |client.ps1|
 
-|script|Remote|localhost,localhost|
+|script|Remote|localhost|
 |eval|$x = 5|
 |eval|$y = 10|
 
-|script|Remote|localhost,localhost|
+|script|Remote|localhost|
 |check|eval|$x*$y|50|
 
 #''An additional field '''COMPUTERNAME''' available for each result''

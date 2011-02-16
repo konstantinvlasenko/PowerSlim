@@ -91,12 +91,14 @@ function PropertyTo-Slim($obj,$prop){
 function ConvertTo-Object($hashtable){
    $object = New-Object PSObject
    $hashtable.GetEnumerator() | % { Add-Member -inputObject $object -memberType NoteProperty -name $_.Name -value $_.Value }
+   Add-Member -inputObject $object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
    $object
 }
 
 function ConvertTo-SimpleObject($obj){
    $object = New-Object PSObject
    Add-Member -inputObject $object -memberType NoteProperty -name "Value" -value $obj.ToString()
+   Add-Member -inputObject $object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
    $object
 }
 
