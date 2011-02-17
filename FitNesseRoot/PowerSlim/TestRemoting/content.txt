@@ -2,7 +2,7 @@
 |import|
 |client.ps1|
 
-|script|Remote|localhost,localhost|
+|script|Remote|localhost|
 |eval|$x = 5|
 |eval|$y = 10|
 

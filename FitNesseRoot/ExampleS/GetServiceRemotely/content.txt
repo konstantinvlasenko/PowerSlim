@@ -18,7 +18,7 @@
 *!
 !* Run script remotely
 '''''Query:ESXI''' will call '''Invoke-VMScript''' behind the scene''
-!|Query:ESXI|${VM}|${GUESTUSER}|${GUESTPWD}|!-get-service | ? {$_.DisplayName -like '* Time*'}-!|
+!|Query:ESXI|${VM}|${GUESTUSER}|${GUESTPWD}|!-get-service | ? {$_.DisplayName -like "* Time*"}-!|
 |DisplayName|Status|
 |Windows Time|Running|
 
