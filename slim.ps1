@@ -212,21 +212,23 @@ function pack_results($results){
 }
 
 function process_message($stream){
-	$msg = get_message($stream)
-	$msg
-	if(ischunk($msg)){
-		$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-		$table = Get-SlimTable $msg
+	if($stream.CanRead){
+		$msg = get_message($stream)
+		$msg
+		if(ischunk($msg)){
+			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
+			$table = Get-SlimTable $msg
 				
-		if(Test-OneRowTable $table){$results = Process-Instruction $table}
-		else{
-			if(Test-RemoteTable $table){process_table_remotely $table $stream; return}
-			else{$results = $table | % { Process-Instruction $_ }}
-		}
+			if(Test-OneRowTable $table){$results = Process-Instruction $table}
+			else{
+				if(Test-RemoteTable $table){process_table_remotely $table $stream; return}
+				else{$results = $table | % { Process-Instruction $_ }}
+			}
 		
-		$send = [text.encoding]::utf8.getbytes((pack_results $results))
-		$stream.Write($send, 0, $send.Length)
-	}
+			$send = [text.encoding]::utf8.getbytes((pack_results $results))
+			$stream.Write($send, 0, $send.Length)
+		}
+	}else{"bye"}
 }
 
 function process_message_ignore_remote($stream){
