@@ -215,7 +215,6 @@ function process_message($stream){
 	if($stream.CanRead){
 		$msg = get_message($stream)
 		$msg
-		$msg | Out-Default
 		if(ischunk($msg)){
 			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 			$table = Get-SlimTable $msg
