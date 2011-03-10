@@ -243,33 +243,34 @@ function process_message_ignore_remote($stream){
 	}
 }
 
-function Run-SlimServer($port){
-	$server = New-Object System.Net.Sockets.TcpListener($port)
-	$server.Start()
 
-	$c = $server.AcceptTcpClient()
+function Run-SlimServer($slimport){
+	$slimserver = New-Object System.Net.Sockets.TcpListener($slimport)
+	$slimserver.Start()
+
+	$c = $slimserver.AcceptTcpClient()
 	$fitnesse = $c.GetStream()
 	send_slim_version($fitnesse)
 	$c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
 	while("bye" -ne (process_message($fitnesse))){};
 	$c.Close()
-	$server.Stop()
+	$slimserver.Stop()
 }
 
-function Run-RemoteServer($port){
-	$server = New-Object System.Net.Sockets.TcpListener($port)
-	$server.Start()
+function Run-RemoteServer($slimport){
+	$slimserver = New-Object System.Net.Sockets.TcpListener($slimport)
+	$slimserver.Start()
 	"waiting..." | Out-Default
-	while($c = $server.AcceptTcpClient()){
+	while($c = $slimserver.AcceptTcpClient()){
 		"accepted!" | Out-Default
-		$slimserver = $c.GetStream()
-		process_message_ignore_remote($slimserver)
-		$slimserver.Close()
+		$fitnesse = $c.GetStream()
+		process_message_ignore_remote($fitnesse)
+		$fitnesse.Close()
 		$c.Close()
 		"waiting..." | Out-Default
 	}
 
-	$server.Stop()
+	$slimserver.Stop()
 }
 
 if(!$args[1]){Run-SlimServer $args[0]}
