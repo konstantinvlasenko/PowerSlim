@@ -12,7 +12,7 @@ $slimbuffer = new-object byte[] 102400
 $slimbuffersize = 0
 
 function Get-SlimTable($slimchunk){
-	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:" -replace "(?S):\d{6}:([^\[].*?)(?=(:\d{6}|:\]))",',''$1''' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
+	$exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 	iex $exp
 }
 
@@ -215,6 +215,7 @@ function process_message($stream){
 	if($stream.CanRead){
 		$msg = get_message($stream)
 		$msg
+		$msg | Out-Default
 		if(ischunk($msg)){
 			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 			$table = Get-SlimTable $msg

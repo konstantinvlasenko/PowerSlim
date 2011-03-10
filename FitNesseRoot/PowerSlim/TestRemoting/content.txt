@@ -10,9 +10,6 @@
 |script|Remote|localhost|
 |check|eval|$x*$y|50|
 
-!|script|Remote|localhost|
-|show|eval|[DateTime]::Now|
-
 #''An additional field '''COMPUTERNAME''' available for each result''
 #!|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|
 #|Value|COMPUTERNAME|
