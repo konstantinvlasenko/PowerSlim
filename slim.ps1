@@ -160,9 +160,10 @@ function Invoke-SlimCall($fnc){
 
 function Set-Script($s, $fmt){
 	if(!$s){ return }
+	$s = $s -replace '</?pre>' #workaround fitnesse strange behavior
 	if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
 	$s = [string]::Format( $fmt, $s)
-	if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value $s -Scope Global}
+	if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function global:$1') -Scope Global}
 	else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
 }
 
