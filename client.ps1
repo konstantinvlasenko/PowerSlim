@@ -24,3 +24,20 @@ function script:process_table_remotely($table, $fitnesse){
 		$fitnesse.Write($send, 0, $send.Length)
 	}
 }
+
+function script:Test-TcpPort($remotehost, $port)
+{
+	$ErrorActionPreference = 'SilentlyContinue'
+	$s = new-object Net.Sockets.TcpClient
+	$s.Connect($remotehost, $port)
+	if ($s.Connected) {
+		$s.Close()
+		return $true
+	}
+	return $false
+}
+
+function script:Wait-RemoteServer($remotehost)
+{
+	while(!(Test-TcpPort $remotehost 35)){sleep 10}
+}
