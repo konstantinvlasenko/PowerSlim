@@ -1,12 +1,17 @@
 function script:process_table_remotely($table, $fitnesse){
-	$computers = $table[0][4].Trim(',').Split(',')
+	$targets = $table[0][4].Trim(',').Split(',')
 	try {
 		$originalslimbuffer = $slimbuffer.Clone()
 		$originalslimbuffersize = $slimbuffersize
 		$result = new-Object 'system.collections.generic.dictionary[string,object]'
-		foreach($computer in $computers){
-			$computer | Out-Default
-			$c = New-Object System.Net.Sockets.TcpClient($computer, 35)
+		foreach($t in $targets){ 
+			$computer, $port = $t.split(':')
+			if($computer.StartsWith('$')){
+				$computer = $slimsymbols[$computer.Substring(1)]
+			}
+            if($port -eq $null){$port = 35};
+            $computer, $port | Out-Default
+			$c = New-Object System.Net.Sockets.TcpClient($computer, $port)
 			$remoteserver = $c.GetStream()
 			$remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
 			$result[$computer] = get_message($remoteserver)
