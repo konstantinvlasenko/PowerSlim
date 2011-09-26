@@ -90,7 +90,7 @@ function PropertyTo-Slim($obj,$prop){
 	(slimlen $slimview) + ":" + $slimview + ":"
 }
 
-function ConvertTo-Object($hashtable){
+function Convert-Hashtable-2Object($hashtable){
    $object = New-Object PSObject
    $hashtable.GetEnumerator() | % { Add-Member -inputObject $object -memberType NoteProperty -name $_.Name -value $_.Value }
    Add-Member -inputObject $object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
@@ -108,11 +108,28 @@ function ResultTo-List($list){
 	if($list -eq $null){
 		$slimvoid
 	}
+	elseif ($list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'){
+		$dict = $list[0]
+		$result = "[" + $dict.Keys.Count.ToString("d6") + ":"
+		foreach ($key in $dict.Keys){
+			$obj = New-Object PSObject -Property @{ Key=$key; Value=$dict[$key].ToString(); COMPUTERNAME=$env:COMPUTERNAME}
+							
+			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
+			
+			$itemstr = "[" +  $fieldscount.ToString("d6") + ":"
+			$obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
+			$itemstr += "]"
+		
+			$result += (slimlen $itemstr) + ":" + $itemstr + ":"
+		} 
+		$result += "]"
+		$result
+	}
 	elseif ($list -is [array]){
 		$result = "[" + (slimlen $list) + ":"
 		foreach ($obj in $list){
 			if($obj -is [hashtable]){
-				$obj = ConvertTo-Object $obj
+				$obj = Convert-Hashtable-2Object $obj
 			}
 			if($obj -is [string] -or $obj -is [int]){
 				$obj = ConvertTo-SimpleObject $obj

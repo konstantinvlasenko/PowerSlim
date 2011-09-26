@@ -1,0 +1,13 @@
+!|script|
+|eval|$dict=new-Object 'system.collections.generic.dictionary[string,object]'|
+|eval|$dict['1'] = 'Value1'|
+|eval|$dict['2'] = 'Value2'|
+|eval|$dict['3'] = 'Value3'|
+|show|eval|$dict.keys|
+|show|eval|$dict.values|
+
+|Query:Local|$dict|
+|Key|Value|
+|1|Value1|
+|2|Value2|
+|3|Value3|
