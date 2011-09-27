@@ -97,6 +97,11 @@ function Convert-Hashtable-2Object($hashtable){
    $object
 }
 
+function Convert-KeyValuePair-2Object($kvp){
+   $obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); COMPUTERNAME=$env:COMPUTERNAME}
+   $obj
+}
+
 function ConvertTo-SimpleObject($obj){
    $object = New-Object PSObject
    Add-Member -inputObject $object -memberType NoteProperty -name "Value" -value $obj.ToString()
@@ -104,28 +109,18 @@ function ConvertTo-SimpleObject($obj){
    $object
 }
 
+function isgenericdict($list){
+	$list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'
+}
+
 function ResultTo-List($list){
 	if($list -eq $null){
 		$slimvoid
-	}
-	elseif ($list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'){
-		$dict = $list[0]
-		$result = "[" + $dict.Keys.Count.ToString("d6") + ":"
-		foreach ($key in $dict.Keys){
-			$obj = New-Object PSObject -Property @{ Key=$key; Value=$dict[$key].ToString(); COMPUTERNAME=$env:COMPUTERNAME}
-							
-			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
-			
-			$itemstr = "[" +  $fieldscount.ToString("d6") + ":"
-			$obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
-			$itemstr += "]"
-		
-			$result += (slimlen $itemstr) + ":" + $itemstr + ":"
-		} 
-		$result += "]"
-		$result
-	}
+	}	
 	elseif ($list -is [array]){
+		if (isgenericdict $list){
+			$list = $list[0].GetEnumerator() | % {$_}
+		}	
 		$result = "[" + (slimlen $list) + ":"
 		foreach ($obj in $list){
 			if($obj -is [hashtable]){
@@ -133,6 +128,9 @@ function ResultTo-List($list){
 			}
 			if($obj -is [string] -or $obj -is [int]){
 				$obj = ConvertTo-SimpleObject $obj
+			}
+			if ($obj -is 'system.collections.generic.keyvaluepair[string,object]'){
+				$obj = Convert-KeyValuePair-2Object $obj
 			}
 
 			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
