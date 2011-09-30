@@ -1,7 +1,8 @@
 |import|
 |client.ps1|
 
-!note You need to run slim remote server: '''!-PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1 35 server-!'''
+!|script|
+|eval|$server = start-process PowerShell "-NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1 35 server" -PassThru|
 
 |script|Remote|localhost|
 |eval|$x = 5|
@@ -9,6 +10,9 @@
 
 |script|Remote|localhost|
 |check|eval|$x*$y|50|
+
+|script|
+|eval|$server.Kill()|
 
 #''An additional field '''COMPUTERNAME''' available for each result''
 #!|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|
