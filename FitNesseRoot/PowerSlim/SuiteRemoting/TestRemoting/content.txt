@@ -1,18 +1,9 @@
-|import|
-|client.ps1|
-
-!|script|
-|eval|$server = start-process PowerShell "-NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1 35 server" -PassThru|
-
 |script|Remote|localhost|
 |eval|$x = 5|
 |eval|$y = 10|
 
 |script|Remote|localhost|
 |check|eval|$x*$y|50|
-
-|script|
-|eval|$server.Kill()|
 
 #''An additional field '''COMPUTERNAME''' available for each result''
 #!|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|

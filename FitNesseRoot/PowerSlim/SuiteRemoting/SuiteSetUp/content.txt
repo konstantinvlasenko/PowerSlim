@@ -1,0 +1,5 @@
+|import|
+|client.ps1|
+
+!|script|
+|eval|$server = start-process PowerShell "-NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1 35 server" -PassThru|
