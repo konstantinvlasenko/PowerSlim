@@ -17,8 +17,42 @@ function script:process_table_remotely($table, $fitnesse){
 			}
 			if($port -eq $null){$port = 35};
 			$computer, $port | Out-Default
+			
+			if($slimsymbols.Count -ne 0){
+				$c = New-Object System.Net.Sockets.TcpClient($computer, $port)
+				$remoteserver = $c.GetStream()
+				
+				
+				$list = $slimsymbols.GetEnumerator() | % {$_}
+				$tr = "[" + (slimlen $list) + ":"
+				foreach ($obj in $list){
+									
+					$itemstr = "[" +  (6).ToString("d6") + ":"
+					$itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
+					$itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
+					$itemstr += (slimlen 'eval') + ":eval:"
+					#if($obj -is [string]){
+						$itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+					#}
+					#else{
+					#	$itemstr +=  (slimlen $obj.Value) + ":$($obj.Value):"
+					#}
+					$itemstr += "]"
+			
+					$tr += (slimlen $itemstr) + ":" + $itemstr + ":"
+				} 
+				$tr += "]"
+				
+				$s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr
+						
+				$s2 = [text.encoding]::utf8.getbytes($s2)
+				$remoteserver.Write($s2, 0, $s2.Length)
+				get_message($remoteserver)
+			}
+						
 			$c = New-Object System.Net.Sockets.TcpClient($computer, $port)
 			$remoteserver = $c.GetStream()
+						
 			$remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
 			$result[$computer] = get_message($remoteserver)
 			$remoteserver.Close()         
