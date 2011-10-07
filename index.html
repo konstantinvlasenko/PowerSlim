@@ -1,73 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='utf-8'>
+---
+layout: default
+title: PowerSlim
+---
 
-  <title>PowerSlim</title>
-
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #c9cbf7;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #000000;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #363408; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #363408; }
-    h3 { text-align: center; color: #363408; }
-    a { color: #363408; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
-</head>
-
-<body>
-  <a href="http://github.com/konstantinvlasenko/PowerSlim"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/konstantinvlasenko/PowerSlim/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/konstantinvlasenko/PowerSlim/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
-
-    <h1><a href="http://github.com/konstantinvlasenko/PowerSlim">PowerSlim</a></h1>
-
-    <div class="description">
-      Fitnesse Slim server implementation in PowerShell. PowerSlim makes it possible to use PowerShell for acceptance testing
-    </div>
-
-    <p>PS> Get-PowerSLlm</p><h2>Dependencies</h2>
-<p>The PowerShell 2.0 should be installed. 
-PowerShell 2.0 is integrated with Windows 7 and Windows Server 2008 R2 and is released for Windows XP with Service Pack 3, Windows Server 2003 with Service Pack 2 and Windows Vista with Service Pack 1.</p>
-<h2>Install</h2>
-<p>!define TEST_SYSTEM {slim}
-!define COMMAND_PATTERN (PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)</p>
-<h2>License</h2>
-<p>THE BEER-WARE LICENSE" (Revision 42):</p>
-<p>konstantin.vlasenko@gmail.com wrote this file. As long as you retain this notice you can do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return.</p>
-<h2>Authors</h2>
-<p>Konstantin Vlasenko (<a href="http://twitter.com/#!/velaskec">@velaskec</a>)<br/><br/><br/> </p>
+<div id="home">
+  <h1>Blog Posts</h1>
+  <ul class="posts">
+    {% for post in site.posts %}
+      <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
+    {% endfor %}
+  </ul>
 </div>
-<script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("UA-26178756-1");
-pageTracker._trackPageview();
-} catch(err) {}</script>
-</body>
-</html>
