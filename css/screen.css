@@ -124,15 +124,10 @@ ul.posts {
 	position: absolute;
 	bottom: 0px;
   }
-
-    .site .footer .contact {
-      float: left;
-      margin-right: 3em;
-    }
-
-      .site .footer .contact a {
-        color: #8085C1;
-      }
+  .site .footer  a {
+    color: #8085C1;
+	margin: 0px 10px;
+  }
 
 /*****************************************************************************/
 /*
