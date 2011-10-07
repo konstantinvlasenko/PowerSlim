@@ -1,0 +1,11 @@
+
+---
+layout: post
+title: Hello GitHub
+---
+
+h1. {{ page.title }}
+
+p(meta). 07 Oct 2011 - Saint-Peterburg
+
+Test
