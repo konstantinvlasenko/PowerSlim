@@ -8,7 +8,7 @@ h1. {{ page.title }}
 
 p(meta). 07 Oct 2011 - Saint-Peterburg
 
-The PowerSlim site has been moved to this GitHub pages. You'll also be able to access the "old site::http://vlasenko.org/powerslim.
+The PowerSlim site has been moved to this GitHub pages. You'll also be able to access the "old site":http://vlasenko.org/powerslim.
 
 
 
