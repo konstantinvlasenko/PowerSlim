@@ -5,7 +5,7 @@
 # think this stuff is worth it, you can buy me a beer in return.
 #
 function script:process_table_remotely($table, $fitnesse){
-	$targets = $table[0][4].Trim(',').Split(',')
+	#$targets = $table[0][4].Trim(',').Split(',')
 	try {
 		$originalslimbuffer = $slimbuffer.Clone()
 		$originalslimbuffersize = $slimbuffersize

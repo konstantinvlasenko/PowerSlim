@@ -1,0 +1,18 @@
+!* simple scenario
+|scenario|plus _ plus _ |arg1,arg2|
+|show|eval|@arg1 + @arg2|
+*!
+!* You have to switch to Remote context in order to be able to use the decision table remotely
+|script|Remote|localhost|
+*!
+|plus plus|
+|arg1|arg2|
+|88|22|
+|99|44|
+!* You have to switch to Local context in order to be able to use the decision table localy
+|script|Local|
+*!
+|plus plus|
+|arg1|arg2|
+|88|22|
+|99|44|

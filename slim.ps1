@@ -236,11 +236,49 @@ function process_message($stream){
 		if(ischunk($msg)){
 			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 			$table = Get-SlimTable $msg
-				
-			if(Test-OneRowTable $table){$results = Process-Instruction $table}
+            
+            if(Test-OneRowTable $table){
+                if($table[0].StartsWith("scriptTable_")){
+                    if("Remote".Equals($table[3],[System.StringComparison]::OrdinalIgnoreCase))
+                    {
+                        "--->Remote context (1)" | Out-Default
+                        $global:Remote = $true
+                        $global:targets = $table[4].Trim(',').Split(',')
+                    }
+                    else
+                    {
+                        "Local context (1)<---" | Out-Default
+                        $global:Remote = $false
+                    }
+                }
+                if($Remote -eq $true){
+                    process_table_remotely $table $stream;
+                    return
+                }
+                else{
+                    $results = Process-Instruction $table
+                }
+            }
 			else{
-				if(Test-RemoteTable $table){process_table_remotely $table $stream; return}
-				else{$results = $table | % { Process-Instruction $_ }}
+                if($table[0][0].StartsWith("scriptTable_")){
+                    if("Remote".Equals($table[0][3],[System.StringComparison]::OrdinalIgnoreCase))
+                    {
+                        "--->Remote context (2)" | Out-Default
+                        $global:Remote = $true
+                        $global:targets = $table[0][4].Trim(',').Split(',')
+                    }
+                    else{
+                        "Local context (2)<---" | Out-Default
+                        $global:Remote = $false
+                    }
+                }
+                if($Remote -eq $true){
+                    process_table_remotely $table $stream;
+                    return
+                }
+                else{
+                    $results = $table | % { Process-Instruction $_ }
+                }
 			}
 		
 			$send = [text.encoding]::utf8.getbytes((pack_results $results))
