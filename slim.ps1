@@ -236,9 +236,9 @@ function process_message($stream){
 		if(ischunk($msg)){
 			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 			$table = Get-SlimTable $msg
-            
+            $msg | out-default
             if(Test-OneRowTable $table){
-                if($table[0].StartsWith("scriptTable_")){
+                if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
                     if("Remote".Equals($table[3],[System.StringComparison]::OrdinalIgnoreCase))
                     {
                         "--->Remote context (1)" | Out-Default
@@ -259,8 +259,8 @@ function process_message($stream){
                     $results = Process-Instruction $table
                 }
             }
-			else{
-                if($table[0][0].StartsWith("scriptTable_")){
+            else{
+                if($table[0][0].StartsWith("scriptTable_") -or $table[0][0].StartsWith("queryTable_")){
                     if("Remote".Equals($table[0][3],[System.StringComparison]::OrdinalIgnoreCase))
                     {
                         "--->Remote context (2)" | Out-Default

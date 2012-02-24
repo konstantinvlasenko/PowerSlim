@@ -1,0 +1,10 @@
+!|script|Remote|localhost|
+|$RemotePID=|eval|$PID|
+
+!|script|
+|$CurrentPID=|eval|$PID|
+
+
+!|Query:Remote|localhost|$PID|
+|Value|
+|$RemotePID|
