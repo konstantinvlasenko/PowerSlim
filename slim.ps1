@@ -22,10 +22,6 @@ function Test-OneRowTable($table){
 	!($table[0] -is [array])
 }
 
-function Test-RemoteTable($table){
-  "Remote" -eq $table[0][3]
-}
-
 function SlimException-NoClass($class){
 	$slimexception + "NO_CLASS " + $class
 }
