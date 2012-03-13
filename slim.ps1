@@ -23,7 +23,7 @@ function Test-OneRowTable($table){
 }
 
 function Test-RemoteTable($table){
-	"Remote".Equals($table[0][3],[System.StringComparison]::OrdinalIgnoreCase)
+  "Remote" -eq $table[0][3]
 }
 
 function SlimException-NoClass($class){
@@ -239,7 +239,7 @@ function process_message($stream){
             $msg | out-default
             if(Test-OneRowTable $table){
                 if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
-                    if("Remote".Equals($table[3],[System.StringComparison]::OrdinalIgnoreCase))
+                    if("Remote" -eq $table[3])
                     {
                         "--->Remote context (1)" | Out-Default
                         $global:Remote = $true
@@ -261,7 +261,7 @@ function process_message($stream){
             }
             else{
                 if($table[0][0].StartsWith("scriptTable_") -or $table[0][0].StartsWith("queryTable_")){
-                    if("Remote".Equals($table[0][3],[System.StringComparison]::OrdinalIgnoreCase))
+                    if("Remote" -eq $table[0][3])
                     {
                         "--->Remote context (2)" | Out-Default
                         $global:Remote = $true
