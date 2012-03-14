@@ -2,17 +2,14 @@
 |check|eval|$PID|@PID|
 |check|eval|$PID|@PID|
 
-|script|Remote|localhost|
-|$RemotePid=|eval|$PID|
-
-!* Calling the scenario '''check pid''' in decision table style. The '''Remote''' context is preserved
+!* Calling the scenario '''check pid''' in decision table style. The '''Remote''' context from setup is preserved
 |check pid|
 |PID|
-|$RemotePid|
+|$RemotePID|
 
 |check pid|
 |PID|
-|$RemotePid|
+|$RemotePID|
 
 *!
 
@@ -27,4 +24,4 @@
 *!
 
 |script|
-|check|eval|$RemotePid -eq $LocalPid|False|
+|check|eval|$RemotePID -eq $LocalPid|False|

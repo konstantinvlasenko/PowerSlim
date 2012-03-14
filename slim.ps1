@@ -254,7 +254,6 @@ function process_message($stream){
 		if(ischunk($msg)){
 			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 			$table = Get-SlimTable $msg
-      $msg | out-default
       if(Test-OneRowTable $table){
         if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
           if("Remote" -eq $table[3])
