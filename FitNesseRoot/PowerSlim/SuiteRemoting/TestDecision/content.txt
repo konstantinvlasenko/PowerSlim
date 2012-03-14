@@ -9,6 +9,12 @@
 |arg1|arg2|
 |88|22|
 |99|44|
+
+|(dir $path).Length|
+|path|result?|
+|"c:\"|>0|
+|"c:\vlasenko"|Cannot find path 'C:\vlasenko' because it does not exist.|
+
 !* You have to switch to Local context in order to be able to use the decision table localy
 |script|Local|
 *!

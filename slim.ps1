@@ -56,12 +56,12 @@ function get_message_length($stream){
 function read_message($stream){
 	$size = get_message_length($stream)
 	$offset = 0
-	while($offset -lt $size){$offset += $stream.Read($slimbuffer, $offset + 7, $size)}
+  while($offset -lt $size){$offset += $stream.Read($slimbuffer, $offset + 7, $size)}
 }
 
 function get_message($stream){
 	read_message($stream)
-	[text.encoding]::utf8.getstring($slimbuffer, 7, $slimbuffersize - 7)
+  [text.encoding]::utf8.getstring($slimbuffer, 7, $slimbuffersize - 7)
 }
 
 function ObjectTo-Slim($obj){
@@ -172,7 +172,7 @@ function Invoke-SlimCall($fnc){
 }
 
 function Set-Script($s, $fmt){
-	if(!$s){ return }
+  if(!$s){ return }
 	$s = $s -replace '</?pre>' #workaround fitnesse strange behavior
 	if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
 	$s = [string]::Format( $fmt, $s)
@@ -194,12 +194,34 @@ function Invoke-SlimInstruction($ins){
 		"import" {iex ". .\$($ins[2])"; "OK"; return}
 		"make" {make $ins; Set-Script $ins[$ins.Count - 1] $QueryFormat__; return}
 		"callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
+    "call" { 
+      if($ins[2].StartsWith('decisionTable')){
+        if($ins[3] -match ('table|beginTable|reset|endTable')){
+          "/__VOID__/"
+          return
+        }elseif($ins[3][0..2] -join '' -eq 'set'){
+          iex "`$global:$($ins[3].Substring(3))=$($ins[4])"
+          "/__VOID__/"
+          return
+        }elseif($ins[3] -eq 'execute'){
+          $global:decision_result = iex "$Script__ 2>&1"
+          $global:decision_result
+          return
+        }else{
+          if($ins[3] -ne 'Result'){
+            "Not Implemented"
+          }else{
+            $global:decision_result
+          }
+          return
+        }
+      }
+    }
 	}
 	if($ins[3] -ne "query" -and $ins[3] -ne "table"){
 		Set-Script $ins[4] $EvalFormat__
 	}
-	
-	$t = measure-command {$result = Invoke-SlimCall $ins[3]}
+  $t = measure-command {$result = Invoke-SlimCall $ins[3]}
 	$Script__ + " : " + $t.TotalSeconds | Out-Default
 	
 	if($symbol){$slimsymbols[$symbol] = $result}
@@ -232,49 +254,51 @@ function process_message($stream){
 		if(ischunk($msg)){
 			$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 			$table = Get-SlimTable $msg
-            $msg | out-default
-            if(Test-OneRowTable $table){
-                if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
-                    if("Remote" -eq $table[3])
-                    {
-                        "--->Remote context (1)" | Out-Default
-                        $global:Remote = $true
-                        $global:targets = $table[4].Trim(',').Split(',')
-                    }
-                    else
-                    {
-                        "Local context (1)<---" | Out-Default
-                        $global:Remote = $false
-                    }
-                }
-                if($Remote -eq $true){
-                    process_table_remotely $table $stream;
-                    return
-                }
-                else{
-                    $results = Process-Instruction $table
-                }
-            }
-            else{
-                if($table[0][0].StartsWith("scriptTable_") -or $table[0][0].StartsWith("queryTable_")){
-                    if("Remote" -eq $table[0][3])
-                    {
-                        "--->Remote context (2)" | Out-Default
-                        $global:Remote = $true
-                        $global:targets = $table[0][4].Trim(',').Split(',')
-                    }
-                    else{
-                        "Local context (2)<---" | Out-Default
-                        $global:Remote = $false
-                    }
-                }
-                if($Remote -eq $true){
-                    process_table_remotely $table $stream;
-                    return
-                }
-                else{
-                    $results = $table | % { Process-Instruction $_ }
-                }
+      $msg | out-default
+      if(Test-OneRowTable $table){
+        if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
+          if("Remote" -eq $table[3])
+          {
+            "--->Remote context (1)" | Out-Default
+            $global:Remote = $true
+            $global:targets = $table[4].Trim(',').Split(',')
+          }
+          else
+          {
+            "Local context (1)<---" | Out-Default
+            $global:Remote = $false
+          }
+        }
+        if($Remote -eq $true){
+          process_table_remotely $table $stream;
+          return
+          ##This prevetns to refactor this function
+          ##There is shoudn't be return. The results should be send back here instead of inside the process_table_remotely function
+        }
+        else{
+          $results = Process-Instruction $table
+        }
+      }
+      else{
+        if($table[0][0].StartsWith("scriptTable_") -or $table[0][0].StartsWith("queryTable_")){
+          if("Remote" -eq $table[0][3])
+          {
+            "--->Remote context (2)" | Out-Default
+            $global:Remote = $true
+            $global:targets = $table[0][4].Trim(',').Split(',')
+          }
+          else{
+            "Local context (2)<---" | Out-Default
+            $global:Remote = $false
+          }
+        }
+        if($Remote -eq $true){
+          process_table_remotely $table $stream;
+          return
+        }
+        else{
+          $results = $table | % { Process-Instruction $_ }
+        }
 			}
 		
 			$send = [text.encoding]::utf8.getbytes((pack_results $results))
