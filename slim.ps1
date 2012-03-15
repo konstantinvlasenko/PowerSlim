@@ -200,12 +200,13 @@ function Invoke-SlimInstruction($ins){
           "/__VOID__/"
           return
         }elseif($ins[3][0..2] -join '' -eq 'set'){
-          iex "`$global:$($ins[3].Substring(3))=$($ins[4])"
+          iex "`$global:$($ins[3].Substring(3))='$($ins[4])'"
           "/__VOID__/"
           return
         }elseif($ins[3] -eq 'execute'){
           $global:decision_result = iex "$Script__ 2>&1"
-          $global:decision_result
+          $slimvoid
+          #$global:decision_result
           return
         }else{
           if($ins[3] -ne 'Result'){
