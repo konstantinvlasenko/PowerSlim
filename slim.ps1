@@ -341,10 +341,10 @@ function Run-RemoteServer($slimserver){
 	}
 }
 
-$s = New-Object System.Net.Sockets.TcpListener($args[0])
-$s.Start()
+$_s_ = New-Object System.Net.Sockets.TcpListener($args[0])
+$_s_.Start()
 
-if(!$args[1]){Run-SlimServer $s}
-else{Run-RemoteServer $s}
+if(!$args[1]){Run-SlimServer $_s_}
+else{Run-RemoteServer $_s_}
 
-$s.Stop()
+$_s_.Stop()
