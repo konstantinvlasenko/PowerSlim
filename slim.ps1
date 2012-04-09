@@ -320,22 +320,16 @@ function process_message_ignore_remote($stream){
 }
 
 
-function Run-SlimServer($slimport){
-	$slimserver = New-Object System.Net.Sockets.TcpListener($slimport)
-	$slimserver.Start()
-
+function Run-SlimServer($slimserver){
 	$c = $slimserver.AcceptTcpClient()
 	$fitnesse = $c.GetStream()
 	send_slim_version($fitnesse)
 	$c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
 	while("bye" -ne (process_message($fitnesse))){};
 	$c.Close()
-	$slimserver.Stop()
 }
 
-function Run-RemoteServer($slimport){
-	$slimserver = New-Object System.Net.Sockets.TcpListener($slimport)
-	$slimserver.Start()
+function Run-RemoteServer($slimserver){
 	"waiting..." | Out-Default
 	while($c = $slimserver.AcceptTcpClient()){
 		"accepted!" | Out-Default
@@ -345,9 +339,12 @@ function Run-RemoteServer($slimport){
 		$c.Close()
 		"waiting..." | Out-Default
 	}
-
-	$slimserver.Stop()
 }
 
-if(!$args[1]){Run-SlimServer $args[0]}
-else{Run-RemoteServer $args[0]}
+$s = New-Object System.Net.Sockets.TcpListener($args[0])
+$s.Start()
+
+if(!$args[1]){Run-SlimServer $s}
+else{Run-RemoteServer $s}
+
+$s.Stop()
