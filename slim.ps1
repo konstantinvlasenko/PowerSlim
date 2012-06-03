@@ -259,13 +259,11 @@ function process_message($stream){
         if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
           if("Remote" -eq $table[3])
           {
-            "--->Remote context (1)" | Out-Default
             $global:Remote = $true
             $global:targets = $table[4].Trim(',').Split(',')
           }
           else
           {
-            "Local context (1)<---" | Out-Default
             $global:Remote = $false
           }
         }
@@ -283,12 +281,10 @@ function process_message($stream){
         if($table[0][0].StartsWith("scriptTable_") -or $table[0][0].StartsWith("queryTable_")){
           if("Remote" -eq $table[0][3])
           {
-            "--->Remote context (2)" | Out-Default
             $global:Remote = $true
             $global:targets = $table[0][4].Trim(',').Split(',')
           }
           else{
-            "Local context (2)<---" | Out-Default
             $global:Remote = $false
           }
         }
@@ -312,8 +308,8 @@ function process_message_ignore_remote($stream){
 	if(ischunk($msg)){
 		$global:QueryFormat__ = $global:EvalFormat__ = "{0}"
 		$table = Get-SlimTable $msg
-		
-		$results = $table | % { Process-Instruction $_ }
+		if(Test-OneRowTable $table){ $results = Process-Instruction $table }
+		else { $results = $table | % { Process-Instruction $_ } }
 		$send = [text.encoding]::utf8.getbytes((pack_results $results))
 		$stream.Write($send, 0, $send.Length)
 	}

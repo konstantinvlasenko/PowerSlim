@@ -21,9 +21,8 @@ function script:process_table_remotely($table, $fitnesse){
 			if($slimsymbols.Count -ne 0){
 				$c = New-Object System.Net.Sockets.TcpClient($computer, $port)
 				$remoteserver = $c.GetStream()
-				
-				
-				$list = $slimsymbols.GetEnumerator() | % {$_}
+						
+				$list = @($slimsymbols.GetEnumerator() | % {$_})
 				$tr = "[" + (slimlen $list) + ":"
 				foreach ($obj in $list){
 									

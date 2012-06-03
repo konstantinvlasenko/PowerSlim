@@ -1,3 +1,3 @@
-|"remote process ID is $rID"|
-|rID|result?|
-|$PID|remote process ID is $RemotePID|
+|"$message $PID"|
+|message|result?|
+|remote process ID is|remote process ID is $RemotePID|
