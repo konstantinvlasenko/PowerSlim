@@ -77,8 +77,11 @@ function ObjectTo-Slim($obj){
 
 function PropertyTo-Slim($obj,$prop){
 	$slimview = "[000002:" + (slimlen $prop) + ":" + $prop+ ":"
-	if($($obj.$prop) -eq $null -or $($obj.$prop) -is [system.array]){
+	if($($obj.$prop) -eq $null){
 		$slimview += $slimnull + "]"
+	}
+	elseif($($obj.$prop) -is [system.array] -or $($obj.$prop) -is [psobject]){
+		$slimview += ($($obj.$prop) | ConvertTo-Json -Compress) |% (slimlen $_) + ":" + $_.ToString() + ":]"
 	}
 	else{
 		$slimview += (slimlen $($obj.$prop)) + ":" + $($obj.$prop).ToString() + ":]"
