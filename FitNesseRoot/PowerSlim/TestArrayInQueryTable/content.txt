@@ -1,0 +1,3 @@
+!|Query:Local|@{array = ("item1", "item2", "item3")}|
+|array                                              |
+|!-["item1","item2","item3"]-!                      |
