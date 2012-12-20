@@ -348,6 +348,7 @@ function Run-RemoteServer($slimserver){
 	}
 }
 
+. .\client.ps1
 $_s_ = New-Object System.Net.Sockets.TcpListener($args[0])
 $_s_.Start()
 
