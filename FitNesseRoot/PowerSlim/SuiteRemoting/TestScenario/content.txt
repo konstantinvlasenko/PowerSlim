@@ -1,0 +1,5 @@
+|scenario|Hello World|
+|check|eval|'Hello World'|Hello World|
+
+|script|Remote|localhost|
+|Hello World|

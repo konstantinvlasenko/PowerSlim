@@ -1,2 +1,2 @@
-|script|
+-!|script|
 |eval|$server.Kill()|

@@ -1,0 +1,10 @@
+!define Lab (@{id='ami-00db570a'; type='m1.small'; name='localhost'}, @{id='ami-00db570b'; type='m1.small'; name='localhost:36'})
+
+-!|script|
+|eval|$server36 = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 36 server" -PassThru|
+
+|script|Remote|${Lab} !-|-! % {$_.name}|
+|check|eval|2+2|4|
+
+-!|script|
+|eval|$server36.Kill()|

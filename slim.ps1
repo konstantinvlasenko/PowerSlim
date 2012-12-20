@@ -263,7 +263,11 @@ function process_message($stream){
           if("Remote" -eq $table[3])
           {
             $global:Remote = $true
-            $global:targets = $table[4].Trim(',').Split(',')
+            $global:targets = $null
+            $global:targets = iex $table[4]
+            if($global:targets -eq $null){
+              $global:targets = $table[4].Trim(',').Split(',')
+            }
           }
           else
           {
@@ -285,7 +289,11 @@ function process_message($stream){
           if("Remote" -eq $table[0][3])
           {
             $global:Remote = $true
-            $global:targets = $table[0][4].Trim(',').Split(',')
+            $global:targets = $null
+            $global:targets = iex $table[0][4]
+            if($global:targets -eq $null){
+              $global:targets = $table[0][4].Trim(',').Split(',')
+            }
           }
           else{
             $global:Remote = $false
