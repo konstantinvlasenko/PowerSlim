@@ -32,7 +32,10 @@ function Get-SlimLength($obj){
 	if($obj -is [array]){
 		$obj.Count.ToString("d6")
 	}
-	else{
+	elseif($obj -is 'system.collections.generic.keyvaluepair[string,object]'){
+		(1).ToString("d6")
+	}
+	else {
 		$obj.ToString().Length.ToString("d6")
 	}
 }
@@ -119,7 +122,21 @@ function ResultTo-List($list){
 	elseif ($list -is [array]){
 		if (isgenericdict $list){
 			$list = $list[0].GetEnumerator() | % {$_}
+			if($list -eq $null){
+				$list = @() #emulate empty array
+			}
+			$list.ToString() | out-default
+			slimlen $list | out-default
+			foreach ($obj in $list){
+				'---' | out-default
+				$obj | out-default
+				'+++' | out-default
+			}
+			
+			
+			
 		}	
+		
 		$result = "[" + (slimlen $list) + ":"
 		foreach ($obj in $list){
 			if($obj -is [hashtable]){
