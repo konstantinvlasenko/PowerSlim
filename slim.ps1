@@ -116,27 +116,17 @@ function isgenericdict($list){
 }
 
 function ResultTo-List($list){
-	if($list -eq $null){
+	if($null -eq $list){
 		$slimvoid
 	}	
 	elseif ($list -is [array]){
+		try { $list  | gm } catch { $list = @() } #emulate empty array
 		if (isgenericdict $list){
 			$list = $list[0].GetEnumerator() | % {$_}
 			if($list -eq $null){
 				$list = @() #emulate empty array
 			}
-			$list.ToString() | out-default
-			slimlen $list | out-default
-			foreach ($obj in $list){
-				'---' | out-default
-				$obj | out-default
-				'+++' | out-default
-			}
-			
-			
-			
 		}	
-		
 		$result = "[" + (slimlen $list) + ":"
 		foreach ($obj in $list){
 			if($obj -is [hashtable]){
@@ -148,9 +138,7 @@ function ResultTo-List($list){
 			if ($obj -is 'system.collections.generic.keyvaluepair[string,object]'){
 				$obj = Convert-KeyValuePair-2Object $obj
 			}
-
 			$fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
-			
 			$itemstr = "[" +  $fieldscount.ToString("d6") + ":"
 			$obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
 			$itemstr += "]"

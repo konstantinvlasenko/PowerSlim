@@ -1,0 +1,4 @@
+https://github.com/konstantinvlasenko/PowerSlim/issues/18
+!|Query:Local|!-Get-ChildItem . | ? {$_.PSIsContainer -eq $false} | % { Get-AuthenticodeSignature $_ } | %{ $_.SignerCertificate }-!|
+|Subject|
+
