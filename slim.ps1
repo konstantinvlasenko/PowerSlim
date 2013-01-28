@@ -120,7 +120,6 @@ function ResultTo-List($list){
 		$slimvoid
 	}	
 	elseif ($list -is [array]){
-		try { $list  | gm } catch { $list = @() } #emulate empty array
 		if (isgenericdict $list){
 			$list = $list[0].GetEnumerator() | % {$_}
 			if($list -eq $null){
