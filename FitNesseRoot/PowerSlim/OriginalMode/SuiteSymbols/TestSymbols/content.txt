@@ -1,0 +1,11 @@
+!|Script|
+|$MySymbol=|eval|"Hello"|
+|check|eval|"$MySymbol World!"|Hello World!|
+|eval|$NotASymbol = "PowerShell variable"|
+|check|eval|"It is the $NotASymbol"|It is the PowerShell variable|
+
+!|Script|
+|eval|function global:test{"Hello World!"}|
+|$suffix=|eval|"st"|
+|check|eval|te$suffix|Hello World!|
+

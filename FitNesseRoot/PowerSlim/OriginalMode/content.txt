@@ -1,0 +1,5 @@
+!define TEST_SYSTEM {slim}
+!define COMMAND_PATTERN (PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
+'''Set ''!define HOST_VERSION (2.0)'' if you don't have !-PowerShell-! 3.0 installed.''' 
+!define HOST_VERSION (3.0)
+!contents -R2 -g -p -f -h

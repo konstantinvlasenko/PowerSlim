@@ -1,0 +1,6 @@
+!|script|
+|eval|function testdefault($value="not set"){$value}|
+|check|eval|testdefault|not set|
+|check|eval|testdefault -value "set"|set|
+
+

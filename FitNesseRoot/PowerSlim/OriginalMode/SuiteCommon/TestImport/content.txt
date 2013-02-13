@@ -1,0 +1,9 @@
+|script|
+|check|eval|Test-Path function:Set-PowerSlimRemoting|False|
+
+''Import will dot sourced the script file ('''Invoke-Expression ". .\vmware.ps1"''') into current context''
+|import|
+|esxi.ps1|
+
+|script|
+|check|eval|Test-Path function:Set-PowerSlimRemoting|True|

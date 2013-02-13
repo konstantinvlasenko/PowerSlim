@@ -1,0 +1,8 @@
+https://github.com/konstantinvlasenko/PowerSlim/issues#issue/3
+|script|
+|eval|$port = 124|
+|check|eval|$port|124|
+
+|script|
+|eval|$server = "vlasenko.org"|
+|check|eval|$server|vlasenko.org|

@@ -1,0 +1,5 @@
+!|Script|
+|$SymbolTwice=|eval|1|
+|check|eval|$SymbolTwice|1|
+|$SymbolTwice=|eval|2|
+|check|eval|$SymbolTwice|2|

@@ -1,0 +1,19 @@
+!*> Setup
+|Remove-Item $file|
+|file|
+|file1.txt|
+|file2.txt|
+
+*!
+|Query:Local|ls file*.txt !-|-! select Name|
+|Name|
+
+|Out-File $file|
+|file|
+|file1.txt|
+|file2.txt|
+
+|Query:Local|ls file*.txt !-|-! select Name|
+|Name|
+|file1.txt|
+|file2.txt|

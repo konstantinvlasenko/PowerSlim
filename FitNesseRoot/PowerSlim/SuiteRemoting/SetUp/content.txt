@@ -1,6 +1,0 @@
-!|script|
-|$CurrentPID=|eval|$PID|
-
-''This last table set remote context''
-!|script|Remote|localhost|
-|$RemotePID=|eval|$PID|

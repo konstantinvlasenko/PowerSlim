@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<properties>
+	<Edit/>
+	<Files/>
+	<Properties/>
+	<RecentChanges/>
+	<Refactor/>
+	<Search/>
+	<Suite/>
+	<SymbolicLinks>
+		<SuiteRemoting>.PowerSlim.OriginalMode.SuiteRemoting</SuiteRemoting>
+		<SuiteCommon>.PowerSlim.OriginalMode.SuiteCommon</SuiteCommon>
+		<SuiteSymbols>.PowerSlim.OriginalMode.SuiteSymbols</SuiteSymbols>
+		<SuiteFixes>.PowerSlim.OriginalMode.SuiteFixes</SuiteFixes>
+	</SymbolicLinks>
+	<Versions/>
+	<WhereUsed/>
+</properties>

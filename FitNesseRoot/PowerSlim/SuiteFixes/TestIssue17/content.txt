@@ -1,3 +1,0 @@
-https://github.com/konstantinvlasenko/PowerSlim/issues/17
--!|script|
-|check|eval|'arn:aws:sns:us-east-1:000021180000:Fitnesse'|arn:aws:sns:us-east-1:000021180000:Fitnesse|

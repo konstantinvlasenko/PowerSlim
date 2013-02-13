@@ -1,0 +1,4 @@
+!|Query:Local|!-("String1","String2","String3") | select -skip 1-!|
+|Value|
+|String2|
+|String3|

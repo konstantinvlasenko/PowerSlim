@@ -1,0 +1,27 @@
+!|Query:Local|get-host|
+|Name        |Version |
+|ConsoleHost |${HOST_VERSION}|
+!* Empty dictionary
+!|script|
+|eval|$list= New-Object "system.collections.generic.dictionary[string,object]";|
+
+|Query:Local|$list|
+|Key|Value|
+*!
+!* One element in the dictionary
+!|script|
+|eval|$list.Add("a","1")|
+
+|Query:Local|$list|
+|Key|Value|
+|a|1|
+*!
+!* More than one element in the dictionary
+!|script|
+|eval|$list.Add("b","2")|
+
+|Query:Local|$list|
+|Key|Value|
+|a|1|
+|b|2|
+*!

@@ -1,2 +1,0 @@
-!|script|
-|eval|$server = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 35 server" -PassThru|
