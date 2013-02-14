@@ -64,12 +64,12 @@ function script:process_table_remotely($table, $fitnesse){
 			$c = New-Object System.Net.Sockets.TcpClient($computer, $port)
 			$remoteserver = $c.GetStream()
 
-            [text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize) | Out-Default # here you have to catch ...scriptTable_2_1:000013:callAndAssign:000007:symbolA:
+            [text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize) | Out-Default #here you have to catch ...scriptTable_2_1:000013:callAndAssign:000007:symbolA:
 						
 			$remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
 			$result[$computer] = get_message($remoteserver)
 
-            $result[$computer] | Out-Default # here add to symbols scriptTable_2_1:000015:Returned Symbol:  sctiptTable_2_1 -> ID http://fitnesse.org/FitNesse.UserGuide.SliM.SlimProtocol    
+            $result[$computer] | Out-Default #here add to symbols scriptTable_2_1:000015:Returned Symbol:  sctiptTable_2_1 -> ID http://fitnesse.org/FitNesse.UserGuide.SliM.SlimProtocol    
 
 			$remoteserver.Close()         
 			$c.Close() 
