@@ -5,12 +5,12 @@
 |script|Remote|localhost|
 |check|eval|$x*$y|50|
 
-#''An additional field '''COMPUTERNAME''' available for each result''
-#!|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|
-#|Value|COMPUTERNAME|
-#|1||
-#|22||
-#|333||
-#|4444||
-#|55555||
+''An additional field '''COMPUTERNAME''' available for each result''
+!|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|
+|Value|COMPUTERNAME|
+|1||
+|22||
+|333||
+|4444||
+|55555||
 
