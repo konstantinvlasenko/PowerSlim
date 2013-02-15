@@ -1,2 +1,0 @@
-|script|Remote|localhost|
-|$symbolA=|eval|"Returned Symbol"|
