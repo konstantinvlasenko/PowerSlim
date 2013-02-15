@@ -6,7 +6,7 @@
 #
 function Get-RemoteSlimSymbols($inputTable)
 {
-  $__pattern__ = '(?<id>scriptTable_\d_\d):\d{6}:callAndAssign:\d{6}:(?<name>\w*):\d{6}:'
+  $__pattern__ = '(?<id>scriptTable_\d_\d):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
   $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
 }
 
@@ -75,7 +75,7 @@ function script:process_table_remotely($table, $fitnesse){
       
             #backward symbols sharing
            foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
-              $__pattern__ = "$($symbol.id):\d{6}:(?<value>\w*):\]"
+              $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
               $slimsymbols[$symbol.name] = $result[$computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
            }
         

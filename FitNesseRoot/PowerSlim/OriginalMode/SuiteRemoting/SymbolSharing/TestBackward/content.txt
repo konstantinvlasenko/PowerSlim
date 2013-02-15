@@ -1,7 +1,7 @@
 |script|Remote|localhost|
 |$symbolA=|eval|"Hello"|
-|$symbolB=|eval|"World"|
-|check|eval|"$symbolA $symbolB"|Hello World|
+|$symbolB=|eval|"World Around"|
+|check|eval|"$symbolA $symbolB"|Hello World Around|
 
 |script|
-|check|eval|"$symbolA $symbolB"|Hello World|
+|check|eval|"$symbolA $symbolB"|Hello World Around|
