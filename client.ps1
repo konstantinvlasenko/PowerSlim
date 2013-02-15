@@ -4,6 +4,12 @@
 # you can do whatever you want with this stuff. If we meet some day, and you
 # think this stuff is worth it, you can buy me a beer in return.
 #
+function Get-RemoteSlimSymbols($inputTable)
+{
+  $__pattern__ = '(?<id>scriptTable_\d_\d):\d{6}:callAndAssign:\d{6}:(?<name>\w*):\d{6}:'
+  $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
+}
+
 function script:process_table_remotely($table, $fitnesse){
 
 	#$targets = $table[0][4].Trim(',').Split(',')
@@ -60,19 +66,21 @@ function script:process_table_remotely($table, $fitnesse){
 				get_message($remoteserver)
 
 			}
-						
-			$c = New-Object System.Net.Sockets.TcpClient($computer, $port)
-			$remoteserver = $c.GetStream()
-
-            [text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize) | Out-Default #here you have to catch ...scriptTable_2_1:000013:callAndAssign:000007:symbolA:
-						
-			$remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
-			$result[$computer] = get_message($remoteserver)
-
-            $result[$computer] | Out-Default #here add to symbols scriptTable_2_1:000015:Returned Symbol:  sctiptTable_2_1 -> ID http://fitnesse.org/FitNesse.UserGuide.SliM.SlimProtocol    
-
-			$remoteserver.Close()         
-			$c.Close() 
+      
+           $c = New-Object System.Net.Sockets.TcpClient($computer, $port)
+		   $remoteserver = $c.GetStream()
+      
+           $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
+           $result[$computer] = get_message($remoteserver)
+      
+            #backward symbols sharing
+           foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
+              $__pattern__ = "$($symbol.id):\d{6}:(?<value>\w*):\]"
+              $slimsymbols[$symbol.name] = $result[$computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
+           }
+		
+   	       $remoteserver.Close()         
+		   $c.Close() 
 
 		}
 
