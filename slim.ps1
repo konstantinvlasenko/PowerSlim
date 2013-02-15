@@ -337,14 +337,20 @@ function process_message($stream){
 }
 
 function process_message_ignore_remote($stream){
+
   $msg = get_message($stream)
+
   if(ischunk($msg)){
+
     $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
     $table = Get-SlimTable $msg
+
     if(Test-OneRowTable $table){ $results = Process-Instruction $table }
     else { $results = $table | % { Process-Instruction $_ } }
+
     $send = [text.encoding]::utf8.getbytes((pack_results $results))
     $stream.Write($send, 0, $send.Length)
+
   }
 }
 
