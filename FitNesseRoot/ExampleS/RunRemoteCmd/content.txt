@@ -1,0 +1,42 @@
+!1 Run external cmd with Powershell and process its output
+
+C:\ForFit\Example12.exe returns 3 lines. All these lines can be processed with !-PowerSlim-!
+
+| script | Remote | ${CONSOLELAB} |
+|eval|!-$info = C:\ForFit\Example12.exe-!|
+
+|Query:Remote|${CONSOLELAB}|$info|
+|Value|
+|Output line 1|
+|Output line 2|
+|Output line 3|
+
+!4 ordering is ignored
+
+|Query:Remote|${CONSOLELAB}|$info|
+|Value|
+|Output line 3|
+|Output line 1|
+|Output line 2|
+
+!4 subset (we just check that necessary line(s) were captured)
+|subset Query:Remote|${CONSOLELAB}|$info|
+|Value|
+|Output line 1|
+
+!4 regex pattern to check correct line
+|Query:Remote|${CONSOLELAB}|$info!-| Select-String -Pattern "(.*?1)$" | %{$_.Matches[0].Groups[1].Value}-!|
+|Value|
+|Output line 1|
+
+
+!1 Process cmd.exe help output
+
+| script | Remote | ${CONSOLELAB} |
+|eval|!-$cmdHelp = cmd.exe /? -!|
+
+
+|Query:Remote|${CONSOLELAB}|$cmdHelp !-| Select-String -Pattern "(.*?Ctrl-D.*?)$" | %{$_.Matches[0].Groups[1].Value}-!|
+|Value|
+|!-function (e.g.  0x4 is Ctrl-D and 0x6 is Ctrl-F).  The user specific-!|
+|!-characters used are Ctrl-D for directory name completion and Ctrl-F for-!|

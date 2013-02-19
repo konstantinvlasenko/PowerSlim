@@ -1,0 +1,5 @@
+!define CONSOLELAB {192.168.193.148}
+
+!3 You need to have Hyper-V cmdlet installed on the remote host (${CONSOLELAB})
+
+!contents -R2 -g -p -f -h

@@ -1,0 +1,25 @@
+|script|remote|${CONSOLELAB}|
+|eval|Start-VM –Name VM1|
+
+|script|remote|${CONSOLELAB}|
+|eval|Suspend-VM –Name VM1|
+
+|script|remote|${CONSOLELAB}|
+|eval|$vm = Start-VM –Name VM1 –PassThru|
+
+|subset Query:Remote|${CONSOLELAB}|$vm|
+|Name|State|
+|VM1|Running|
+
+|script|remote|${CONSOLELAB}|
+|eval|Stop-VM –Name VM1 -TurnOff|
+
+|script|remote|${CONSOLELAB}|
+|eval|Set-VMMemory VM1 -DynamicMemoryEnabled $true -MinimumBytes 20MB|
+
+|script|remote|${CONSOLELAB}|
+|eval|$memSettings = Get-VMMemory VM1|
+
+|subset Query:Remote|${CONSOLELAB}|$memSettings |
+|Minimum|
+|20971520|

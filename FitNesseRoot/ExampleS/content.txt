@@ -1,4 +1,27 @@
+!1 How to use all power of !-PowerSlim-!
+
+!*** !-PowerSlim and real infrastructure -!
+ * [[Process cmdline output][.ExampleS.RunRemoteCmd]]
+ * [[Calls to Hyper-V][.ExampleS.HyperV]]
+ * [[Check files signature][.ExampleS.CheckSign]]
+ * [[Create share on remote host][.ExampleS.CreateProductShare]]
+***!
+
+!*** Remove duplications
+ * [[Use "Scenario" pattern][.ExampleS.ScenarioLibrary]]
+ * [[Use include page][.ExampleS.ToInclude]]
+***!
+
+!*** Advanced technics
+ * [[Run script on several remote machines][.ExampleS.MultiHosts]]
+ * [[Use Fitnesse variables to share data between remote machines][.ExampleS.NewConsole]]
+***!
+
+!4 Links below are showed automatically. Use !-!content-! command
+!contents -R2 -g -p -f -h
+
 !define TEST_SYSTEM {slim}
 !define COMMAND_PATTERN (PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
 
-!contents -R2 -g -p -f -h
+!define CONSOLELAB {192.168.193.143}
+!define INSTALLEDPATH {C:\Program Files\MegaProduct}

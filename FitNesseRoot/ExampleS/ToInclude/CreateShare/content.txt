@@ -1,0 +1,12 @@
+| script | Remote | ${CONSOLELAB} |
+|eval|!-
+function global:New-Share ($Foldername, $Sharename) { 
+   if (!(TEST-PATH $Foldername)){ 
+      new-item $Foldername -type Directory 
+   } 
+   if (!(get-wmiobject Win32_Share -filter "name='$Sharename'")){ 
+      $Shares=[WMICLASS]"WIN32_Share" 
+      $Shares.Create($Foldername,$Sharename,0) 
+   }
+}
+-!|

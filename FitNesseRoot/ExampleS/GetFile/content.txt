@@ -1,0 +1,11 @@
+|script|remote|192.168.193.143|
+|$reportContent=|eval|!-[io.file]::ReadAllText('C:\Fit\test.txt')-!|
+
+|script|
+|check|eval|"$reportContent"|qwerty|
+|eval|$f = "$reportContent"|
+|eval|!-[io.file]::WriteAllText('D:\Fit\test.txt',$f)-!|
+
+|script|
+|eval|!-$psVarContent = [io.file]::ReadAllText('D:\Fit\test.txt')-!|
+|check|eval|$psVarContent|qwerty|

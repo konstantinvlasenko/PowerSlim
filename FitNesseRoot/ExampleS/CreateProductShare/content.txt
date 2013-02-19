@@ -1,0 +1,24 @@
+!include -c .PowerSlim.HelpExamples.ToInclude.CreateShare
+
+!define SHARE_NAME {Product Share}
+
+!***> Test initialization
+-|script|remote|${CONSOLELAB}|
+|Delete share|${SHARE_NAME}_2|
+|Delete share|${SHARE_NAME}|
+***!
+!4 Create share with script from the another included page
+|script|remote|${CONSOLELAB}|
+|eval|!- New-Share "C:\test\CPC" -! "${SHARE_NAME}"|
+
+!4 Check that share was created
+|script|remote|${CONSOLELAB}|
+|check|eval|!-get-wmiobject Win32_Share -filter "name='-!${SHARE_NAME}!-'"-!|!-\\SCVMM\root\cimv2:Win32_Share.Name="-!${SHARE_NAME}!-"-!|
+
+!4 Create share with common scenario
+-|script|remote|${CONSOLELAB}|
+|Create share|${SHARE_NAME}_2|for folder|!-C:\new_test\one-!|
+
+!4 We tries to assign existing share name to another folder. Test should be failed
+-|script|remote|${CONSOLELAB}|
+|Create share|${SHARE_NAME}_2|for folder|!-C:\new_test\double-!|

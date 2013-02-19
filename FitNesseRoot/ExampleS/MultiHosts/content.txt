@@ -1,0 +1,4 @@
+!3 Use comma to separate target machine names
+
+|script|Remote|192.168.193.143, 192.168.193.148|
+|eval|Stop-Service Themes|

@@ -1,0 +1,22 @@
+!3 Check .ExampleS.CreateProductShare to get "how to use"
+
+|scenario|Create share|share_name|for folder|folder_name|
+|eval|!-
+   if (!(TEST-PATH "@folder_name")){ 
+      $tmp = new-item "@folder_name" -type Directory 
+   } 
+   if (!(get-wmiobject Win32_Share -filter "name='@share_name'")){ 
+      $Shares=[WMICLASS]"WIN32_Share" 
+      $Shares.Create("@folder_name","@share_name",0) 
+   }
+-!|
+|check|eval|(get-wmiobject Win32_Share -filter "name='@share_name'").Path|@folder_name|
+
+|scenario|Delete share|share_name|
+|eval|!-
+   $share = get-wmiobject Win32_Share -filter "name='@share_name'"
+   if ($null -ne $share){ 
+      $share.Delete()
+   }
+-!|
+|check|eval|!- $null -eq (get-wmiobject Win32_Share -filter "name='@share_name'")-!|True|

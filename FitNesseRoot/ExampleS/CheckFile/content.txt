@@ -1,6 +1,4 @@
-!|Query:Local|!-gc slim.ps1 | select -first 4-!|
+!|Query:Local|!-gc slim.ps1 | select -first 2-!|
 |Value|
-|######################################################################################|
-|#The latest source code is available at http://github.com/konstantinvlasenko/PowerSlim|
-|#Copyright 2011 by the author(s). All rights reserved|
-|######################################################################################|
+|#|
+|# "THE BEER-WARE LICENSE" (Revision 42):|

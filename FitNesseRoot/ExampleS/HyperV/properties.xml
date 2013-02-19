@@ -2,11 +2,12 @@
 <properties>
 	<Edit/>
 	<Files/>
+	<Help>Redefine global variables</Help>
 	<Properties/>
 	<RecentChanges/>
 	<Refactor/>
 	<Search/>
-	<Test/>
+	<Suite/>
 	<Versions/>
 	<WhereUsed/>
 </properties>

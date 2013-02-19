@@ -1,0 +1,8 @@
+!4 Check that all our binaries have signature certificate
+
+!|Query:Remote|${CONSOLELAB}|!-Get-ChildItem "-!${INSTALLEDPATH}!-\*.*" | Select-Object @{Name="File";Expression = {%{$_.Name}}}, @{Name="Certificate Subject";Expression = {%{Get-AuthenticodeSignature $_} | %{$_.SignerCertificate.Subject}}}-!|
+|!-File-!|!-Certificate Subject-!|
+|"service.exe"|	"CN=Cool Company Ltd., OU=Digital ID Class 3 - Microsoft Software Validation v2, O=Cool Company Ltd., L=Moscow, S=Moscow, C=RU"|
+|"ui.exe"|	"CN=Cool Company Ltd., OU=Digital ID Class 3 - Microsoft Software Validation v2, O=Cool Company Ltd., L=Moscow, S=Moscow, C=RU"|
+|"Microsoft.VC90.CRT.manifest"|	null|
+|"db.sql"	|null|
