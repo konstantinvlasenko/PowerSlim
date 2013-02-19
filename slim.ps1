@@ -314,7 +314,7 @@ function process_message($stream){
             $global:targets = $null
             $global:targets = iex $table[0][4]
             if($global:targets -eq $null){
-              $global:targets = $table[0][4].Trim(',').Split(',')
+              $global:targets = $table[0][4].Split(',').Trim(',')
             }
           }
           else{
