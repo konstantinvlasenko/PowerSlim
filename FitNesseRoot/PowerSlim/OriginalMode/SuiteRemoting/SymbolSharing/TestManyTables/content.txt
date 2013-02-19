@@ -1,0 +1,38 @@
+!*> Many tables leads to double digits internal table identification
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+
+|script|
+|eval|'nop'|
+*!
+|script|Remote|localhost|
+|$symbolA=|eval|"Hello"|
+|$symbolB=|eval|"World Around"|
+|check|eval|"$symbolA $symbolB"|Hello World Around|
+
+|script|
+|check|eval|"$symbolA $symbolB"|Hello World Around|

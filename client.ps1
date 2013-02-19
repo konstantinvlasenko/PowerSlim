@@ -6,7 +6,7 @@
 #
 function Get-RemoteSlimSymbols($inputTable)
 {
-  $__pattern__ = '(?<id>scriptTable_\d_\d):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
+  $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
   $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
 }
 
