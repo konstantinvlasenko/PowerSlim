@@ -1,0 +1,15 @@
+|script|
+|check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru-!||
+
+|script|
+|check|eval|$client = New-Object System.Net.Sockets.TcpClient localhost, 41||
+|check|eval|$data = [System.Text.Encoding]::ASCII.GetBytes("200000");  ||
+|check|eval|$stream = $client.GetStream()||
+|check|eval|$stream.Write($data,0,$data.Length)||
+
+|script|
+|check|eval|$stream.ReadTimeout = 1000||
+|check|eval|$stream.Read($data,0,1)|blank|
+
+|script|
+|check|eval|$sut.Kill()||
