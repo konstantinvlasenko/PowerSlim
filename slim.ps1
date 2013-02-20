@@ -59,7 +59,14 @@ function get_message_length($ps_stream){
 function read_message($ps_stream){
   $ps_size = get_message_length($ps_stream)
   $offset = 0
-  while($offset -lt $ps_size){$offset += $ps_stream.Read($slimbuffer, $offset + 7, $ps_size)}
+  while($offset -lt $ps_size){
+
+    $error.clear()
+    $offset += $ps_stream.Read($slimbuffer, $offset + 7, $ps_size)
+
+    if ($error) {break}
+
+  }
 }
 
 function get_message($ps_stream){
@@ -361,7 +368,6 @@ function Run-SlimServer($ps_server){
   $ps_fitnesse_client.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
   while("bye" -ne (process_message($ps_fitnesse_stream))){};
   $ps_fitnesse_client.Close()
-  #CanRead
 }
 
 function Run-RemoteServer($ps_server){
