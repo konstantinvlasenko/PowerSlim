@@ -14,7 +14,7 @@
 
 !*** Advanced technics
  * [[Run script on several remote machines][.ExampleS.MultiHosts]]
- * [[Use Fitnesse variables to share data between remote machines][.ExampleS.NewConsole]]
+ * [[Use Fitnesse variables to share data between remote machines][.ExampleS.GetFile]]
 ***!
 
 !4 Links below are showed automatically. Use !-!content-! command
