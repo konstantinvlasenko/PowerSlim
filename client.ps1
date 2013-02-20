@@ -10,9 +10,9 @@ function Get-RemoteSlimSymbols($inputTable)
   $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
 }
 
-function script:process_table_remotely($table, $fitnesse){
+function script:process_table_remotely($ps_table, $ps_fitnesse){
 
-    #$targets = $table[0][4].Trim(',').Split(',')
+    #$targets = $ps_table[0][4].Trim(',').Split(',')
     try {
 
         $originalslimbuffer = $slimbuffer.Clone()
@@ -22,20 +22,26 @@ function script:process_table_remotely($table, $fitnesse){
 
         foreach($t in $targets){ 
 
-            $computer, $port = $t.split(':')
+            $ps_computer, $ps_port = $t.split(':')
 
-            if($computer.StartsWith('$')){
-                $computer = $slimsymbols[$computer.Substring(1)]
+            if($ps_computer.StartsWith('$')){
+                $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
             }
 
-            if($port -eq $null){$port = 35};
+            if($ps_port -eq $null){$ps_port = 35};
 
-            $computer, $port | Out-Default
+            $ps_computer, $ps_port | Out-Default
             
             if($slimsymbols.Count -ne 0){
 
-                $c = New-Object System.Net.Sockets.TcpClient($computer, $port)
-                $remoteserver = $c.GetStream()
+                try {
+                $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+                } catch {
+                  '------------' | out-default
+                  $error[0] | out-default
+                  '------------' | out-default
+                }
+                $remoteserver = $ps_sumbols_client.GetStream()
                         
                 $list = @($slimsymbols.GetEnumerator() | % {$_})
                 $tr = "[" + (slimlen $list) + ":"
@@ -66,17 +72,22 @@ function script:process_table_remotely($table, $fitnesse){
                 get_message($remoteserver)
 
             }
-      
-           $ps_client = New-Object System.Net.Sockets.TcpClient($computer, $port)
+           try { 
+            $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+           } catch {
+            '------------' | out-default
+            $error[0] | out-default
+            '------------' | out-default
+           }
            $remoteserver = $ps_client.GetStream()
       
            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
-           $result[$computer] = get_message($remoteserver)
+           $result[$ps_computer] = get_message($remoteserver)
       
             #backward symbols sharing
            foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
               $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-              $slimsymbols[$symbol.name] = $result[$computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
+              $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
            }
         
            $remoteserver.Close()         
@@ -85,23 +96,23 @@ function script:process_table_remotely($table, $fitnesse){
         }
 
         #if($result.Count -eq 1){
-        $fitnesse.Write($slimbuffer, 0, $slimbuffersize)
+        $ps_fitnesse.Write($slimbuffer, 0, $slimbuffersize)
         #}
 
     }
     catch [System.Exception] {
-        $send = '[000002:' + (slimlen $table[0][0]) + ':' + $table[0][0] + ':' + (slimlen "$slimexception$($_.Exception.Message)") + ':' + "$slimexception$($_.Exception.Message)" + ':]'
+        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "$slimexception$($_.Exception.Message)") + ':' + "$slimexception$($_.Exception.Message)" + ':]'
         $send = (slimlen $send) + ":" + $send + ":"
         $send = [text.encoding]::utf8.getbytes((pack_results $send))
-        $fitnesse.Write($send, 0, $send.Length)
+        $ps_fitnesse.Write($send, 0, $send.Length)
     }
 }
 
-function script:Test-TcpPort($remotehost, $port)
+function script:Test-TcpPort($ps_remotehost, $ps_port)
 {
     $ErrorActionPreference = 'SilentlyContinue'
     $s = new-object Net.Sockets.TcpClient
-    $s.Connect($remotehost, $port)
+    $s.Connect($ps_remotehost, $ps_port)
     if ($s.Connected) {
         $s.Close()
         return $true
@@ -109,7 +120,7 @@ function script:Test-TcpPort($remotehost, $port)
     return $false
 }
 
-function script:Wait-RemoteServer($remotehost)
+function script:Wait-RemoteServer($ps_remotehost)
 {
-    while(!(Test-TcpPort $remotehost 35)){sleep 10}
+    while(!(Test-TcpPort $ps_remotehost 35)){sleep 10}
 }

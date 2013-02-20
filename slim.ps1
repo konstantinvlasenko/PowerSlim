@@ -14,40 +14,40 @@ $slimbuffer = new-object byte[] 102400
 $slimbuffersize = 0
 
 function Get-SlimTable($slimchunk){
-  $exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
-  iex $exp
+  $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
+  iex $ps_exp
 }
 
-function Test-OneRowTable($table){
-  !($table[0] -is [array])
+function Test-OneRowTable($ps_table){
+  !($ps_table[0] -is [array])
 }
 
-function SlimException-NoClass($class){
-  $slimexception + "NO_CLASS " + $class
+function SlimException-NoClass($ps_class){
+  $slimexception + "NO_CLASS " + $ps_class
 }
 
 new-alias noclass SlimException-NoClass
 
-function Get-SlimLength($obj){
-  if($obj -is [array]){
-    $obj.Count.ToString("d6")
+function Get-SlimLength($ps_obj){
+  if($ps_obj -is [array]){
+    $ps_obj.Count.ToString("d6")
   }
-  elseif($obj -is 'system.collections.generic.keyvaluepair[string,object]'){
+  elseif($ps_obj -is 'system.collections.generic.keyvaluepair[string,object]'){
     (1).ToString("d6")
   }
   else {
-    $obj.ToString().Length.ToString("d6")
+    $ps_obj.ToString().Length.ToString("d6")
   }
 }
 new-alias slimlen Get-SlimLength
 
-function ischunk($msg){
-  $msg.StartsWith('[') -and $msg.EndsWith(']')
+function ischunk($ps_msg){
+  $ps_msg.StartsWith('[') -and $ps_msg.EndsWith(']')
 }
 
 function send_slim_version($ps_stream){
-  $version = [text.encoding]::ascii.getbytes($slimver)
-  $ps_stream.Write($version, 0, $version.Length)
+  $ps_version = [text.encoding]::ascii.getbytes($slimver)
+  $ps_stream.Write($ps_version, 0, $ps_version.Length)
 }
 
 function get_message_length($ps_stream){
@@ -57,9 +57,9 @@ function get_message_length($ps_stream){
 }
 
 function read_message($ps_stream){
-  $size = get_message_length($ps_stream)
+  $ps_size = get_message_length($ps_stream)
   $offset = 0
-  while($offset -lt $size){$offset += $ps_stream.Read($slimbuffer, $offset + 7, $size)}
+  while($offset -lt $ps_size){$offset += $ps_stream.Read($slimbuffer, $offset + 7, $ps_size)}
 }
 
 function get_message($ps_stream){
@@ -67,13 +67,13 @@ function get_message($ps_stream){
   [text.encoding]::utf8.getstring($slimbuffer, 7, $slimbuffersize - 7)
 }
 
-function ObjectTo-Slim($obj){
-  $slimview = "[000002:" + (slimlen $prop) + ":" + $prop+ ":"
-  if($($obj.$prop) -eq $null -or $($obj.$prop) -is [system.array]){
+function ObjectTo-Slim($ps_obj){
+  $slimview = "[000002:" + (slimlen $ps_prop) + ":" + $ps_prop+ ":"
+  if($($ps_obj.$ps_prop) -eq $null -or $($ps_obj.$ps_prop) -is [system.array]){
     $slimview += $slimnull + "]"
   }
   else{
-    $slimview += (slimlen $($obj.$prop)) + ":" + $($obj.$prop).ToString() + ":]"
+    $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop).ToString() + ":]"
   }
   (slimlen $slimview) + ":" + $slimview + ":"
 }
@@ -81,49 +81,49 @@ function ObjectTo-Slim($obj){
 function ConvertTo-Json20([object] $item)
 {
     add-type -assembly system.web.extensions
-    $js=new-object system.web.script.serialization.javascriptSerializer
-    return $js.Serialize($item) 
+    $ps_js=new-object system.web.script.serialization.javascriptSerializer
+    return $ps_js.Serialize($item) 
 }
 
-function PropertyTo-Slim($obj,$prop){
-  $slimview = "[000002:" + (slimlen $prop) + ":" + $prop+ ":"
-  if($($obj.$prop) -eq $null){
+function PropertyTo-Slim($ps_obj,$ps_prop){
+  $slimview = "[000002:" + (slimlen $ps_prop) + ":" + $ps_prop+ ":"
+  if($($ps_obj.$ps_prop) -eq $null){
     $slimview += $slimnull + "]"
   }
-  elseif($($obj.$prop) -is [system.array] -or $($obj.$prop) -is [psobject]){
-    if ($Host.Version.Major -eq 3) { $slimview += (ConvertTo-Json -Compress $($obj.$prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }
-        else { $slimview += ConvertTo-JSON20 ($obj.$prop) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }        
+  elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject]){
+    if ($Host.Version.Major -eq 3) { $slimview += (ConvertTo-Json -Compress $($ps_obj.$ps_prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }
+        else { $slimview += ConvertTo-JSON20 ($ps_obj.$ps_prop) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }        
   }
   else{
-    $slimview += (slimlen $($obj.$prop)) + ":" + $($obj.$prop).ToString() + ":]"
+    $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop).ToString() + ":]"
   }
   (slimlen $slimview) + ":" + $slimview + ":"
 }
 
 function Convert-Hashtable-2Object($hashtable){
-   $object = New-Object PSObject
-   $hashtable.GetEnumerator() | % { Add-Member -inputObject $object -memberType NoteProperty -name $_.Name -value $_.Value }
-   Add-Member -inputObject $object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
-   $object
+   $ps_object = New-Object PSObject
+   $hashtable.GetEnumerator() | % { Add-Member -inputObject $ps_object -memberType NoteProperty -name $_.Name -value $_.Value }
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+   $ps_object
 }
 
 function Convert-KeyValuePair-2Object($kvp){
-   $obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); COMPUTERNAME=$env:COMPUTERNAME}
-   $obj
+   $ps_obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); COMPUTERNAME=$env:COMPUTERNAME}
+   $ps_obj
 }
 
-function ConvertTo-SimpleObject($obj){
-   $object = New-Object PSObject
-   Add-Member -inputObject $object -memberType NoteProperty -name "Value" -value $obj.ToString()
-   Add-Member -inputObject $object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
-   $object
+function ConvertTo-SimpleObject($ps_obj){
+   $ps_object = New-Object PSObject
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value $ps_obj.ToString()
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+   $ps_object
 }
 
 function GetNullObject{
-   $object = New-Object PSObject
-   Add-Member -inputObject $object -memberType NoteProperty -name "Value" -value "Null"
-   Add-Member -inputObject $object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
-   $object
+   $ps_object = New-Object PSObject
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value "Null"
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+   $ps_object
 }
 
 function isgenericdict($list){
@@ -142,22 +142,22 @@ function ResultTo-List($list){
       }
     }	
     $result = "[" + (slimlen $list) + ":"
-    foreach ($obj in $list){
-      if($obj -is [hashtable]){
-        $obj = Convert-Hashtable-2Object $obj
+    foreach ($ps_obj in $list){
+      if($ps_obj -is [hashtable]){
+        $ps_obj = Convert-Hashtable-2Object $ps_obj
       }
-      if($obj -is [string] -or $obj -is [int]){
-        $obj = ConvertTo-SimpleObject $obj
+      if($ps_obj -is [string] -or $ps_obj -is [int]){
+        $ps_obj = ConvertTo-SimpleObject $ps_obj
       }
-      if ($obj -is 'system.collections.generic.keyvaluepair[string,object]'){
-        $obj = Convert-KeyValuePair-2Object $obj
+      if ($ps_obj -is 'system.collections.generic.keyvaluepair[string,object]'){
+        $ps_obj = Convert-KeyValuePair-2Object $ps_obj
       }
-      if ($null -eq $obj){ 
-        $obj = GetNullObject 
+      if ($null -eq $ps_obj){ 
+        $ps_obj = GetNullObject 
       }
-      $fieldscount = ($obj  | gm -membertype Property, NoteProperty  | measure-object).Count
+      $fieldscount = ($ps_obj  | gm -membertype Property, NoteProperty  | measure-object).Count
       $itemstr = "[" +  $fieldscount.ToString("d6") + ":"
-      $obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $obj $_.Name }
+      $ps_obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $ps_obj $_.Name }
       $itemstr += "]"
     
       $result += (slimlen $itemstr) + ":" + $itemstr + ":"
@@ -176,8 +176,8 @@ function ResultTo-String($res){
   }
   else{
     $result = ""
-    foreach ($obj in $res){
-      $result += $obj.ToString()
+    foreach ($ps_obj in $res){
+      $result += $ps_obj.ToString()
       $result += ","
     }
     $result.TrimEnd(",")
@@ -263,32 +263,32 @@ function Process-Instruction($ins){
 
 function pack_results($results){
   if($results -is [array]){
-    $send = "[" + (slimlen $results) + ":"
-    $results | % {$send += $_}
+    $ps_send = "[" + (slimlen $results) + ":"
+    $results | % {$ps_send += $_}
   }
   else{
-    $send = "[000001:$results"
+    $ps_send = "[000001:$results"
   }
-  $send += "]"
-  [text.encoding]::utf8.getbytes($send).Length.ToString("d6") + ":" + $send
+  $ps_send += "]"
+  [text.encoding]::utf8.getbytes($ps_send).Length.ToString("d6") + ":" + $ps_send
 }
 
 function process_message($ps_stream){
   if($ps_stream.CanRead){
-    $msg = get_message($ps_stream)
-    $msg
-    if(ischunk($msg)){
+    $ps_msg = get_message($ps_stream)
+    $ps_msg
+    if(ischunk($ps_msg)){
       $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-      $table = Get-SlimTable $msg
-      if(Test-OneRowTable $table){
-        if($table[0].StartsWith("scriptTable_") -or $table[0].StartsWith("queryTable_")){
-          if("Remote" -eq $table[3])
+      $ps_table = Get-SlimTable $ps_msg
+      if(Test-OneRowTable $ps_table){
+        if($ps_table[0].StartsWith("scriptTable_") -or $ps_table[0].StartsWith("queryTable_")){
+          if("Remote" -eq $ps_table[3])
           {
             $global:Remote = $true
             $global:targets = $null
-            $global:targets = iex $table[4]
+            $global:targets = iex $ps_table[4]
             if($global:targets -eq $null){
-              $global:targets = $table[4].Split(',').Trim(', ')
+              $global:targets = $ps_table[4].Split(',').Trim(', ')
             }
           }
           else
@@ -297,24 +297,24 @@ function process_message($ps_stream){
           }
         }
         if($Remote -eq $true){
-          process_table_remotely $table $ps_stream;
+          process_table_remotely $ps_table $ps_stream;
           return
           ##This prevetns to refactor this function
           ##There is shoudn't be return. The results should be send back here instead of inside the process_table_remotely function
         }
         else{
-          $results = Process-Instruction $table
+          $results = Process-Instruction $ps_table
         }
       }
       else{
-        if($table[0][0].StartsWith("scriptTable_") -or $table[0][0].StartsWith("queryTable_")){
-          if("Remote" -eq $table[0][3])
+        if($ps_table[0][0].StartsWith("scriptTable_") -or $ps_table[0][0].StartsWith("queryTable_")){
+          if("Remote" -eq $ps_table[0][3])
           {
             $global:Remote = $true
             $global:targets = $null
-            $global:targets = iex $table[0][4]
+            $global:targets = iex $ps_table[0][4]
             if($global:targets -eq $null){
-              $global:targets = $table[0][4].Split(',').Trim(', ')
+              $global:targets = $ps_table[0][4].Split(',').Trim(', ')
             }
           }
           else{
@@ -322,67 +322,66 @@ function process_message($ps_stream){
           }
         }
         if($Remote -eq $true){
-          process_table_remotely $table $ps_stream;
+          process_table_remotely $ps_table $ps_stream;
           return
         }
         else{
-          $results = $table | % { Process-Instruction $_ }
+          $results = $ps_table | % { Process-Instruction $_ }
         }
       }
     
-      $send = [text.encoding]::utf8.getbytes((pack_results $results))
-      $ps_stream.Write($send, 0, $send.Length)
+      $ps_send = [text.encoding]::utf8.getbytes((pack_results $results))
+      $ps_stream.Write($ps_send, 0, $ps_send.Length)
     }
   }else{"bye"}
 }
 
 function process_message_ignore_remote($ps_stream){
 
-  $msg = get_message($ps_stream)
+  $ps_msg = get_message($ps_stream)
 
-  if(ischunk($msg)){
+  if(ischunk($ps_msg)){
 
     $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-    $table = Get-SlimTable $msg
+    $ps_table = Get-SlimTable $ps_msg
 
-    if(Test-OneRowTable $table){ $results = Process-Instruction $table }
-    else { $results = $table | % { Process-Instruction $_ } }
+    if(Test-OneRowTable $ps_table){ $ps_results = Process-Instruction $ps_table }
+    else { $ps_results = $ps_table | % { Process-Instruction $_ } }
 
-    $send = [text.encoding]::utf8.getbytes((pack_results $results))
-    $ps_stream.Write($send, 0, $send.Length)
+    $ps_send = [text.encoding]::utf8.getbytes((pack_results $ps_results))
+    $ps_stream.Write($ps_send, 0, $ps_send.Length)
 
   }
 }
 
-
-function Run-SlimServer($slimserver){
-  $c = $slimserver.AcceptTcpClient()
-  $fitnesse = $c.GetStream()
-  send_slim_version($fitnesse)
-  $c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
-  while("bye" -ne (process_message($fitnesse))){};
-  $c.Close()
+function Run-SlimServer($ps_server){
+  $ps_fitnesse_client = $ps_server.AcceptTcpClient()
+  $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
+  send_slim_version($ps_fitnesse_stream)
+  $ps_fitnesse_client.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
+  while("bye" -ne (process_message($ps_fitnesse_stream))){};
+  $ps_fitnesse_client.Close()
   #CanRead
 }
 
-function Run-RemoteServer($slimserver){
+function Run-RemoteServer($ps_server){
   "waiting..." | Out-Default
-  while($c = $slimserver.AcceptTcpClient()){
+  while($ps_fitnesse_client = $ps_server.AcceptTcpClient()){
     "accepted!" | Out-Default
-    $fitnesse = $c.GetStream()
-    process_message_ignore_remote($fitnesse)
-    $fitnesse.Close()
-    $c.Close()
+    $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
+    process_message_ignore_remote($ps_fitnesse_stream)
+    $ps_fitnesse_stream.Close()
+    $ps_fitnesse_client.Close()
     "waiting..." | Out-Default
   }
 }
 
-$_s_ = New-Object System.Net.Sockets.TcpListener($args[0])
-$_s_.Start()
+$ps_server = New-Object System.Net.Sockets.TcpListener($args[0])
+$ps_server.Start()
 
 if(!$args[1]){
   . .\client.ps1
-  Run-SlimServer $_s_
+  Run-SlimServer $ps_server
 }
-else{ Run-RemoteServer $_s_ }
-$_s_.Stop()
+else{ Run-RemoteServer $ps_server }
+$ps_server.Stop()
