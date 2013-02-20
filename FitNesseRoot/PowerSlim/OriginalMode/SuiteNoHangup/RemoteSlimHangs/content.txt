@@ -9,7 +9,7 @@
 
 |script|
 |check|eval|$stream.ReadTimeout = 1000||
-|check|eval|$stream.Read($data,0,1)|blank|
+|check|eval|$stream.Read($data,0,1)|0|
 
 |script|
 |check|eval|$sut.Kill()||
