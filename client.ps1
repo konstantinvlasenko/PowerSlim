@@ -67,8 +67,8 @@ function script:process_table_remotely($table, $fitnesse){
 
             }
       
-           $c = New-Object System.Net.Sockets.TcpClient($computer, $port)
-           $remoteserver = $c.GetStream()
+           $ps_client = New-Object System.Net.Sockets.TcpClient($computer, $port)
+           $remoteserver = $ps_client.GetStream()
       
            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
            $result[$computer] = get_message($remoteserver)
@@ -80,7 +80,7 @@ function script:process_table_remotely($table, $fitnesse){
            }
         
            $remoteserver.Close()         
-           $c.Close() 
+           $ps_client.Close() 
 
         }
 

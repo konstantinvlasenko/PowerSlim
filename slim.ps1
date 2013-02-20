@@ -45,25 +45,25 @@ function ischunk($msg){
   $msg.StartsWith('[') -and $msg.EndsWith(']')
 }
 
-function send_slim_version($stream){
+function send_slim_version($ps_stream){
   $version = [text.encoding]::ascii.getbytes($slimver)
-  $stream.Write($version, 0, $version.Length)
+  $ps_stream.Write($version, 0, $version.Length)
 }
 
-function get_message_length($stream){
-  $stream.Read($slimbuffer, 0, 7) | out-null
+function get_message_length($ps_stream){
+  $ps_stream.Read($slimbuffer, 0, 7) | out-null
   $global:slimbuffersize = [int][text.encoding]::utf8.getstring($slimbuffer, 0, 6) + 7
   $slimbuffersize - 7
 }
 
-function read_message($stream){
-  $size = get_message_length($stream)
+function read_message($ps_stream){
+  $size = get_message_length($ps_stream)
   $offset = 0
-  while($offset -lt $size){$offset += $stream.Read($slimbuffer, $offset + 7, $size)}
+  while($offset -lt $size){$offset += $ps_stream.Read($slimbuffer, $offset + 7, $size)}
 }
 
-function get_message($stream){
-  read_message($stream)
+function get_message($ps_stream){
+  read_message($ps_stream)
   [text.encoding]::utf8.getstring($slimbuffer, 7, $slimbuffersize - 7)
 }
 
@@ -273,9 +273,9 @@ function pack_results($results){
   [text.encoding]::utf8.getbytes($send).Length.ToString("d6") + ":" + $send
 }
 
-function process_message($stream){
-  if($stream.CanRead){
-    $msg = get_message($stream)
+function process_message($ps_stream){
+  if($ps_stream.CanRead){
+    $msg = get_message($ps_stream)
     $msg
     if(ischunk($msg)){
       $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
@@ -297,7 +297,7 @@ function process_message($stream){
           }
         }
         if($Remote -eq $true){
-          process_table_remotely $table $stream;
+          process_table_remotely $table $ps_stream;
           return
           ##This prevetns to refactor this function
           ##There is shoudn't be return. The results should be send back here instead of inside the process_table_remotely function
@@ -322,7 +322,7 @@ function process_message($stream){
           }
         }
         if($Remote -eq $true){
-          process_table_remotely $table $stream;
+          process_table_remotely $table $ps_stream;
           return
         }
         else{
@@ -331,14 +331,14 @@ function process_message($stream){
       }
     
       $send = [text.encoding]::utf8.getbytes((pack_results $results))
-      $stream.Write($send, 0, $send.Length)
+      $ps_stream.Write($send, 0, $send.Length)
     }
   }else{"bye"}
 }
 
-function process_message_ignore_remote($stream){
+function process_message_ignore_remote($ps_stream){
 
-  $msg = get_message($stream)
+  $msg = get_message($ps_stream)
 
   if(ischunk($msg)){
 
@@ -349,7 +349,7 @@ function process_message_ignore_remote($stream){
     else { $results = $table | % { Process-Instruction $_ } }
 
     $send = [text.encoding]::utf8.getbytes((pack_results $results))
-    $stream.Write($send, 0, $send.Length)
+    $ps_stream.Write($send, 0, $send.Length)
 
   }
 }
@@ -362,6 +362,7 @@ function Run-SlimServer($slimserver){
   $c.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
   while("bye" -ne (process_message($fitnesse))){};
   $c.Close()
+  #CanRead
 }
 
 function Run-RemoteServer($slimserver){
