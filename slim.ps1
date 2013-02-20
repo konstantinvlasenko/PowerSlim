@@ -59,7 +59,14 @@ function get_message_length($ps_stream){
 function read_message($ps_stream){
   $size = get_message_length($ps_stream)
   $offset = 0
-  while($offset -lt $size){$offset += $ps_stream.Read($slimbuffer, $offset + 7, $size)}
+  while($offset -lt $size){
+
+    $error.clear()
+    $offset += $ps_stream.Read($slimbuffer, $offset + 7, $size)
+
+    if ($error) {break}
+
+  }
 }
 
 function get_message($ps_stream){
