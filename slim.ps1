@@ -60,11 +60,11 @@ function read_message($ps_stream){
   $ps_size = get_message_length($ps_stream)
   $offset = 0
   while($offset -lt $ps_size){
-
+    
     $error.clear()
     $offset += $ps_stream.Read($slimbuffer, $offset + 7, $ps_size)
 
-    if ($error) {break}
+    if ($error -or !$ps_stream.DataAvailable) {break}
 
   }
 }

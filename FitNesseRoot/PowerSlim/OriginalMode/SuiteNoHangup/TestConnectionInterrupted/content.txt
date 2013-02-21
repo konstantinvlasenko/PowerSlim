@@ -1,0 +1,29 @@
+!define SLIM_TABLE_SIZE (000035:)
+!define SLIM_TABLE_PART ([000002:)
+!*> Test setup
+!|script|
+|eval|$sut = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru|
+*!
+!* fake slim protocol 
+'''connect to SLIM server'''
+!|script|
+|check|eval|$client = New-Object System.Net.Sockets.TcpClient localhost, 41||
+|check|eval|$stream = $client.GetStream()||
+
+'''send table size'''
+!|script|
+|check|eval|$data = [System.Text.Encoding]::ASCII.GetBytes("${SLIM_TABLE_SIZE}")||
+|check|eval|$stream.Write($data,0,$data.Length)||
+
+'''send part of table and close connection. So remote !-PowerSlim-! should get the idea that connection interrupted.'''
+!|script|
+|check|eval|$data = [System.Text.Encoding]::ASCII.GetBytes("${SLIM_TABLE_PART}")||
+|check|eval|$stream.Write($data,0,$data.Length)||
+|check|eval|$client.Close()||
+*!
+!|script|Remote|localhost:41|
+|check|eval|1+2|3|
+!*> Test teardown
+!|script|
+|eval|$sut.Kill()|
+*!

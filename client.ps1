@@ -15,89 +15,78 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
     #$targets = $ps_table[0][4].Trim(',').Split(',')
     try {
 
-        $originalslimbuffer = $slimbuffer.Clone()
-        $originalslimbuffersize = $slimbuffersize
+      $originalslimbuffer = $slimbuffer.Clone()
+      $originalslimbuffersize = $slimbuffersize
 
-        $result = new-Object 'system.collections.generic.dictionary[string,object]'
+      $result = new-Object 'system.collections.generic.dictionary[string,object]'
 
-        foreach($t in $targets){ 
+      foreach($t in $targets){ 
 
-            $ps_computer, $ps_port = $t.split(':')
+          $ps_computer, $ps_port = $t.split(':')
 
-            if($ps_computer.StartsWith('$')){
-                $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
-            }
+          if($ps_computer.StartsWith('$')){
+              $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
+          }
 
-            if($ps_port -eq $null){$ps_port = 35};
+          if($ps_port -eq $null){$ps_port = 35};
 
-            $ps_computer, $ps_port | Out-Default
-            
-            if($slimsymbols.Count -ne 0){
-
-                try {
-                $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
-                } catch {
-                  '------------' | out-default
-                  $error[0] | out-default
-                  '------------' | out-default
-                }
-                $remoteserver = $ps_sumbols_client.GetStream()
-                        
-                $list = @($slimsymbols.GetEnumerator() | % {$_})
-                $tr = "[" + (slimlen $list) + ":"
-
-                foreach ($obj in $list){
-                                    
-                    $itemstr = "[" +  (6).ToString("d6") + ":"
-
-                    $itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
-                    $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
-                    $itemstr += (slimlen 'eval') + ":eval:"
-
-                    $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+          $ps_computer, $ps_port | Out-Default
+          
+          if($slimsymbols.Count -ne 0){
+              $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
     
-                    $itemstr += "]"
-            
-                    $tr += (slimlen $itemstr) + ":" + $itemstr + ":"
-                } 
+              $remoteserver = $ps_sumbols_client.GetStream()
+                      
+              $list = @($slimsymbols.GetEnumerator() | % {$_})
+              $tr = "[" + (slimlen $list) + ":"
 
-                $tr += "]"
-                
-                $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
-                $s2 = [text.encoding]::utf8.getbytes($s2)
+              foreach ($obj in $list){
+                                  
+                  $itemstr = "[" +  (6).ToString("d6") + ":"
 
-                $tr | Out-Default 
+                  $itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
+                  $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
+                  $itemstr += (slimlen 'eval') + ":eval:"
 
-                $remoteserver.Write($s2, 0, $s2.Length)
-                get_message($remoteserver)
+                  $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+    
+                  $itemstr += "]"
+          
+                  $tr += (slimlen $itemstr) + ":" + $itemstr + ":"
+              } 
 
-            }
-           try { 
-            $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
-           } catch {
-            '------------' | out-default
-            $error[0] | out-default
-            '------------' | out-default
-           }
-           $remoteserver = $ps_client.GetStream()
+              $tr += "]"
+              
+              $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
+              $s2 = [text.encoding]::utf8.getbytes($s2)
+
+              $tr | Out-Default 
+
+              $remoteserver.Write($s2, 0, $s2.Length)
+              get_message($remoteserver)
+
+          }
+
+         $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+         $remoteserver = $ps_client.GetStream()
+    
+         $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
+         $result[$ps_computer] = get_message($remoteserver)
+    
+          #backward symbols sharing
+         foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
+            $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
+            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
+         }
       
-           $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
-           $result[$ps_computer] = get_message($remoteserver)
-      
-            #backward symbols sharing
-           foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
-              $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-              $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
-           }
-        
-           $remoteserver.Close()         
-           $ps_client.Close() 
+         $remoteserver.Close()         
+         $ps_client.Close() 
 
-        }
+      }
 
-        #if($result.Count -eq 1){
-        $ps_fitnesse.Write($slimbuffer, 0, $slimbuffersize)
-        #}
+      #if($result.Count -eq 1){
+      $ps_fitnesse.Write($slimbuffer, 0, $slimbuffersize)
+      #}
 
     }
     catch [System.Exception] {
