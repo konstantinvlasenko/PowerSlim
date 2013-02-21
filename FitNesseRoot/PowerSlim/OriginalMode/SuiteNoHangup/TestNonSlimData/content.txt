@@ -11,5 +11,8 @@
 |check|eval|$stream.ReadTimeout = 1000||
 |check|eval|$stream.Read($data,0,1)|0|
 
+!|script|Remote|localhost:41|
+|check|eval|1+2|3|
+
 |script|
 |check|eval|$sut.Kill()||

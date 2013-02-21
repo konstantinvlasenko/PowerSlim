@@ -1,5 +1,5 @@
 !|script|
 |check|eval|$client1 = New-Object System.Net.Sockets.TcpClient localhost, 49|=~/No connection could be made because the target machine actively refused it 127.0.0.1:49/|
 |eval|$data = [System.Text.Encoding]::ASCII.GetBytes("200000")|
-|check|eval|$stream = $client1.GetStream()|You cannot call a method on a null-valued expression.|
-|check|eval|$stream.Write($data,0,$data.Length)|You cannot call a method on a null-valued expression.|
+|check|eval|$stream = $client1.GetStream();|You cannot call a method on a null-valued expression.|
+|check|eval|$stream2.Write($data,0,$data.Length)|You cannot call a method on a null-valued expression.|
