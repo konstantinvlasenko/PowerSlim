@@ -196,7 +196,13 @@ function Invoke-SlimCall($fnc){
   switch ($fnc){
     "query" {$result = ResultTo-List @(iex $Script__)}
     "eval" {$result = ResultTo-String (iex $Script__)}
-    default {$result = $slimvoid}
+    default {
+
+      "I am in default and it seems like a trouble" | Out-Default
+      write-error "please use either eval or query"
+
+      $result = $slimvoid
+    }
   }
   $global:matches = $matches
   if($error[0] -ne $null){$error[0]}
@@ -254,6 +260,8 @@ function Invoke-SlimInstruction($ins){
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
     Set-Script $ins[4] $EvalFormat__
   }
+  
+  
   $t = measure-command {$result = Invoke-SlimCall $ins[3]}
   $Script__ + " : " + $t.TotalSeconds | Out-Default
   
