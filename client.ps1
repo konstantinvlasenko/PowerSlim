@@ -33,9 +33,13 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
           $ps_computer, $ps_port | Out-Default
           
           if($slimsymbols.Count -ne 0){
+
+              "Connecting to $ps_computer $ps_port" | Out-Default
+
               $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
-    
               $remoteserver = $ps_sumbols_client.GetStream()
+
+              "Connected" | Out-Default
                       
               $list = @($slimsymbols.GetEnumerator() | % {$_})
               $tr = "[" + (slimlen $list) + ":"

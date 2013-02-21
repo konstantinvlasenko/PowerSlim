@@ -288,67 +288,76 @@ function pack_results($results){
   [text.encoding]::utf8.getbytes($ps_send).Length.ToString("d6") + ":" + $ps_send
 }
 
+
+function check_remote($ps_table) {
+
+  
+  if( !(Test-OneRowTable $ps_table) ) {         
+      $ps_table = $ps_table[0]
+  }
+
+  if($ps_table[0].StartsWith("scriptTable_") -or $ps_table[0].StartsWith("queryTable_")){
+
+      if("Remote" -eq $ps_table[3])
+      {
+        set_remote_targets($ps_table[4])
+      }
+      else
+      {
+        $global:Remote = $false
+      }
+
+  }
+
+
+}
+
+function set_remote_targets($ps_cell) {
+
+  $global:Remote = $true
+  $global:targets = $null
+
+  $global:targets = iex $ps_cell
+  
+  if($global:targets -eq $null){
+    $global:targets = $ps_cell.Split(",") | %{$_.Trim(", ")}
+  }
+
+}
+
+function process_table($ps_table) {
+
+  if(Test-OneRowTable $ps_table){ $ps_results = Process-Instruction $ps_table }
+  else { $ps_results = $ps_table | % { Process-Instruction $_ } }
+
+  $ps_results
+
+}
+
 function process_message($ps_stream){
-  if($ps_stream.CanRead){
-    $ps_msg = get_message($ps_stream)
-    $ps_msg
-    if(ischunk($ps_msg)){
-      $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-      $ps_table = Get-SlimTable $ps_msg
-      if(Test-OneRowTable $ps_table){
-        if($ps_table[0].StartsWith("scriptTable_") -or $ps_table[0].StartsWith("queryTable_")){
-          if("Remote" -eq $ps_table[3])
-          {
-            $global:Remote = $true
-            $global:targets = $null
-            $global:targets = iex $ps_table[4]
-            if($global:targets -eq $null){
-              $global:targets = $ps_table[4].Split(',').Trim(', ')
-            }
-          }
-          else
-          {
-            $global:Remote = $false
-          }
-        }
-        if($Remote -eq $true){
-          process_table_remotely $ps_table $ps_stream;
-          return
-          ##This prevetns to refactor this function
-          ##There is shoudn't be return. The results should be send back here instead of inside the process_table_remotely function
-        }
-        else{
-          $results = Process-Instruction $ps_table
-        }
-      }
-      else{
-        if($ps_table[0][0].StartsWith("scriptTable_") -or $ps_table[0][0].StartsWith("queryTable_")){
-          if("Remote" -eq $ps_table[0][3])
-          {
-            $global:Remote = $true
-            $global:targets = $null
-            $global:targets = iex $ps_table[0][4]
-            if($global:targets -eq $null){
-              $global:targets = $ps_table[0][4].Split(',').Trim(', ')
-            }
-          }
-          else{
-            $global:Remote = $false
-          }
-        }
-        if($Remote -eq $true){
-          process_table_remotely $ps_table $ps_stream;
-          return
-        }
-        else{
-          $results = $ps_table | % { Process-Instruction $_ }
-        }
-      }
-    
-      $ps_send = [text.encoding]::utf8.getbytes((pack_results $results))
-      $ps_stream.Write($ps_send, 0, $ps_send.Length)
-    }
-  }else{"bye"}
+
+  if( ! $ps_stream.CanRead ){ return "buy" }
+
+  $ps_msg = get_message($ps_stream)
+  $ps_msg
+
+  if( !(ischunk $ps_msg) ){ return }
+
+  $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
+  $ps_table = Get-SlimTable $ps_msg
+
+  check_remote($ps_table)
+
+  if($Remote -eq $true){
+    process_table_remotely $ps_table $ps_stream;
+    return
+  }
+  
+  $ps_results = process_table $ps_table
+
+  $ps_send = [text.encoding]::utf8.getbytes((pack_results $ps_results))
+  $ps_stream.Write($ps_send, 0, $ps_send.Length)
+  
 }
 
 function process_message_ignore_remote($ps_stream){
@@ -360,8 +369,7 @@ function process_message_ignore_remote($ps_stream){
     $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
     $ps_table = Get-SlimTable $ps_msg
 
-    if(Test-OneRowTable $ps_table){ $ps_results = Process-Instruction $ps_table }
-    else { $ps_results = $ps_table | % { Process-Instruction $_ } }
+    $ps_results = process_table $ps_table
 
     $ps_send = [text.encoding]::utf8.getbytes((pack_results $ps_results))
     $ps_stream.Write($ps_send, 0, $ps_send.Length)
