@@ -119,19 +119,19 @@ function Convert-KeyValuePair-2Object($kvp){
    $ps_obj
 }
 
-function ConvertTo-SimpleObject($ps_obj){
-   $ps_object = New-Object PSObject
-   Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value $ps_obj.ToString()
-   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
-   $ps_object
+function ConvertTo($ps_str) {
+
+  $ps_object = New-Object PSObject
+
+  Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value $ps_str
+  Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+
+  $ps_object
+
 }
 
-function GetNullObject{
-   $ps_object = New-Object PSObject
-   Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value "Null"
-   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
-   $ps_object
-}
+function ConvertTo-SimpleObject($ps_obj){ ConvertTo $ps_obj.ToString() }
+function GetNullObject{ ConvertTo "Null" }
 
 function isgenericdict($list){
 	$list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'
