@@ -21,7 +21,6 @@ function Get-SlimTable($slimchunk){
   $global:ps_table = iex $ps_exp
 }
 
-function Table-Type() {$global:ps_table[2]}
 
 function Test-OneRowTable($ps_table){
   !($ps_table[0] -is [array])
@@ -240,6 +239,7 @@ function make($ins){
 function Id() {$global:ps_row[0]}
 function Operation() {$global:ps_row[1]}
 function Module() {$global:ps_row[2]}
+function Table-Type() {$global:ps_row[2]}
 
 function Invoke-SlimInstruction(){
 
