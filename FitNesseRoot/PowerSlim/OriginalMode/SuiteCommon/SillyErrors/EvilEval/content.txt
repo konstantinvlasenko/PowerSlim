@@ -1,2 +1,5 @@
 !|script|
-|check|evil|$a = 10|please use either eval or query|
+|check|evil|$a = 10|please use eval|
+
+!|script|
+|check|eval|$a = 11||

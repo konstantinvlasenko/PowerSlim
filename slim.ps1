@@ -15,6 +15,9 @@ $slimbuffersize = 0
 
 function Get-SlimTable($slimchunk){
   $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
+
+  $ps_exp | Out-Default
+
   iex $ps_exp
 }
 
@@ -191,15 +194,22 @@ function ResultTo-String($res){
   }
 }
 
+function Table-Type() {$global:ps_table[2]}
+
 function Invoke-SlimCall($fnc){
+
   $error.clear()
+
   switch ($fnc){
+
     "query" {$result = ResultTo-List @(iex $Script__)}
     "eval" {$result = ResultTo-String (iex $Script__)}
+
     default {
 
-      "I am in default and it seems like a trouble" | Out-Default
-      write-error "please use either eval or query"
+      if ((Table-Type) -eq "ScriptTableActor") {
+        write-error "please use eval"
+      }
 
       $result = $slimvoid
     }
@@ -342,7 +352,7 @@ function process_message($ps_stream){
   if( !(ischunk $ps_msg) ){ return }
 
   $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-  $ps_table = Get-SlimTable $ps_msg
+  $global:ps_table = Get-SlimTable $ps_msg
 
   check_remote($ps_table)
 
