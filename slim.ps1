@@ -15,8 +15,13 @@ $slimbuffersize = 0
 
 function Get-SlimTable($slimchunk){
   $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
-  iex $ps_exp
+
+  $ps_exp | Out-Default
+
+  $global:ps_table = iex $ps_exp
 }
+
+function Table-Type() {$global:ps_table[2]}
 
 function Test-OneRowTable($ps_table){
   !($ps_table[0] -is [array])
@@ -191,15 +196,21 @@ function ResultTo-String($res){
   }
 }
 
+
 function Invoke-SlimCall($fnc){
+
   $error.clear()
+
   switch ($fnc){
+
     "query" {$result = ResultTo-List @(iex $Script__)}
     "eval" {$result = ResultTo-String (iex $Script__)}
+
     default {
 
-      "I am in default and it seems like a trouble" | Out-Default
-      write-error "please use either eval or query"
+      if ((Table-Type) -eq "ScriptTableActor") {
+        write-error "please use eval"
+      }
 
       $result = $slimvoid
     }
@@ -226,12 +237,41 @@ function make($ins){
   "OK"
 }
 
-function Invoke-SlimInstruction($ins){
-  $ins[0]
-  switch ($ins[1]){
-    "import" {iex ". .\$($ins[2])"; "OK"; return}
-    "make" {make $ins; Set-Script $ins[$ins.Count - 1] $QueryFormat__; return}
-    "callAndAssign" {$symbol = $ins[2]; $ins = $ins[0,1 + 3 .. $ins.Count]}
+function Id() {$global:ps_row[0]}
+function Operation() {$global:ps_row[1]}
+function Module() {$global:ps_row[2]}
+
+function Invoke-SlimInstruction(){
+
+  $ins = $global:ps_row
+
+  (Id)
+
+  switch (Operation){
+
+    "import" {
+
+      iex ". .\$(Module)" 
+      "OK"
+      return
+
+    }
+
+    "make" {
+    
+      make $ins
+      Set-Script $ins[$ins.Count - 1] $QueryFormat__
+      return
+      
+    }
+
+    "callAndAssign" {
+    
+      $symbol = $ins[2]
+      $ins = $ins[0,1 + 3 .. $ins.Count]
+      
+    }
+
     "call" { 
       if($ins[2].StartsWith('decisionTable')){
         if($ins[3] -match ('table|beginTable|reset|endTable')){
@@ -274,7 +314,10 @@ function Invoke-SlimInstruction($ins){
 }
 
 function Process-Instruction($ins){
-  $result = Invoke-SlimInstruction $ins
+
+  $global:ps_row = $ins
+  $result = Invoke-SlimInstruction
+
   $s = '[000002:' + (slimlen $result[0]) + ':' + $result[0] + ':' + (slimlen $result[1]) + ':' + $result[1] + ':]'
   (slimlen $s) + ":" + $s + ":"
 
@@ -327,10 +370,10 @@ function set_remote_targets($ps_cell) {
 
 }
 
-function process_table($ps_table) {
+function process_table() {
 
-  if(Test-OneRowTable $ps_table){ $ps_results = Process-Instruction $ps_table }
-  else { $ps_results = $ps_table | % { Process-Instruction $_ } }
+  if(Test-OneRowTable $global:ps_table){ $ps_results = Process-Instruction $global:ps_table }
+  else { $ps_results = $global:ps_table | % { Process-Instruction $_ } }
 
   $ps_results
 
@@ -346,16 +389,16 @@ function process_message($ps_stream){
   if( !(ischunk $ps_msg) ){ return }
 
   $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
-  $ps_table = Get-SlimTable $ps_msg
+  Get-SlimTable $ps_msg
 
-  check_remote($ps_table)
+  check_remote($global:ps_table)
 
   if($Remote -eq $true){
-    process_table_remotely $ps_table $ps_stream;
+    process_table_remotely $global:ps_table $ps_stream;
     return
   }
   
-  $ps_results = process_table $ps_table
+  $ps_results = process_table
 
   $ps_send = [text.encoding]::utf8.getbytes((pack_results $ps_results))
   $ps_stream.Write($ps_send, 0, $ps_send.Length)
@@ -371,7 +414,7 @@ function process_message_ignore_remote($ps_stream){
     $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
     $ps_table = Get-SlimTable $ps_msg
 
-    $ps_results = process_table $ps_table
+    $ps_results = process_table
 
     $ps_send = [text.encoding]::utf8.getbytes((pack_results $ps_results))
     $ps_stream.Write($ps_send, 0, $ps_send.Length)
