@@ -257,6 +257,10 @@ function Invoke-SlimInstruction($ins){
       }
     }
   }
+  '+++++++++++++' | out-default
+  $ins[3] | out-default
+  '+++++++++++++' | out-default
+  
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
     Set-Script $ins[4] $EvalFormat__
   }
