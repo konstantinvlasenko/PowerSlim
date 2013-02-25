@@ -1,3 +1,5 @@
 |script|
-|eval|function getFullName($hash){$hash.fname + $hash.lname}|
-|check|eval|getFullName(!{fname:Bob, lname:Martin, dob:5-Dec-1952})||
+|eval|$x = !{fname:Bob, lname:Martin, dob:5-Dec-1952}|
+|check|eval|x.fname|Bob|
+|check|eval|x.lname|Martin|
+|check|eval|x.dob|5-Dec-1952|
