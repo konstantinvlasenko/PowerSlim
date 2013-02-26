@@ -20,7 +20,7 @@ http://fitnesse.org/FitNesse.UserGuide.MarkupHashTable
 |check|eval|getFirstname(${HASH})|Bob|
 
 '''Through Fitnesse Symbol'''
-|comment|
+|script|
 |$nameAsSymbol=|eval|${HASH}|
 |check|eval|$nameAsSymbol.first|Bob|
 |check|eval|$nameAsSymbol.last|Martin|

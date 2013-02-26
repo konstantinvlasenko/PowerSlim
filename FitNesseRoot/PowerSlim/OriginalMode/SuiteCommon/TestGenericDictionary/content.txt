@@ -6,7 +6,7 @@
 |show|eval|$dict.keys  |
 |show|eval|$dict.values|
 
-|Query:Local|Transpose $dict|
+|Query:Local|$dict !-|-! % { $_.GetEnumerator()}|
 |Key        |Value          |
 |1          |Value1         |
 |2          |Value2         |
@@ -24,7 +24,7 @@
 |eval|$d2['k2'] = 'Val2'|
 |eval|$d2['k3'] = 'Val3'|
 
-|Query:Local|Transpose $dict,$d2|
+|Query:Local|$dict,$d2 !-|-! % { $_.GetEnumerator()}|
 |Key        |Value              |
 |1          |Value1             |
 |2          |Value2             |
@@ -32,4 +32,3 @@
 |k1         |Val1               |
 |k2         |Val2               |
 |k3         |Val3               |
-

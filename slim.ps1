@@ -139,10 +139,6 @@ function isgenericdict($list){
 	$list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'
 }
 
-function Transpose($list){
-    $list | % { $_.GetEnumerator() }
-}
-
 function ResultTo-List($list){
   if($null -eq $list){
     $slimvoid
@@ -204,28 +200,6 @@ function Invoke-SlimCall($fnc){
     }
   }
   $global:matches = $matches
-}
-
-function Invoke-SlimCallOld($fnc){
-
-  $error.clear()
-  switch ($fnc){
-
-    "query" {$result = ResultTo-List @(iex $Script__)}
-    "eval" {$result = ResultTo-String (iex $Script__)}
-
-    default {
-
-      if ((Table-Type) -eq "ScriptTableActor") {
-        write-error "please use eval"
-      }
-
-      $result = $slimvoid
-    }
-  }
-  $global:matches = $matches
-  if($error[0] -ne $null){$error[0]}
-  else{$result.TrimEnd("`r`n")}
 }
 
 function Set-Script($s, $fmt){
@@ -321,7 +295,14 @@ function Invoke-SlimInstruction(){
   
   $error.clear()
   switch ($ins[3]){
-    "query" {$result = ResultTo-List @($result)}
+    "query" {
+      if(($null -eq $result) -or ($result -is 'system.collections.generic.dictionary[string,object]' -and  $result.Count -eq 0)){ 
+        $result = ResultTo-List @()
+      }
+      else{
+        $result = ResultTo-List @($result)
+      }
+    }
     "eval" {$result = ResultTo-String $result}
   }
   if($error[0] -ne $null){ return $error[0] }

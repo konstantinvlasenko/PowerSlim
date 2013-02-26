@@ -5,22 +5,40 @@
 !|script|
 |eval|$list= New-Object "system.collections.generic.dictionary[string,object]";|
 
-|Query:Local|Transpose $list|
+''hash-table style''
+|Query:Local|$list|
+|Value|
+
+''key-value style''
+|Query:Local|$list  !-|-! % { $_.GetEnumerator() }|
 |Key|Value|
 *!
 !* One element in the dictionary
 !|script|
 |eval|$list.Add("a","1")|
 
-|Query:Local|Transpose $list|
+''hashtable style''
+|Query:Local|$list|
+|a|
+|1|
+
+''key-value style''
+|Query:Local|$list  !-|-! % { $_.GetEnumerator() }|
 |Key|Value|
 |a|1|
+
 *!
 !* More than one element in the dictionary
 !|script|
 |eval|$list.Add("b","2")|
 
-|Query:Local|Transpose $list|
+''hashtable style''
+|Query:Local|$list|
+|a|b|
+|1|2|
+
+''key-value style''
+|Query:Local|$list  !-|-! % { $_.GetEnumerator() }|
 |Key|Value|
 |a|1|
 |b|2|
