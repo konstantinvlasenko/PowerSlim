@@ -1,11 +1,11 @@
-!define HASH (!{first:Bob, last:Martin})
+!define HASH (!{first:Bob, last name:Martin})
 
 http://fitnesse.org/FitNesse.UserGuide.MarkupHashTable
 '''simple usage'''
 |script|
 |eval|$name=${HASH}|
 |check|eval|$name.first|Bob|
-|check|eval|$name.last|Martin|
+|check|eval|$name['last name']|Martin|
 
 '''In scenario'''
 !|scenario|FirstNameShouldBeBob|hash|
@@ -23,4 +23,4 @@ http://fitnesse.org/FitNesse.UserGuide.MarkupHashTable
 |script|
 |$nameAsSymbol=|eval|${HASH}|
 |check|eval|$nameAsSymbol.first|Bob|
-|check|eval|$nameAsSymbol.last|Martin|
+|check|eval|$nameAsSymbol['last name']|Martin|
