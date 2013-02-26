@@ -1,0 +1,14 @@
+!|script|
+|eval|$d1=new-Object 'system.collections.generic.dictionary[string,object]'|
+|eval|$d2=new-Object 'system.collections.generic.dictionary[string,object]'|
+|eval|$d3=new-Object 'system.collections.generic.dictionary[string,object]'|
+|eval|$d1['col1'] = 'Value1'; $d1['col2'] = 'Value4';|
+|eval|$d2['col1'] = 'Value2'; $d2['col2'] = 'Value5';|
+|eval|$d3['col1'] = 'Value3'; $d3['col2'] = 'Value6';|
+|eval|$arrDict = $d1,$d2,$d3 |
+
+|Query:Local|$arrDict|
+|col1       |col2    |
+|Value1     |Value4  |
+|Value2     |Value5  |
+|Value3     |Value6  |
