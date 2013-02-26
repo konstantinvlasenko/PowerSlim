@@ -1,5 +1,15 @@
 !|script|
 |check|evil|$a = 10|please use eval|
+|evel|$a = 10|please use eval|
 
 !|script|
 |check|eval|$a = 11||
+
+|scenario|set it|
+|eval|$it = 12|
+
+|script|
+|show|eval|function Ups() {"Pups"};|
+|check|eval|set it||
+|check|eval|Ups|Pups|
+|check|eval|$it|=~//|
