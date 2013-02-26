@@ -16,8 +16,6 @@ $slimbuffersize = 0
 function Get-SlimTable($slimchunk){
   $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 
-  $ps_exp | Out-Default
-
   $global:ps_table = iex $ps_exp
 }
 
@@ -197,9 +195,19 @@ function ResultTo-String($res){
 
 
 function Invoke-SlimCall($fnc){
+  switch ($fnc){
+    {($_ -eq "query") -or ($_ -eq "eval")} {iex $Script__}
+    default { 
+      if ((Table-Type) -eq "ScriptTableActor") { "please use eval" }
+      else{ $slimvoid }
+    }
+  }
+  $global:matches = $matches
+}
+
+function Invoke-SlimCallOld($fnc){
 
   $error.clear()
-
   switch ($fnc){
 
     "query" {$result = ResultTo-List @(iex $Script__)}
@@ -223,7 +231,8 @@ function Set-Script($s, $fmt){
   if(!$s){ return }
   $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '$1=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','''$1'';'
   $s = $s -replace '</?pre>' #workaround fitnesse strange behavior
-  if($slimsymbols.Count){$slimsymbols.Keys | ? {!(Test-Path variable:$_)} | ? {!($s -match "\`$$_\s*=")} | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
+  if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -match "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
+  if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = [string]::Format( $fmt, $s)
   if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function global:$1') -Scope Global}
   else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
@@ -270,7 +279,6 @@ function Invoke-SlimInstruction(){
     
       $symbol = $ins[2]
       $ins = $ins[0,1 + 3 .. $ins.Count]
-      
     }
 
     "call" { 
@@ -298,20 +306,25 @@ function Invoke-SlimInstruction(){
       }
     }
   }
-  '+++++++++++++' | out-default
-  $ins[3] | out-default
-  '+++++++++++++' | out-default
   
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
     Set-Script $ins[4] $EvalFormat__
   }
   
-  
-  $t = measure-command {$result = Invoke-SlimCall $ins[3]}
+  $error.clear()
+  $t = measure-command { $result = Invoke-SlimCall $ins[3] }
   $Script__ + " : " + $t.TotalSeconds | Out-Default
+  if($error[0] -ne $null){ return $error[0] }
+  #if($null -eq $result){ return $slimvoid }
+  if($symbol){ $slimsymbols[$symbol] = $result }
   
-  if($symbol){$slimsymbols[$symbol] = $result}
-  $result
+  $error.clear()
+  switch ($ins[3]){
+    "query" {$result = ResultTo-List @($result)}
+    "eval" {$result = ResultTo-String $result}
+  }
+  if($error[0] -ne $null){ return $error[0] }
+  else { $result.TrimEnd("`r`n") }
 }
 
 function Process-Instruction($ins){
