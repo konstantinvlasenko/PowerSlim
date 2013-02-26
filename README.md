@@ -13,6 +13,10 @@ The PowerShell 3.0 comes integrated with Windows 8 and with Windows Server 2012.
 
 Please Note: You can still use the PowerShell 2.0 or work in backward compatibility with the PowerShell 2.0. But in order to support arrays and PSObjects verification in Queries the ConvertTo-Json CMDLet is used introduced in the PowerShell 3.0. For the verification to work with the PowerShell 2.0 you have to implement ConvertTo-Json CMDLet functionality via e.g. System.Web.Script.Serialization.JavaScriptSerializer (upgarade to .NET Framework 3.5 is reqquired). Otherwise you can stub the ConvertTo-Json CMDLet.
 
+### February 26, 2013
+
+* [Support for Fitnesse Hash Table](https://github.com/konstantinvlasenko/PowerSlim/blob/master/FitNesseRoot/PowerSlim/OriginalMode/SuiteCommon/TestFitnesseHashTable/content.txt)
+
 ### December 19, 2012
 
 * [Target as expression](https://github.com/konstantinvlasenko/PowerSlim/blob/master/FitNesseRoot/PowerSlim/SuiteRemoting/TestTargetAsExpression/content.txt)
