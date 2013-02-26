@@ -1,13 +1,35 @@
-!|script|
+!|script                                                                     |
 |eval|$dict=new-Object 'system.collections.generic.dictionary[string,object]'|
 |eval|$dict['1'] = 'Value1'|
 |eval|$dict['2'] = 'Value2'|
 |eval|$dict['3'] = 'Value3'|
-|show|eval|$dict.keys|
+|show|eval|$dict.keys  |
 |show|eval|$dict.values|
 
-|Query:Local|$dict|
-|Key|Value|
-|1|Value1|
-|2|Value2|
-|3|Value3|
+|Query:Local|Transpose $dict|
+|Key        |Value          |
+|1          |Value1         |
+|2          |Value2         |
+|3          |Value3         |
+
+
+|Query:Local|$dict        |
+|1          |2     |3     |
+|Value1     |Value2|Value3|
+
+
+!|script                                                                   |
+|eval|$d2=new-Object 'system.collections.generic.dictionary[string,object]'|
+|eval|$d2['k1'] = 'Val1'|
+|eval|$d2['k2'] = 'Val2'|
+|eval|$d2['k3'] = 'Val3'|
+
+|Query:Local|Transpose $dict,$d2|
+|Key        |Value              |
+|1          |Value1             |
+|2          |Value2             |
+|3          |Value3             |
+|k1         |Val1               |
+|k2         |Val2               |
+|k3         |Val3               |
+

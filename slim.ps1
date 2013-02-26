@@ -139,20 +139,21 @@ function isgenericdict($list){
 	$list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'
 }
 
+function Transpose($list){
+    $list | % { $_.GetEnumerator() }
+}
+
 function ResultTo-List($list){
   if($null -eq $list){
     $slimvoid
   }
   elseif ($list -is [array]){
-    if (isgenericdict $list){
-      $list = $list[0].GetEnumerator() | % {$_}
-      if($list -eq $null){
-        $list = @() #emulate empty array
-      }
-    }	
     $result = "[" + (slimlen $list) + ":"
     foreach ($ps_obj in $list){
-      if($ps_obj -is [hashtable]){
+      if ($ps_obj -is 'system.collections.generic.dictionary[string,object]'){
+        $ps_obj = [hashtable] $ps_obj
+      }
+      if($ps_obj -is [hashtable] ){
         $ps_obj = Convert-Hashtable-2Object $ps_obj
       }
       if($ps_obj -is [string] -or $ps_obj -is [int]){
