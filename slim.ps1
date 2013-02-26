@@ -1,9 +1,6 @@
-#
-# "THE BEER-WARE LICENSE" (Revision 45):
-# <konstantin.vlasenko@gmail.com> wrote this file. As long as you retain this notice
-# you can do whatever you want with this stuff. If we meet some day, and you
-# think this stuff is worth it, you can buy me a beer in return.
-#
+##########################
+# PowerSlim (Revision 46)#
+##########################
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 #$slimvoid = "/__VOID__/"
@@ -209,7 +206,7 @@ function Invoke-SlimCall($fnc){
 
 function Set-Script($s, $fmt){
   if(!$s){ return }
-  $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '$1=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','''$1'';'
+  $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','''$1'';'
   $s = $s -replace '</?pre>' #workaround fitnesse strange behavior
   if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -match "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
