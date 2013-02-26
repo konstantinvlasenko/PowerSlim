@@ -66,7 +66,7 @@ function read_message($ps_stream){
     $error.clear()
     $offset += $ps_stream.Read($slimbuffer, $offset + 7, $ps_size)
 
-    if ($error -or !$ps_stream.DataAvailable) {break}
+    if ($error -or !$ps_stream.Socket.Connected) {break}
 
   }
 }
