@@ -1,5 +1,5 @@
 ##########################
-# PowerSlim (Revision 45)#
+# PowerSlim (Revision 46)#
 ##########################
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
@@ -331,7 +331,8 @@ function pack_results($results){
 
 function check_remote($ps_table) {
   
-  if( !(Test-OneRowTable $ps_table) ) {         
+  if( !(Test-OneRowTable $ps_table) ) {
+         
       $ps_table = $ps_table[0]
   }
 
