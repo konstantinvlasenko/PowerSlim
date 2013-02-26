@@ -1,5 +1,5 @@
 #
-# "THE BEER-WARE LICENSE" (Revision 44):
+# "THE BEER-WARE LICENSE" (Revision 45):
 # <konstantin.vlasenko@gmail.com> wrote this file. As long as you retain this notice
 # you can do whatever you want with this stuff. If we meet some day, and you
 # think this stuff is worth it, you can buy me a beer in return.
@@ -334,7 +334,8 @@ function pack_results($results){
 
 function check_remote($ps_table) {
   
-  if( !(Test-OneRowTable $ps_table) ) {         
+  if( !(Test-OneRowTable $ps_table) ) {
+         
       $ps_table = $ps_table[0]
   }
 
