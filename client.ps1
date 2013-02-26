@@ -33,7 +33,6 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
               $remoteserver = $ps_sumbols_client.GetStream()
 
-              "Connected" | Out-Default
                       
               $list = @($slimsymbols.GetEnumerator() | % {$_})
               $tr = "[" + (slimlen $list) + ":"
@@ -62,10 +61,30 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               get_message($remoteserver)
 
           }
+          ###################################################################
+          # It is time to real crazy PS development
+          # Timeout below works fine - looks like the performance increase
+          # But We have the duplication above (Line:33)
+          # I am looking for ability to pass a function as argument to another function
+          # function PowerSlim-Connect($ps_computer, $ps_port, $callbac ) {
+            # $ps_client = new-Object System.Net.Sockets.TcpClient
+            # $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)   
+            # $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(1000, $false)  
+            # if(!$ps_wait) {   
+              # $ps_client.Close()   
+              # Write-Error "[$ps_computer $ps_port] Connection Timeout"   
+            # } else {   
+              # $ps_client.EndConnect($ps_connect) | out-Null
+              # $remoteserver = $ps_client.GetStream()
+              # iex "$callback $remoteserver"
+              # $remoteserver.Close()
+              # $ps_client.Close() 
+            # }
+          # }
+
           
           $ps_client = new-Object System.Net.Sockets.TcpClient
           $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)   
-          #Configure a timeout before quitting   
           $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(1000, $false)  
           if(!$ps_wait) {   
             $ps_client.Close()   
@@ -101,15 +120,28 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 }
 
 function script:Test-TcpPort($ps_computer, $ps_port)
-{
+{   
+    ###############################################################
+    # This works
+    # But performance is to slow due to job nature!
+    #
+    # $ErrorActionPreference = 'SilentlyContinue'
+    # Start-Job -ScriptBlock {
+      # $ps_client = New-Object System.Net.Sockets.TcpClient($args)
+      # if($ps_client) { 
+        # $ps_client.Connected
+        # $ps_client.Close()
+      # }else{ $false }
+    # } -ArgumentList $ps_computer,$ps_port | wait-job | Receive-Job
+    
     $ErrorActionPreference = 'SilentlyContinue'
-    Start-Job -ScriptBlock {
-      $ps_client = New-Object System.Net.Sockets.TcpClient($args)
-      if($ps_client) { 
-        $ps_client.Connected
-        $ps_client.Close()
-      }else{ $false }
-    } -ArgumentList $ps_computer,$ps_port | wait-job | Receive-Job
+    $s = new-object Net.Sockets.TcpClient
+    $s.Connect($ps_remotehost, $ps_port)
+    if ($s.Connected) {
+        $s.Close()
+        return $true
+    }
+    return $false
 }
 
 function script:Wait-RemoteServer($ps_remotehost)

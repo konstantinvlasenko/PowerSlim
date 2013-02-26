@@ -12,6 +12,7 @@
 		<SuiteCommon>.PowerSlim.OriginalMode.SuiteCommon</SuiteCommon>
 		<SuiteSymbols>.PowerSlim.OriginalMode.SuiteSymbols</SuiteSymbols>
 		<SuiteFixes>.PowerSlim.OriginalMode.SuiteFixes</SuiteFixes>
+		<SuiteNoHangup>.PowerSlim.OriginalMode.SuiteNoHangup</SuiteNoHangup>
 	</SymbolicLinks>
 	<Versions/>
 	<WhereUsed/>
