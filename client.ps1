@@ -1,3 +1,9 @@
+#
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <konstantin.vlasenko@gmail.com> wrote this file. As long as you retain this notice
+# you can do whatever you want with this stuff. If we meet some day, and you
+# think this stuff is worth it, you can buy me a beer in return.
+#
 function Get-RemoteSlimSymbols($inputTable)
 {
   $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
@@ -33,6 +39,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
               $remoteserver = $ps_sumbols_client.GetStream()
 
+              "Connected" | Out-Default
                       
               $list = @($slimsymbols.GetEnumerator() | % {$_})
               $tr = "[" + (slimlen $list) + ":"
@@ -57,53 +64,28 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
               $s2 = [text.encoding]::utf8.getbytes($s2)
 
+              $tr | Out-Default 
+
               $remoteserver.Write($s2, 0, $s2.Length)
               get_message($remoteserver)
 
           }
-          ###################################################################
-          # It is time to real crazy PS development
-          # Timeout below works fine - looks like the performance increase
-          # But We have the duplication above (Line:33)
-          # I am looking for ability to pass a function as argument to another function
-          # function PowerSlim-Connect($ps_computer, $ps_port, $callbac ) {
-            # $ps_client = new-Object System.Net.Sockets.TcpClient
-            # $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)   
-            # $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(1000, $false)  
-            # if(!$ps_wait) {   
-              # $ps_client.Close()   
-              # Write-Error "[$ps_computer $ps_port] Connection Timeout"   
-            # } else {   
-              # $ps_client.EndConnect($ps_connect) | out-Null
-              # $remoteserver = $ps_client.GetStream()
-              # iex "$callback $remoteserver"
-              # $remoteserver.Close()
-              # $ps_client.Close() 
-            # }
-          # }
 
-          
-          $ps_client = new-Object System.Net.Sockets.TcpClient
-          $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)   
-          $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(1000, $false)  
-          if(!$ps_wait) {   
-            $ps_client.Close()   
-            Write-Error "[$ps_computer $ps_port] Connection Timeout"   
-          } else {   
-            $ps_client.EndConnect($ps_connect) | out-Null
-            $remoteserver = $ps_client.GetStream()
+         $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+         $remoteserver = $ps_client.GetStream()
     
-            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
-            $result[$ps_computer] = get_message($remoteserver)
+         $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
+         $result[$ps_computer] = get_message($remoteserver)
     
-            #backward symbols sharing
-            foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
-              $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-              $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
-            }
-            $remoteserver.Close()         
-            $ps_client.Close() 
-          }
+          #backward symbols sharing
+         foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
+            $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
+            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
+         }
+      
+         $remoteserver.Close()         
+         $ps_client.Close() 
+
       }
 
       #if($result.Count -eq 1){
@@ -119,21 +101,8 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
     }
 }
 
-function script:Test-TcpPort($ps_computer, $ps_port)
-{   
-    ###############################################################
-    # This works
-    # But performance is to slow due to job nature!
-    #
-    # $ErrorActionPreference = 'SilentlyContinue'
-    # Start-Job -ScriptBlock {
-      # $ps_client = New-Object System.Net.Sockets.TcpClient($args)
-      # if($ps_client) { 
-        # $ps_client.Connected
-        # $ps_client.Close()
-      # }else{ $false }
-    # } -ArgumentList $ps_computer,$ps_port | wait-job | Receive-Job
-    
+function script:Test-TcpPort($ps_remotehost, $ps_port)
+{
     $ErrorActionPreference = 'SilentlyContinue'
     $s = new-object Net.Sockets.TcpClient
     $s.Connect($ps_remotehost, $ps_port)
