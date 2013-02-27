@@ -70,7 +70,7 @@ function read_message($ps_stream){
 
     if ($error) {
 
-      Write-Verbose $error
+      Write-Verbose $error.Exception
       break
 
     }
