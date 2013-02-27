@@ -4,9 +4,27 @@ function Get-RemoteSlimSymbols($inputTable)
   $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
 }
 
+function PowerSlim-SendTable($ps_computer, $ps_port, $buffer, $length ) {
+  "[$ps_computer $ps_port] Connecting..." | Out-Default
+  $ps_client = new-Object System.Net.Sockets.TcpClient
+  $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)  
+  $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(5000)  
+  if(!$ps_wait) {   
+    $ps_client.Close()   
+    throw "[$ps_computer $ps_port] Connection Timeout"   
+  } else {   
+    $ps_client.EndConnect($ps_connect) | Out-Null
+    "[$ps_computer $ps_port] Connected!" | Out-Default
+    $remoteserver = $ps_client.GetStream()
+    $remoteserver.Write($buffer, 0, $length)
+    get_message($remoteserver)
+    $remoteserver.Close()
+    $ps_client.Close() 
+  }
+}
+
 function script:process_table_remotely($ps_table, $ps_fitnesse){
 
-    #$targets = $ps_table[0][4].Trim(',').Split(',')
     try {
 
       $originalslimbuffer = $slimbuffer.Clone()
@@ -23,86 +41,39 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
           }
 
           if($ps_port -eq $null){$ps_port = 35};
-
-          $ps_computer, $ps_port | Out-Default
-          
+                
           if($slimsymbols.Count -ne 0){
+            $list = @($slimsymbols.GetEnumerator() | % {$_})
+            $tr = "[" + (slimlen $list) + ":"
 
-              "Connecting to $ps_computer $ps_port" | Out-Default
+            foreach ($obj in $list){
+                                
+                $itemstr = "[" +  (6).ToString("d6") + ":"
 
-              $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
-              $remoteserver = $ps_sumbols_client.GetStream()
+                $itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
+                $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
+                $itemstr += (slimlen 'eval') + ":eval:"
 
-                      
-              $list = @($slimsymbols.GetEnumerator() | % {$_})
-              $tr = "[" + (slimlen $list) + ":"
-
-              foreach ($obj in $list){
-                                  
-                  $itemstr = "[" +  (6).ToString("d6") + ":"
-
-                  $itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
-                  $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
-                  $itemstr += (slimlen 'eval') + ":eval:"
-
-                  $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+                $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
     
-                  $itemstr += "]"
+                $itemstr += "]"
           
-                  $tr += (slimlen $itemstr) + ":" + $itemstr + ":"
-              } 
+                $tr += (slimlen $itemstr) + ":" + $itemstr + ":"
+            } 
 
-              $tr += "]"
-              
-              $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
-              $s2 = [text.encoding]::utf8.getbytes($s2)
+            $tr += "]"
+            
+            $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
+            $s2 = [text.encoding]::utf8.getbytes($s2)
 
-              $remoteserver.Write($s2, 0, $s2.Length)
-              get_message($remoteserver)
-
+            PowerSlim-SendTable $ps_computer $ps_port $s2 $s2.Length | out-Null
           }
-          ###################################################################
-          # It is time to real crazy PS development
-          # Timeout below works fine - looks like the performance increase
-          # But We have the duplication above (Line:33)
-          # I am looking for ability to pass a function as argument to another function
-          # function PowerSlim-Connect($ps_computer, $ps_port, $callbac ) {
-            # $ps_client = new-Object System.Net.Sockets.TcpClient
-            # $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)   
-            # $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(1000, $false)  
-            # if(!$ps_wait) {   
-              # $ps_client.Close()   
-              # Write-Error "[$ps_computer $ps_port] Connection Timeout"   
-            # } else {   
-              # $ps_client.EndConnect($ps_connect) | out-Null
-              # $remoteserver = $ps_client.GetStream()
-              # iex "$callback $remoteserver"
-              # $remoteserver.Close()
-              # $ps_client.Close() 
-            # }
-          # }
-
-          
-          $ps_client = new-Object System.Net.Sockets.TcpClient
-          $ps_connect = $ps_client.BeginConnect($ps_computer,$ps_port,$null,$null)   
-          $ps_wait = $ps_connect.AsyncWaitHandle.WaitOne(1000, $false)  
-          if(!$ps_wait) {   
-            $ps_client.Close()   
-            Write-Error "[$ps_computer $ps_port] Connection Timeout"   
-          } else {   
-            $ps_client.EndConnect($ps_connect) | out-Null
-            $remoteserver = $ps_client.GetStream()
-    
-            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
-            $result[$ps_computer] = get_message($remoteserver)
-    
-            #backward symbols sharing
-            foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
-              $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-              $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
-            }
-            $remoteserver.Close()         
-            $ps_client.Close() 
+             
+          $result[$ps_computer] = PowerSlim-SendTable $ps_computer $ps_port $originalslimbuffer $originalslimbuffersize
+          #backward symbols sharing
+          foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
+            $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
+            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
           }
       }
 
@@ -111,11 +82,12 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
       #}
 
     }
-    catch [System.Exception] {
-        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "$slimexception$($_.Exception.Message)") + ':' + "$slimexception$($_.Exception.Message)" + ':]'
-        $send = (slimlen $send) + ":" + $send + ":"
-        $send = [text.encoding]::utf8.getbytes((pack_results $send))
-        $ps_fitnesse.Write($send, 0, $send.Length)
+    catch {
+      $_.Exception.Message | out-default
+      $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.Message)>>") + ':' + "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.Message)>>" + ':]'
+      $send = (slimlen $send) + ":" + $send + ":"
+      $send = [text.encoding]::utf8.getbytes((pack_results $send))
+      $ps_fitnesse.Write($send, 0, $send.Length)
     }
 }
 

@@ -6,6 +6,7 @@ $slimnull = "000004:null:"
 #$slimvoid = "/__VOID__/"
 $slimvoid = ""
 $slimexception = "__EXCEPTION__:"
+$abort = "__EXCEPTION__:ABORT_SLIM_TEST"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $slimbuffer = new-object byte[] 102400
 $slimbuffersize = 0
@@ -432,7 +433,7 @@ function Run-SlimServer($ps_server){
 }
 
 function Run-RemoteServer($ps_server){
-  "waiting..." | Out-Default
+  #"waiting..." | Out-Default
   while($ps_fitnesse_client = $ps_server.AcceptTcpClient()){
     "accepted!" | Out-Default
     $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
