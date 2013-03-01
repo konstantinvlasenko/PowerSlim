@@ -7,8 +7,8 @@ $slimnull = "000004:null:"
 $slimvoid = ""
 $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
-$slimbuffer = new-object byte[] 102400
-$slimbuffersize = 0
+#$slimbuffer = new-object byte[] 102400
+#$slimbuffersize = 0
 
 #$VerbosePreference="Continue"
 
@@ -55,32 +55,30 @@ function send_slim_version($ps_stream){
 }
 
 function get_message_length($ps_stream){
-  $ps_stream.Read($slimbuffer, 0, 7) | out-null
-  $global:slimbuffersize = [int][text.encoding]::utf8.getstring($slimbuffer, 0, 6) + 7
-  $slimbuffersize - 7
+  $buf = new-object byte[] 7
+  $t = read_message $ps_stream $buf
+  [int][text.encoding]::utf8.getstring($buf, 0, 6)
 }
 
-function read_message($ps_stream){
-  $ps_size = get_message_length($ps_stream)
-  $offset = 0
-  while($offset -lt $ps_size){
-    
-    $error.clear()
-    $offset += $ps_stream.Read($slimbuffer, $offset + 7, $ps_size)
+function read_message($ps_stream, $buf, $offset = 0){
+    $ps_size = $buf.Count
+    $ps_size | out-default
+    while($offset -lt $ps_size){
+        $error.clear()
+        $offset += $ps_stream.Read($buf, $offset, $ps_size - $offset)
 
-    if ($error) {
-
-      Write-Verbose $error.Exception
-      break
-
+        if ($error) {
+            Write-Verbose $error.Exception
+            break
+        }
     }
-
-  }
 }
 
 function get_message($ps_stream){
-  read_message($ps_stream)
-  [text.encoding]::utf8.getstring($slimbuffer, 7, $slimbuffersize - 7)
+  $ps_size = get_message_length($ps_stream)
+  $buf = new-object byte[] $ps_size
+  $t = read_message $ps_stream $buf
+  [text.encoding]::utf8.getstring($buf)
 }
 
 function ObjectTo-Slim($ps_obj){
