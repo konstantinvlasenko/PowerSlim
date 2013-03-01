@@ -4,6 +4,7 @@
 # you can do whatever you want with this stuff. If we meet some day, and you
 # think this stuff is worth it, you can buy me a beer in return.
 #
+
 function Get-RemoteSlimSymbols($inputTable)
 {
   $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
@@ -15,8 +16,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
     #$targets = $ps_table[0][4].Trim(',').Split(',')
     try {
 
-      $originalslimbuffer = $slimbuffer.Clone()
-      $originalslimbuffersize = $slimbuffersize
+      $originalslimbuffer = $ps_buf1 + $ps_buf2
 
       $result = new-Object 'system.collections.generic.dictionary[string,object]'
 
@@ -30,7 +30,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 
           if($ps_port -eq $null){$ps_port = 35};
 
-          $ps_computer, $ps_port | Out-Default
+          Write-Verbose "Connecting to $ps_computer, $ps_port"
           
           if($slimsymbols.Count -ne 0){
 
@@ -74,11 +74,11 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
          $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
          $remoteserver = $ps_client.GetStream()
     
-         $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffersize)
+         $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
          $result[$ps_computer] = get_message($remoteserver)
     
           #backward symbols sharing
-         foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffersize))) {
+         foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) {
             $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
             $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
          }
@@ -89,7 +89,10 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
       }
 
       #if($result.Count -eq 1){
-      $ps_fitnesse.Write($slimbuffer, 0, $slimbuffersize)
+
+      $res = $ps_buf1 + $ps_buf2
+      $ps_fitnesse.Write($res, 0, $res.Length)
+
       #}
 
     }

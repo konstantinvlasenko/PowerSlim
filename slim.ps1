@@ -9,7 +9,6 @@ $slimexception = "__EXCEPTION__:"
 $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 #$slimbuffer = new-object byte[] 102400
 #$slimbuffersize = 0
-
 #$VerbosePreference="Continue"
 
 function Get-SlimTable($slimchunk){
@@ -54,31 +53,54 @@ function send_slim_version($ps_stream){
   $ps_stream.Write($ps_version, 0, $ps_version.Length)
 }
 
+$ps_buf1 = $null
+$ps_buf2 = $null
+
 function get_message_length($ps_stream){
-  $buf = new-object byte[] 7
-  $t = read_message $ps_stream $buf
-  [int][text.encoding]::utf8.getstring($buf, 0, 6)
+
+  $global:ps_buf1 = new-object byte[] 7
+
+  $t = read_message $ps_stream $ps_buf1
+  [int][text.encoding]::utf8.getstring($ps_buf1, 0, 6)
+
+  Write-Verbose "Length: $ps_buf1"
 }
 
 function read_message($ps_stream, $buf, $offset = 0){
+
+    Write-Verbose "Reading message...."
+
     $ps_size = $buf.Count
-    $ps_size | out-default
+
     while($offset -lt $ps_size){
+
         $error.clear()
         $offset += $ps_stream.Read($buf, $offset, $ps_size - $offset)
+
+        Write-Verbose "Offset $offset"
 
         if ($error) {
             Write-Verbose $error.Exception
             break
         }
     }
+
+    Write-Verbose "Got $buf"
 }
 
 function get_message($ps_stream){
+
+  Write-Verbose "Getting Message Length ..."
+
   $ps_size = get_message_length($ps_stream)
-  $buf = new-object byte[] $ps_size
-  $t = read_message $ps_stream $buf
-  [text.encoding]::utf8.getstring($buf)
+
+  Write-Verbose "Length: $ps_size"
+
+  $global:ps_buf2 = new-object byte[] $ps_size
+  $t = read_message $ps_stream $ps_buf2
+
+  [text.encoding]::utf8.getstring($ps_buf2)
+
 }
 
 function ObjectTo-Slim($ps_obj){
@@ -385,6 +407,8 @@ function process_message($ps_stream){
 
   if( ! $ps_stream.CanRead ){ return "buy" }
 
+  Write-Verbose "Started processing message."
+
   $ps_msg = get_message($ps_stream)
   $ps_msg
 
@@ -396,7 +420,16 @@ function process_message($ps_stream){
   check_remote($global:ps_table)
 
   if($Remote -eq $true){
+
+    Write-Verbose "Buffer1 $ps_buf1"
+    Write-Verbose "Buffer2 $ps_buf2"
+
+    Write-Verbose "Processing table remotelly"
+
     process_table_remotely $global:ps_table $ps_stream;
+
+    Write-Verbose "Done remote call"
+
     return
   }
   
@@ -408,6 +441,8 @@ function process_message($ps_stream){
 }
 
 function process_message_ignore_remote($ps_stream){
+
+  Write-Verbose "Process Message & Ignore Remote"
 
   $ps_msg = get_message($ps_stream)
 
