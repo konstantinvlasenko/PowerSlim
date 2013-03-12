@@ -1,5 +1,9 @@
 |script|
-|check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru-!||
+|check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru -Verbose -!||
+#|check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!||
+
+!|script|Remote|localhost:41|
+|eval|$VerbosePreference="Continue"|
 
 |script|
 |check|eval|$client = New-Object System.Net.Sockets.TcpClient localhost, 41||
@@ -9,10 +13,10 @@
 
 |script|
 |check|eval|$stream.ReadTimeout = 1000||
-|check|eval|$stream.Read($data,0,1)|0|
+|show|eval|$stream.Read($data,0,1)||
 
-!|script|Remote|localhost:41|
-|check|eval|1+2|3|
+#!|script|Remote|localhost:41|
+#|check|eval|1+2|3|
 
 |script|
 |check|eval|$sut.Kill()||
