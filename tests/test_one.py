@@ -42,20 +42,20 @@ def make_stream(s):
   i_( "$stream = New-Object System.IO.MemoryStream" )
   i_( "$writer = New-Object System.IO.StreamWriter $stream" )
 
-  i_( "$writer.WriteLine('%s')" % s )
+  i_( "$writer.Write('%s')" % s )
   i_( "$writer.Flush()" )
   i_( "$stream.Seek(0, 'Begin')" )  
 
 def test_stream():
 
   p.Streams.Error.Clear()
-  make_stream( "Wow" )
+  make_stream( "1" )
 
-  i_( "$buff = new-object byte[] 3" )
-  i_( "$stream.Read($buff,0,3)" )
-  i_( "[text.encoding]::utf8.getstring($buff);$buff" )
+  i_( "$buff = new-object byte[] 1" )
+  i_( "$stream.Read($buff,0,1)" )
+  i_( "[text.encoding]::utf8.getstring($buff)" )
 
-  eq_(res, "Wow" )
+  eq_(res, "1" )
 
 def test_powershell():
   
@@ -88,10 +88,10 @@ def test_is_chunk():
 
 def test_message_length():
   
-  make_stream( "11111" ) 
+  make_stream( "1111111" ) 
   i_( "get_message_length($stream)" )
 
-  eq_( res, 11111 )
+  eq_( res, 111111 )
 
 def _test_message_length_hangs():
   
