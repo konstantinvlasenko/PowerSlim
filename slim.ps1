@@ -491,6 +491,11 @@ function Run-RemoteServer($ps_server){
   }
 }
 
+if (!$args.Length) { 
+  Write-Output "No arguments provided!"
+  return; 
+}
+
 $ps_server = New-Object System.Net.Sockets.TcpListener($args[0])
 $ps_server.Start()
 
