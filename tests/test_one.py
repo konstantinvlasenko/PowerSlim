@@ -28,7 +28,7 @@ def i_(s):
 
 def print_errors():
  
-  print len(p.Streams.Error)
+  print "PowerShell Errors: %s" % len(p.Streams.Error)
   for i in p.Streams.Error:
     print i
 
@@ -40,7 +40,6 @@ def make_stream(s):
   i_( "$writer.WriteLine('%s')" % s )
   i_( "$writer.Flush()" )
   i_( "$stream.Seek(0, 'Begin')" )  
-  i_( "Write-Error $stream.Position" )
 
 def test_stream():
 
@@ -50,8 +49,6 @@ def test_stream():
   i_( "$buff = new-object byte[] 3" )
   i_( "$stream.Read($buff,0,3)" )
   i_( "[text.encoding]::utf8.getstring($buff);$buff" )
-
-  print_errors()
 
   eq_(res, "Wow" )
 
@@ -83,3 +80,22 @@ def test_is_chunk():
   i_( "ischunk($a)" )
 
   eq_(res, True)
+
+def test_message_length():
+  
+  make_stream( "111111" ) 
+  i_( "get_message_length($stream)" )
+
+  eq_( res, 111111 )
+
+def _test_message_length_hangs():
+  
+  make_stream( "111" ) 
+
+  script( "get_message_length($stream)" )
+  async = p.BeginInvoke()
+
+  done = async.AsyncWaitHandle.WaitOne( 1000 )
+  p.Stop()
+  
+  eq_( done, True )
