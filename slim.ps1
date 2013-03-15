@@ -69,7 +69,12 @@ function get_message_length($ps_stream){
 function read_message($ps_stream, $buf, $offset = 0){
 
     Write-Verbose "Reading message...."
-
+    
+    #Support for slow connection
+    $ps_stream.ReadTimeout = 10000 #idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
+    # But if the read operation completed with the zero bytes. This means that client is not going to send anything. Right?
+    
+    
     $ps_size = $buf.Count
 
     while($offset -lt $ps_size){
@@ -83,6 +88,12 @@ function read_message($ps_stream, $buf, $offset = 0){
             Write-Verbose $error.Exception
             break
         }
+        if($offset -eq 0)
+        {
+            Write-Verbose "Offset should not be zero!"
+            break
+        }
+        
     }
 
     Write-Verbose "Got $buf"
