@@ -19,7 +19,12 @@ def i_(s):
   script(s)
   global res
 
-  res = p.Invoke()
+  async = p.BeginInvoke()
+
+  if not async.AsyncWaitHandle.WaitOne( 2000 ):
+    p.Stop()
+
+  res = p.EndInvoke(async)
 
   if (len(res)):
     res = res[0]
@@ -83,19 +88,14 @@ def test_is_chunk():
 
 def test_message_length():
   
-  make_stream( "111111" ) 
+  make_stream( "11111" ) 
   i_( "get_message_length($stream)" )
 
-  eq_( res, 111111 )
+  eq_( res, 11111 )
 
 def _test_message_length_hangs():
   
   make_stream( "111" ) 
+  i_( "get_message_length($stream)" )
 
-  script( "get_message_length($stream)" )
-  async = p.BeginInvoke()
-
-  done = async.AsyncWaitHandle.WaitOne( 1000 )
-  p.Stop()
-  
-  eq_( done, True )
+  eq_( res, 11111 )
