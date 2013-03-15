@@ -18,7 +18,11 @@ def i_(s):
 
   script(s)
   global res
-  res = (p.Invoke())
+
+  res = p.Invoke()
+
+  if (len(res)):
+    res = res[0]
 
   p.Commands.Clear()
 
@@ -49,33 +53,33 @@ def test_stream():
 
   print_errors()
 
-  eq_(res[0], "Wow" )
+  eq_(res, "Wow" )
 
 def test_powershell():
   
   i_( "$a=12;$a" )
-  eq_(res[0], 12)
+  eq_(res, 12)
 
 def test_one_row_table():
   
   i_( "$a = 1, 2, 3" )
   i_( "Test-OneRowTable( $a )" )
 
-  eq_(res[0], True)
+  eq_(res, True)
   
   i_( "$a = (1,2,3), 2, 3" )
   i_( "Test-OneRowTable( $a )" )
   
-  eq_(res[0], False)
+  eq_(res, False)
 
 def test_is_chunk():
 
   i_( "$a='not chunk'" )
   i_( "ischunk($a)" )
 
-  eq_(res[0], False)
+  eq_(res, False)
 
   i_( "$a='[chunk]'" )
   i_( "ischunk($a)" )
 
-  eq_(res[0], True)
+  eq_(res, True)
