@@ -11,6 +11,11 @@ $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 #$slimbuffersize = 0
 #$VerbosePreference="Continue"
 
+#Support for slow connection
+#$ps_stream.ReadTimeout = 10000 #idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
+# But if the read operation completed with the zero bytes. This means that client is not going to send anything. Right?
+$REQUEST_READ_TIMEOUT = 10000
+
 function Get-SlimTable($slimchunk){
 
   $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
@@ -69,11 +74,6 @@ function get_message_length($ps_stream){
 function read_message($ps_stream, $buf, $offset = 0){
 
     Write-Verbose "Reading message...."
-    
-    #Support for slow connection
-    $ps_stream.ReadTimeout = 10000 #idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
-    # But if the read operation completed with the zero bytes. This means that client is not going to send anything. Right?
-    
     
     $ps_size = $buf.Count
 
@@ -473,6 +473,8 @@ function process_message_ignore_remote($ps_stream){
 function Run-SlimServer($ps_server){
   $ps_fitnesse_client = $ps_server.AcceptTcpClient()
   $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
+  $ps_fitnesse_stream.ReadTimeout = $REQUEST_READ_TIMEOUT
+  
   send_slim_version($ps_fitnesse_stream)
   $ps_fitnesse_client.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
   while("bye" -ne (process_message($ps_fitnesse_stream))){};
@@ -484,6 +486,8 @@ function Run-RemoteServer($ps_server){
   while($ps_fitnesse_client = $ps_server.AcceptTcpClient()){
     "accepted!" | Out-Default
     $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
+    $ps_fitnesse_stream.ReadTimeout = $REQUEST_READ_TIMEOUT
+    
     process_message_ignore_remote($ps_fitnesse_stream)
     $ps_fitnesse_stream.Close()
     $ps_fitnesse_client.Close()
