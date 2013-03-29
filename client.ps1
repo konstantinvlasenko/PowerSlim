@@ -5,6 +5,9 @@
 # think this stuff is worth it, you can buy me a beer in return.
 #
 
+# the timeout for the Remote server is 1 hour
+$REMOTE_SERVER_READ_TIMEOUT = 60*60*1000
+
 function Get-RemoteSlimSymbols($inputTable)
 {
   $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
@@ -38,6 +41,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 
               $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
               $remoteserver = $ps_sumbols_client.GetStream()
+              $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
 
               "Connected" | Out-Default
                       
@@ -73,6 +77,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 
          $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
          $remoteserver = $ps_client.GetStream()
+         $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
     
          $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
          $result[$ps_computer] = get_message($remoteserver)
