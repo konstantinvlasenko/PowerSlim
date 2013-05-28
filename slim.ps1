@@ -1,5 +1,5 @@
 ##########################
-# PowerSlim (Revision 46)#
+# PowerSlim (Revision 47)#
 ##########################
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
@@ -420,8 +420,12 @@ function process_message($ps_stream){
 
   Write-Verbose "Started processing message."
 
+  $error.clear()
   $ps_msg = get_message($ps_stream)
+
   $ps_msg
+
+  if ($error) { return "buy" }
 
   if( !(ischunk $ps_msg) ){ return }
 
