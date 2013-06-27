@@ -21,7 +21,7 @@ function Get-SlimTable($slimchunk){
 
   Write-Verbose $ps_exp
 
-  $global:ps_table = iex $ps_exp
+  $script:ps_table = iex $ps_exp
 }
 
 
@@ -62,7 +62,7 @@ $ps_buf2 = $null
 
 function get_message_length($ps_stream){
 
-  $global:ps_buf1 = new-object byte[] 7
+  $script:ps_buf1 = new-object byte[] 7
 
   $t = read_message $ps_stream $ps_buf1
   [int][text.encoding]::utf8.getstring($ps_buf1, 0, 6)
@@ -107,7 +107,7 @@ function get_message($ps_stream){
 
   Write-Verbose "Length: $ps_size"
 
-  $global:ps_buf2 = new-object byte[] $ps_size
+  $script:ps_buf2 = new-object byte[] $ps_size
   $t = read_message $ps_stream $ps_buf2
 
   [text.encoding]::utf8.getstring($ps_buf2)
@@ -237,7 +237,7 @@ function Invoke-SlimCall($fnc){
       else{ $slimvoid }
     }
   }
-  $global:matches = $matches
+  $script:matches = $matches
 }
 
 function Set-Script($s, $fmt){
@@ -247,26 +247,26 @@ function Set-Script($s, $fmt){
   if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -match "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = [string]::Format( $fmt, $s)
-  if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function global:$1') -Scope Global}
-  else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$global:$1') -Scope Global}
+  if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global}
+  else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)(?=\s*=)','$script:$1') -Scope Global}
 }
 
 function make($ins){
   if("ESXI".Equals($ins[3],[System.StringComparison]::OrdinalIgnoreCase)){
-    $global:QueryFormat__ = Get-QueryFormat $ins
-    $global:EvalFormat__ = Get-EvalFormat $ins
+    $script:QueryFormat__ = Get-QueryFormat $ins
+    $script:EvalFormat__ = Get-EvalFormat $ins
   }
   "OK"
 }
 
-function Id() {$global:ps_row[0]}
-function Operation() {$global:ps_row[1]}
-function Module() {$global:ps_row[2]}
-function Table-Type() {$global:ps_row[2]}
+function Id() {$script:ps_row[0]}
+function Operation() {$script:ps_row[1]}
+function Module() {$script:ps_row[2]}
+function Table-Type() {$script:ps_row[2]}
 
 function Invoke-SlimInstruction(){
 
-  $ins = $global:ps_row
+  $ins = $script:ps_row
 
   (Id)
 
@@ -300,19 +300,19 @@ function Invoke-SlimInstruction(){
           "/__VOID__/"
           return
         }elseif($ins[3][0..2] -join '' -eq 'set'){
-          iex "`$global:$($ins[3].Substring(3))='$($ins[4])'"
+          iex "`$script:$($ins[3].Substring(3))='$($ins[4])'"
           "/__VOID__/"
           return
         }elseif($ins[3] -eq 'execute'){
-          $global:decision_result = iex "$Script__ 2>&1"
+          $script:decision_result = iex "$Script__ 2>&1"
           $slimvoid
-          #$global:decision_result
+          #$script:decision_result
           return
         }else{
           if($ins[3] -ne 'Result'){
             "Not Implemented"
           }else{
-            $global:decision_result
+            $script:decision_result
           }
           return
         }
@@ -349,7 +349,7 @@ function Invoke-SlimInstruction(){
 
 function Process-Instruction($ins){
 
-  $global:ps_row = $ins
+  $script:ps_row = $ins
   $result = Invoke-SlimInstruction
 
   $s = '[000002:' + (slimlen $result[0]) + ':' + $result[0] + ':' + (slimlen $result[1]) + ':' + $result[1] + ':]'
@@ -385,7 +385,7 @@ function check_remote($ps_table) {
       }
       else
       {
-        $global:Remote = $false
+        $script:Remote = $false
       }
 
   }
@@ -394,21 +394,21 @@ function check_remote($ps_table) {
 
 function set_remote_targets($ps_cell) {
 
-  $global:Remote = $true
-  $global:targets = $null
+  $script:Remote = $true
+  $script:targets = $null
 
-  $global:targets = iex $ps_cell
+  $script:targets = iex $ps_cell
   
-  if($global:targets -eq $null){
-    $global:targets = $ps_cell.Split(",") | %{$_.Trim(", ")}
+  if($script:targets -eq $null){
+    $script:targets = $ps_cell.Split(",") | %{$_.Trim(", ")}
   }
 
 }
 
 function process_table() {
 
-  if(Test-OneRowTable $global:ps_table){ $ps_results = Process-Instruction $global:ps_table }
-  else { $ps_results = $global:ps_table | % { Process-Instruction $_ } }
+  if(Test-OneRowTable $script:ps_table){ $ps_results = Process-Instruction $script:ps_table }
+  else { $ps_results = $script:ps_table | % { Process-Instruction $_ } }
 
   $ps_results
 
@@ -429,10 +429,10 @@ function process_message($ps_stream){
 
   if( !(ischunk $ps_msg) ){ return }
 
-  $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
+  $script:QueryFormat__ = $script:EvalFormat__ = "{0}"
   Get-SlimTable $ps_msg
 
-  check_remote($global:ps_table)
+  check_remote($script:ps_table)
 
   if($Remote -eq $true){
 
@@ -441,7 +441,7 @@ function process_message($ps_stream){
 
     Write-Verbose "Processing table remotelly"
 
-    process_table_remotely $global:ps_table $ps_stream;
+    process_table_remotely $script:ps_table $ps_stream;
 
     Write-Verbose "Done remote call"
 
@@ -463,7 +463,7 @@ function process_message_ignore_remote($ps_stream){
 
   if(ischunk($ps_msg)){
 
-    $global:QueryFormat__ = $global:EvalFormat__ = "{0}"
+    $script:QueryFormat__ = $script:EvalFormat__ = "{0}"
     $ps_table = Get-SlimTable $ps_msg
 
     $ps_results = process_table
