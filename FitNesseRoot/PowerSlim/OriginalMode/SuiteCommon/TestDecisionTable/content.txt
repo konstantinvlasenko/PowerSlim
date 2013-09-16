@@ -13,3 +13,14 @@
 |arg|result2?|
 |World|Not Implemented|
 |Canada|Not Implemented|
+
+!* Symbols in decision table
+|"$arg1 $arg2"|
+|arg1 |arg2 |result?|
+|Hello|World| $V= |
+
+|script|
+|check|eval|"Hello World"|$V|
+|check|eval|"$V"|Hello World|
+
+*!
