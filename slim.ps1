@@ -244,7 +244,7 @@ function Set-Script($s, $fmt){
   if(!$s){ return }
   $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','''$1'';'
   $s = $s -replace '</?pre>' #workaround fitnesse strange behavior
-  if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -match "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -replace "\`$$_",$slimsymbols[$_] }}
+  if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = [string]::Format( $fmt, $s)
   if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global}
@@ -270,7 +270,7 @@ function Invoke-SlimInstruction(){
 
   (Id)
 
-  switch (Operation){
+  switch -wildcard (Operation){
 
     "import" {
 
@@ -294,7 +294,7 @@ function Invoke-SlimInstruction(){
       $ins = $ins[0,1 + 3 .. $ins.Count]
     }
 
-    "call" { 
+    "call*" { 
       if($ins[2].StartsWith('decisionTable')){
         if($ins[3] -match ('table|beginTable|reset|endTable')){
           "/__VOID__/"
@@ -312,6 +312,7 @@ function Invoke-SlimInstruction(){
           if($ins[3] -ne 'Result'){
             "Not Implemented"
           }else{
+            if($symbol){$slimsymbols[$symbol] = $script:decision_result}
             $script:decision_result
           }
           return
