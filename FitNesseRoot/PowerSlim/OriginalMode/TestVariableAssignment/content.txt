@@ -1,0 +1,9 @@
+|script|
+|eval|$a=1;$b=2|
+|check|eval|$a|1|
+|check|eval|$b|2|
+
+|script|
+|eval|$c,$d = 3,4|
+|check|eval|$c|3|
+|check|eval|$d|4|
