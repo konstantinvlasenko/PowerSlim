@@ -1,0 +1,11 @@
+!|script|
+|eval|$server2 = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 37 server" -PassThru|
+|eval|$server3 = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 38 server" -PassThru|
+|eval|sleep 1|
+
+!|script|remote|localhost:37,localhost:38|
+|eval|notepad|
+
+-!|script|
+|eval|$server2.Kill()|
+|eval|$server3.Kill()|
