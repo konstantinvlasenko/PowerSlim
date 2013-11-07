@@ -1,0 +1,5 @@
+| script |
+| show | eval | 1/0 |
+| eval | $ErrorActionPreference = 'Stop' |
+| show | eval | 1/0 |
+| show | eval | "This test does not execute" |
