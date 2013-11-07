@@ -14,6 +14,9 @@ $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 #Support for slow connection
 #$ps_stream.ReadTimeout = 10000 #idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
 $REQUEST_READ_TIMEOUT = 10000
+$script:SLIM_ABORT_TEST = $false
+$script:SLIM_SHOW_INSTRUCTION = $false
+$script:SLIM_SHOW_REPLY = $false
 
 function Get-SlimTable($slimchunk){
 
@@ -178,7 +181,7 @@ function isgenericdict($list){
 }
 
 function ResultTo-List($list){
-  if($null -eq $list){
+  if( $null -eq $list){
     $slimvoid
   }
   elseif ($list -is [array]){
@@ -228,16 +231,85 @@ function ResultTo-String($res){
   }
 }
 
+function Exec-Script( $Script ) {
+  $Error.Clear()   # Clear out any prior errors. After executing the test, if error[0] <> $null, we know it came from the test.
+  try {
+    if ( $script:SLIM_ABORT_TEST ) {
+      # If another critical error has already been detected, we immediately end this 
+      # test w/o executing it and return an error.
+      $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_INDICATED:Test not run>>'
+    } else {
+      # execute the test and store the result.
+      $result = iex $Script
+      # preserve the $matches value, if set by the expression
+      $script:matches = $matches
+    }
+  } catch [System.Management.Automation.CommandNotFoundException] {
+    $exc_type = '__EXCEPTION__:COMMAND_NOT_FOUND:'
+    $exc_msg  = $exc_type + $_
+  } catch [System.Management.Automation.ActionPreferenceStopException] { 
+    # if $ErrorActionPreference is set to stop and an error occurred, we end up here
+    $script:SLIM_ABORT_TEST = $true
+    $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+    $exc_msg  = $exc_type + $_ 
+  } catch [System.Management.Automation.RuntimeException] {
+    $e = $_
+    switch -regex ( $Error[0].FullyQualifiedErrorId ) {
+       # If the user script has thrown an exception and it starts with "StopTest", no further 
+       # tests should execute.
+       '^StopTest:?(.*)?' { if ( $matches.1 ) {
+                              # The exception provides additional details about the error.
+                              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                              $exc_msg  = $exc_type +'Testing aborted. Additional Info[' + $matches.1 + "]"
+                            } else {
+                              # No other details provided... just a throw "StopTest" was executed
+                              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                              $exc_msg  = $exc_type + "Testing aborted." 
+                            }
+                            $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
+                          }
+       default           { 
+          $exc_type = '__EXCEPTION__:'+$_+':'
+          $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+       }
+    }
+  } catch {
+    $exc_type = '__EXCEPTION__:UNKNOWN_ERROR:'
+  	$exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+  } finally {
+    if ( $Error[0] -ne $null ) {
+       # An error has occurred. If $exc_type has a value, it was caught above.
+       if ( $exc_type -gt '' ) {
+         #an error occurred, so check $ErrorActionPreference to see if it's set to Stop
+         if ( $global:ErrorActionPreference -eq 'Stop' ) {
+            # if the user indicated they want to stop on all errors, Stop.
+            $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+         }
+         if ( $exc_type -eq '__EXCEPTION__:ABORT_SLIM_TEST:' ) { 
+            $script:SLIM_ABORT_TEST = $true
+         }
+         $result = $exc_type+'message:<<'+$exc_msg+'>>'
+       } else {
+         # This is a non-terminating error and not caught as part of the special types
+         # above, so simply return the error text as the result of the instruction
+         $result = (''+$Error[0])
+       }
+    }
+  }
+  return $result
+}
+
 
 function Invoke-SlimCall($fnc){
   switch ($fnc){
-    {($_ -eq "query") -or ($_ -eq "eval")} {iex $Script__}
+ 		'query' {$result = Exec-Script -Script $Script__ }
+    'eval'  {$result = Exec-Script -Script $Script__ }
     default { 
-      if ((Table-Type) -eq "ScriptTableActor") { "please use eval" }
-      else{ $slimvoid }
+      if ((Table-Type) -eq "ScriptTableActor") { $result = "please use eval" }
+      else{ $result = $slimvoid }
     }
   }
-  $script:matches = $matches
+  $result
 }
 
 function Set-Script($s, $fmt){
@@ -304,7 +376,7 @@ function Invoke-SlimInstruction(){
           "/__VOID__/"
           return
         }elseif($ins[3] -eq 'execute'){
-          $script:decision_result = iex "$Script__ 2>&1"
+          $script:decision_result = Exec-Script -Script "$Script__ 2>&1"
           $slimvoid
           #$script:decision_result
           return
@@ -326,11 +398,12 @@ function Invoke-SlimInstruction(){
   }
   
   $error.clear()
-  $t = measure-command { $result = Invoke-SlimCall $ins[3] }
+  $t = measure-command { 
+     $result = Invoke-SlimCall $ins[3] 
+  }
   $Script__ + " : " + $t.TotalSeconds | Out-Default
-  if($error[0] -ne $null){ return $error[0] }
-  #if($null -eq $result){ return $slimvoid }
-  if($symbol){ $slimsymbols[$symbol] = $result }
+
+	if($symbol){$slimsymbols[$symbol] = $result}
   
   $error.clear()
   switch ($ins[3]){
@@ -342,10 +415,13 @@ function Invoke-SlimInstruction(){
         $result = ResultTo-List @($result)
       }
     }
-    "eval" {$result = ResultTo-String $result}
+    "eval"  { $result = ResultTo-String $result }
   }
-  if($error[0] -ne $null){ return $error[0] }
-  else { $result.TrimEnd("`r`n") }
+  if ($result -is [String]) {
+    $result.TrimEnd("`r`n")
+  } else { 
+	  $result
+  }
 }
 
 function Process-Instruction($ins){
@@ -417,7 +493,7 @@ function process_table() {
 
 function process_message($ps_stream){
 
-  if( ! $ps_stream.CanRead ){ return "buy" }
+  if( ! $ps_stream.CanRead ){ return "bye" }
 
   Write-Verbose "Started processing message."
 
@@ -426,7 +502,7 @@ function process_message($ps_stream){
 
   $ps_msg
 
-  if ($error) { return "buy" }
+  if ($error) { return "bye" }
 
   if( !(ischunk $ps_msg) ){ return }
 

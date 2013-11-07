@@ -1,6 +1,8 @@
 !define SLIM_TABLE_SIZE (000035:)
 !define SLIM_TABLE_PART ([000002:)
 
+NOTE: This test page is intentionally disabled so that it doesn't run automatically via the Suite test but is instead run from SuiteNoHangupRunner page.
+
 '''READ THIS''' http://goo.gl/aiUAt, Looks like it is not the case
 
 !*> Test setup
