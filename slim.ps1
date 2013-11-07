@@ -257,10 +257,10 @@ function Exec-Script( $Script ) {
     switch -regex ( $Error[0].FullyQualifiedErrorId ) {
        # If the user script has thrown an exception and it starts with "StopTest", no further 
        # tests should execute.
-       '^StopTest:?(.*)?' { if ( $matches.1 ) {
+       '^StopTest:?(.*)?' { if ( $matches[1] ) {
                               # The exception provides additional details about the error.
                               $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-                              $exc_msg  = $exc_type +'Testing aborted. Additional Info[' + $matches.1 + "]"
+                              $exc_msg  = $exc_type +'Testing aborted. Additional Info[' + $matches[1] + "]"
                             } else {
                               # No other details provided... just a throw "StopTest" was executed
                               $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
