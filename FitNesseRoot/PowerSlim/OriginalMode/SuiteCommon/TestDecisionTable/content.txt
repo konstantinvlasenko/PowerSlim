@@ -1,26 +1,32 @@
-|(dir $path).Length|
-|path|result?|
-|c:\|>0|
+|(dir $path).Length                                                   |
+|path       |result?                                                  |
+|c:\        |>0                                                       |
 |c:\vlasenko|Cannot find path 'C:\vlasenko' because it does not exist.|
 
-|"$arg1 $arg2"|
-|arg1|arg2|result?|
-|Hello|World|Hello World|
+|"$arg1 $arg2"                    |
+|arg1 |arg2      |result?         |
+|Hello|World     |Hello World     |
 |Saint|Petersburg|Saint Petersburg|
 
-'''Only result is supported'''
-|"Hello $arg"|
-|arg|result2?|
-|World|Not Implemented|
-|Canada|Not Implemented|
+'''Result attributes/properties are supported'''
+!|"Hello $arg"                              |
+|arg   |result?     |length?|
+|World |Hello World |11     |
+|Canada|Hello Canada|12     |
+
+''' The properties of complex results can be referenced by using an underscore, _, in place of a period, . ''' 
+'' Note: A period doesn't work and methods can't be called because !-FitNesse-! strips special characters from the table column names''
+!| new-object PSObject -Property @{ Name = "$First $Last"; Phone = @{ Home = "$HomePhone"; Work = "$WorkPhone" }; } | 
+| First | Last   | HomePhone    | WorkPhone    | Name?      | Phone_Home?  | Phone_Work?  |
+| Fred  | Smith  | 800-555-1212 | 888-555-1212 | Fred Smith | 800-555-1212 | 888-555-1212 |
 
 !* Symbols in decision table
-|"$arg1 $arg2"|
+|"$arg1 $arg2"      |
 |arg1 |arg2 |result?|
-|Hello|World| $V= |
+|Hello|World|$V=    |
 
-|script|
-|check|eval|"Hello World"|$V|
-|check|eval|"$V"|Hello World|
+|script                              |
+|check|eval|"Hello World"|$V         |
+|check|eval|"$V"         |Hello World|
 
 *!

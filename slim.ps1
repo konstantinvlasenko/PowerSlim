@@ -304,16 +304,53 @@ function Invoke-SlimInstruction(){
           "/__VOID__/"
           return
         }elseif($ins[3] -eq 'execute'){
-          $script:decision_result = iex "$Script__ 2>&1"
+          $script:decision_time = measure-command {
+            $script:decision_result = iex "$Script__ 2>&1"
+          }
           $slimvoid
           #$script:decision_result
           return
         }else{
-          if($ins[3] -ne 'Result'){
-            "Not Implemented"
-          }else{
-            if($symbol){$slimsymbols[$symbol] = $script:decision_result}
-            $script:decision_result
+          switch -regex ($ins[3]) {
+            # Support requesting the amount of time it took to process a decision table row.
+            '^Time(?<comp>\w+)?'
+                       { if ( $Matches.ContainsKey( 'comp') ) {
+                           switch ( $matches.comp ) {
+                              'Seconds' { $script:decision_time.TotalSeconds }
+                              'Days' { $script:decision_time.TotalDays }
+                              'Hours' { $script:decision_time.TotalHours }
+                              'Minutes' { $script:decision_time.TotalMinutes }
+                              'Milliseconds' { $script:decision_time.TotalMilliseconds }
+                              default { 'Invalid Duration: $_' }
+                           }
+                         } else {
+                           $script:decision_time.TotalSeconds
+                         }
+                         break
+                       }
+            '^Result$' { $script:decision_result
+                         if ($symbol) {
+                            $slimsymbols[$symbol] = $script:decision_result
+                         }
+                         break
+                       }
+            '^Result(\S+)$'  # Support accessing a property via Result.Property?
+                       { $prop = $Matches[1]
+                         $prop = $prop -replace '_','.'
+                         ResultTo-String (iex ('$script:decision_result.'+$prop))
+                         if ($symbol) {
+                           $slimsymbols[$symbol] = iex ('$script:decision_result.'+$prop)
+                         }
+                         break
+                       }
+            '^(\S+)$'  { $prop = $Matches[1]
+                         $prop = $prop -replace '_','.'
+                         ResultTo-String (iex ('$script:decision_result.'+$prop))
+                         if ($symbol) {
+                           $slimsymbols[$symbol] = iex ('$script:decision_result.'+$prop)
+                         }
+                       }
+            default { 'Not Implemented' }
           }
           return
         }
@@ -326,8 +363,10 @@ function Invoke-SlimInstruction(){
   }
   
   $error.clear()
-  $t = measure-command { $result = Invoke-SlimCall $ins[3] }
-  $Script__ + " : " + $t.TotalSeconds | Out-Default
+  $script:Command_Time = measure-command {
+    $result = Invoke-SlimCall $ins[3]
+  }
+  $Script__ + " : " + $script:Command_Time.TotalSeconds | Out-Default
   if($error[0] -ne $null){ return $error[0] }
   #if($null -eq $result){ return $slimvoid }
   if($symbol){ $slimsymbols[$symbol] = $result }
