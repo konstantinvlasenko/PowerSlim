@@ -33,7 +33,12 @@ function SlimException-NoClass($ps_class){
   $slimexception + "NO_CLASS " + $ps_class
 }
 
+function SlimException-CMD_NOT_FOUND($ps_cmd){
+  $slimexception + "COMMAND_NOT_FOUND " + $ps_cmd
+}
+
 new-alias noclass SlimException-NoClass
+new-alias nocommand SlimException-CMD_NOT_FOUND
 
 function Get-SlimLength($ps_obj){
   if($ps_obj -is [array]){
@@ -109,7 +114,7 @@ function get_message($ps_stream){
 
   $script:ps_buf2 = new-object byte[] $ps_size
   $t = read_message $ps_stream $ps_buf2
-
+  [text.encoding]::utf8.getstring($ps_buf2) | out-default
   [text.encoding]::utf8.getstring($ps_buf2)
 
 }
@@ -233,7 +238,7 @@ function Invoke-SlimCall($fnc){
   switch ($fnc){
     {($_ -eq "query") -or ($_ -eq "eval")} {iex $Script__}
     default { 
-      if ((Table-Type) -eq "ScriptTableActor") { "please use eval" }
+      if ((Table-Type) -eq "ScriptTableActor") { nocommand $_ }
       else{ $slimvoid }
     }
   }
