@@ -18,5 +18,5 @@
 ''Each missing scenario increments exceptions counter''
 ''We are going to run .PowerSlim.SuiteWrongFailedException.TestMissingScenario trough command line''
 -!|script|
-|check|eval|java -jar fitnesse-standalone.jar -d c:\GitHub\PowerSlim -p 8023 -c "PowerSlim.SuiteWrongFailedException.TestMissingScenario?test&format=text"|=~/R:0.+W:0.+I:0.+E:2/|
+|check|eval|java -jar fitnesse-standalone.jar -p 8023 -c "PowerSlim.SuiteWrongFailedException.TestMissingScenario?test&format=text"|=~/R:0.+W:0.+I:0.+E:2/|
 *!
