@@ -114,7 +114,6 @@ function get_message($ps_stream){
 
   $script:ps_buf2 = new-object byte[] $ps_size
   $t = read_message $ps_stream $ps_buf2
-  [text.encoding]::utf8.getstring($ps_buf2) | out-default
   [text.encoding]::utf8.getstring($ps_buf2)
 
 }
