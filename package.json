@@ -1,5 +1,5 @@
 {
-  "name": "PowerSlim",
+  "name": "powerslim",
   "description": "An implementation of FitNesse Slim in PowerShell",
   "version": "0.6.0",
   "homepage": "http://powerslim.org/",
