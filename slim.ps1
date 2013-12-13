@@ -513,7 +513,7 @@ $ps_server = New-Object System.Net.Sockets.TcpListener($args[0])
 $ps_server.Start()
 
 if(!$args[1]){
-  . .\client.ps1
+  . $scriptPath\client.ps1
   Run-SlimServer $ps_server
 }
 else{ Run-RemoteServer $ps_server }
