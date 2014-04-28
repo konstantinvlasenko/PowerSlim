@@ -154,12 +154,12 @@ function PropertyTo-Slim($ps_obj,$ps_prop){
 function Convert-Hashtable-2Object($hashtable){
    $ps_object = New-Object PSObject
    $hashtable.GetEnumerator() | % { Add-Member -inputObject $ps_object -memberType NoteProperty -name $_.Name -value $_.Value }
-   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "SLIM_COMPUTERNAME" -value $env:COMPUTERNAME
    $ps_object
 }
 
 function Convert-KeyValuePair-2Object($kvp){
-   $ps_obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); COMPUTERNAME=$env:COMPUTERNAME}
+   $ps_obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); SLIM_COMPUTERNAME=$env:COMPUTERNAME}
    $ps_obj
 }
 
@@ -168,7 +168,7 @@ function ConvertTo($ps_str) {
   $ps_object = New-Object PSObject
 
   Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value $ps_str
-  Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+  Add-Member -inputObject $ps_object -memberType NoteProperty -name "SLIM_COMPUTERNAME" -value $env:COMPUTERNAME
 
   $ps_object
 
