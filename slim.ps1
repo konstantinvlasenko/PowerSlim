@@ -36,7 +36,12 @@ function SlimException-NoClass($ps_class){
   $slimexception + "NO_CLASS " + $ps_class
 }
 
+function SlimException-CMD_NOT_FOUND($ps_cmd){
+  $slimexception + "COMMAND_NOT_FOUND " + $ps_cmd
+}
+
 new-alias noclass SlimException-NoClass
+new-alias nocommand SlimException-CMD_NOT_FOUND
 
 function Get-SlimLength($ps_obj){
   if($ps_obj -is [array]){
@@ -153,12 +158,12 @@ function PropertyTo-Slim($ps_obj,$ps_prop){
 function Convert-Hashtable-2Object($hashtable){
    $ps_object = New-Object PSObject
    $hashtable.GetEnumerator() | % { Add-Member -inputObject $ps_object -memberType NoteProperty -name $_.Name -value $_.Value }
-   Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+   Add-Member -inputObject $ps_object -memberType NoteProperty -name "SLIM_COMPUTERNAME" -value $env:COMPUTERNAME
    $ps_object
 }
 
 function Convert-KeyValuePair-2Object($kvp){
-   $ps_obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); COMPUTERNAME=$env:COMPUTERNAME}
+   $ps_obj = New-Object PSObject -Property @{ Key=$kvp.Key; Value=$kvp.Value.ToString(); SLIM_COMPUTERNAME=$env:COMPUTERNAME}
    $ps_obj
 }
 
@@ -167,7 +172,7 @@ function ConvertTo($ps_str) {
   $ps_object = New-Object PSObject
 
   Add-Member -inputObject $ps_object -memberType NoteProperty -name "Value" -value $ps_str
-  Add-Member -inputObject $ps_object -memberType NoteProperty -name "COMPUTERNAME" -value $env:COMPUTERNAME
+  Add-Member -inputObject $ps_object -memberType NoteProperty -name "SLIM_COMPUTERNAME" -value $env:COMPUTERNAME
 
   $ps_object
 
@@ -181,7 +186,7 @@ function isgenericdict($list){
 }
 
 function ResultTo-List($list){
-  if( $null -eq $list){
+  if($null -eq $list){
     $slimvoid
   }
   elseif ($list -is [array]){
@@ -310,13 +315,14 @@ function Exec-Script( $Script ) {
 
 function Invoke-SlimCall($fnc){
   switch ($fnc){
- 		'query' {$result = Exec-Script -Script $Script__ }
+    'query' {$result = Exec-Script -Script $Script__ }
     'eval'  {$result = Exec-Script -Script $Script__ }
     default { 
-      if ((Table-Type) -eq "ScriptTableActor") { $result = "please use eval" }
+      if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
       else{ $result = $slimvoid }
     }
   }
+  $script:matches = $matches
   $result
 }
 
@@ -456,9 +462,9 @@ function Invoke-SlimInstruction(){
     # the execution of the 'make' procedure.
     $result = Invoke-SlimCall $ins[3]
   }
-	$Script__ + " : " + $script:Command_Time.TotalSeconds | Out-Default
+  $Script__ + " : " + $script:Command_Time.TotalSeconds | Out-Default
 
-	if($symbol){$slimsymbols[$symbol] = $result}
+  if($symbol){$slimsymbols[$symbol] = $result}
   
   $error.clear()
   switch ($ins[3]){
@@ -475,7 +481,7 @@ function Invoke-SlimInstruction(){
   if ($result -is [String]) {
     $result.TrimEnd("`r`n")
   } else { 
-	  $result
+    $result
   }
 }
 
@@ -641,7 +647,8 @@ $ps_server = New-Object System.Net.Sockets.TcpListener($args[0])
 $ps_server.Start()
 
 if(!$args[1]){
-  . .\client.ps1
+  $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
+  . $scriptPath\client.ps1
   Run-SlimServer $ps_server
 }
 else{ Run-RemoteServer $ps_server }
