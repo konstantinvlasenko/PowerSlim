@@ -41,8 +41,8 @@ function global:Run-Test ($url) {
 | scenario | To prove suite pages aborted after failure _ | TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED |
 | $URL= | eval | 'http' + ':' + '//${Server}/@TESTPAGE?responder=@PAGETYPE&${Inputs}'          |
 |         eval | $results = Run-Test -url '$URL'                                               |
-|         eval | $page1   = Run-Test -url ('http' + ':' + '//${Server}/' + $results.testresults.result[0].pagehistorylink) |
-|         eval | $page2   = Run-Test -url ('http' + ':' + '//${Server}/' + $results.testresults.result[1].pagehistorylink) |
+|         eval | $page1   = Run-Test -url ('http' + ':' + '//${Server}/' + $results.testresults.result[0].pagehistorylink + '&format=xml') |
+|         eval | $page2   = Run-Test -url ('http' + ':' + '//${Server}/' + $results.testresults.result[1].pagehistorylink + '&format=xml') |
 | check | eval | $page1.testResults.result.content.indexOf( '@FIRST_EXCEPTION' ) -ge 0       | True |
 | check | eval | $page1.testResults.result.content.indexOf( '@NEXT_EXCEPTION' ) -ge 0        | True |
 | check | eval | $page2.testResults.result.content.indexOf( '@PROOF_TESTING_STOPPED' ) -ge 0 | True |
