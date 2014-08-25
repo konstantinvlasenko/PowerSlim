@@ -1,0 +1,10 @@
+This test verifies that various run-time exceptions are handled. 
+
+The 1/0 statement will produce an error, but the test should continue and verify the current date matches a regular expression.
+
+Note: This test page is intentionally disabled and run from the ExceptionTestRunner page.
+
+| script |
+| eval  | write-host 'This command executes, but the one that follows produces an exception.' |
+| show  | eval | 1/0 |
+| check | eval | get-date -f 'yyyy-MM-dd' | =~/\d{4}-\d{2}-\d{2}/ |

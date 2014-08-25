@@ -1,3 +1,5 @@
+NOTE: This test page is intentionally disabled so that it doesn't run automatically via the Suite test but is instead run from SuiteNoHangupRunner page.
+
 !|script|
 |check|eval|$client1 = New-Object System.Net.Sockets.TcpClient localhost, 49|=~/No connection could be made because the target machine actively refused it 127.0.0.1:49/|
 |eval|$data = [System.Text.Encoding]::ASCII.GetBytes("200000")|

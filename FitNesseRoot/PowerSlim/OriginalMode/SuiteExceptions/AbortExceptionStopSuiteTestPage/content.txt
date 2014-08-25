@@ -1,0 +1,4 @@
+This page has one purpose... by being disabled, it keeps the pages beneath from running during the regular suite execution.
+This suite page is intentionally disabled and run from the ExceptionTestRunner page.
+
+!contents -R2 -g -p -f -h

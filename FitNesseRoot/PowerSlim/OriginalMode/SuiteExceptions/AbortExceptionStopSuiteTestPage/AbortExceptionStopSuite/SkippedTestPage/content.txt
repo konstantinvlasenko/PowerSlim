@@ -1,0 +1,2 @@
+| script |
+| show | eval | "This test page should never run if '''throw 'StopSuite' ''' is executed before this page runs" |

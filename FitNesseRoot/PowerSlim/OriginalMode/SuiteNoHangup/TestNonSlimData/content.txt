@@ -1,3 +1,5 @@
+NOTE: This test page is intentionally disabled so that it doesn't run automatically via the Suite test but is instead run from SuiteNoHangupRunner page.
+
 |script|
 |check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru -Verbose -!||
 #|check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!||

@@ -1,0 +1,3 @@
+Note: This suite page is run from the .PowerSlim.OriginalMode.SuiteExceptions.ExceptionTestRunner page.
+
+!contents -R2 -g -p -f -h
