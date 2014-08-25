@@ -3,5 +3,5 @@ In !-PowerShell-! 3.0: ''$emptyvalue.count'' returns '''0'''
 In !-PowerShell-! 2.0: ''$emptyvalue.count'' returns '''nothing'''
 
 -!|script|
-|$Expected=|eval|if($host.Version.Major -in 3,4){0}|
+|$Expected=|eval|if($host.Version.Major -ge 3){0}|
 |check|eval|$emptyvalue.count|$Expected|
