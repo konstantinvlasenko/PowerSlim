@@ -1,0 +1,5 @@
+Demonstrate the different time attributes that can be evaluated
+
+| sleep -seconds $arg1 |
+| arg1 | Time.Seconds? | Time.Milliseconds? | Time.Days? | Time.Hours? | Time.Minutes? |
+|  1   |     > 1       |        > 1000      |    < 1     |    < 1      |     < 1       |

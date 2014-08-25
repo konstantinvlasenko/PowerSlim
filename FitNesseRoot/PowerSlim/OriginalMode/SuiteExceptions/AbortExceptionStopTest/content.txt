@@ -1,0 +1,16 @@
+This test verifies that an ABORT_SLIM_TEST exception stops processing of a table. 
+
+The throw "StopTest" will produce an error and the last show in the table shouldn't execute, nor the last table.
+
+Note: This test page is intentionally disabled and run from the ExceptionTestRunner page.
+
+| script |
+| $PHRASE1= | eval | "This sentence shouldn't" |
+| $PHRASE2= | eval | "exist in the output."    |
+|             eval | throw 'StopTest'          |
+| show      | eval | "$PHRASE1 $PHRASE2"       |
+
+| script | 
+| $PHRASE1= | eval | "This statement should" |
+| $PHRASE2= | eval | "never execute."        |
+| show      | eval | "$PHRASE1 $PHRASE2"     |

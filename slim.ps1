@@ -14,6 +14,9 @@ $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 #Support for slow connection
 #$ps_stream.ReadTimeout = 10000 #idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
 $REQUEST_READ_TIMEOUT = 10000
+$script:SLIM_ABORT_TEST = $false
+$script:SLIM_ABORT_SUITE = $false
+
 
 function Get-SlimTable($slimchunk){
 
@@ -232,16 +235,94 @@ function ResultTo-String($res){
   }
 }
 
+function Exec-Script( $Script ) {
+  $Error.Clear()   # Clear out any prior errors. After executing the test, if error[0] <> $null, we know it came from the test.
+  try {
+    if ( $script:SLIM_ABORT_TEST ) {
+      # If another critical error has already been detected, we immediately end this 
+      # test w/o executing it and return an error.
+      $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>'
+    } elseif ( $script:SLIM_ABORT_SUITE ) {
+      # If another critical error has already been detected, we immediately end this 
+      # test w/o executing it and return an error.
+      $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>'
+    } else {
+      # execute the test and store the result.
+      $result = iex $Script
+      # preserve the $matches value, if set by the expression
+      $script:matches = $matches
+    }
+  } catch [System.Management.Automation.CommandNotFoundException] {
+    $exc_type = '__EXCEPTION__:COMMAND_NOT_FOUND:'
+    $exc_msg  = $exc_type + $_
+  } catch [System.Management.Automation.ActionPreferenceStopException] { 
+    # if $ErrorActionPreference is set to stop and an error occurred, we end up here
+    $script:SLIM_ABORT_TEST = $true
+    $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+    $exc_msg  = $exc_type + $_ 
+  } catch [System.Management.Automation.RuntimeException] {
+    $e = $_
+    switch -regex ( $Error[0].FullyQualifiedErrorId ) {
+       # If the user script has thrown an exception and it starts with "StopTest", no further 
+       # tests should execute.
+       '^Stop(Test|Suite):?(.*)?' 
+                          { if ( $matches[2] ) {
+                              # The exception provides additional details about the error.
+                              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                              $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + "]"
+                            } else {
+                              # No other details provided... just a throw "StopTest" was executed
+                              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                              $exc_msg  = $exc_type + $matches[1] + " aborted." 
+                            }
+                            $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
+                            if ( $matches[1] -eq 'Suite' ) {
+                              $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
+                            }
+                          }
+       default           { 
+          $exc_type = '__EXCEPTION__:'+$_+':'
+          $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+       }
+    }
+  } catch {
+    $exc_type = '__EXCEPTION__:UNKNOWN_ERROR:'
+  	$exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+  } finally {
+    if ( $Error[0] -ne $null ) {
+       # An error has occurred. If $exc_type has a value, it was caught above.
+       if ( $exc_type -gt '' ) {
+         #an error occurred, so check $ErrorActionPreference to see if it's set to Stop
+         if ( $global:ErrorActionPreference -eq 'Stop' ) {
+            # if the user indicated they want to stop on all errors, Stop.
+            $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+         }
+         if ( $exc_type -eq '__EXCEPTION__:ABORT_SLIM_TEST:' ) { 
+            $script:SLIM_ABORT_TEST = $true
+         }
+         $result = $exc_type+'message:<<'+$exc_msg+'>>'
+       } else {
+         # This is a non-terminating error and not caught as part of the special types
+         # above, so simply return the error text as the result of the instruction
+         $result = (''+$Error[0])
+       }
+    }
+  }
+  return $result
+}
+
 
 function Invoke-SlimCall($fnc){
   switch ($fnc){
-    {($_ -eq "query") -or ($_ -eq "eval")} {iex $Script__}
+    'query' {$result = Exec-Script -Script $Script__ }
+    'eval'  {$result = Exec-Script -Script $Script__ }
     default { 
-      if ((Table-Type) -eq "ScriptTableActor") { nocommand $_ }
-      else{ $slimvoid }
+      if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
+      else{ $result = $slimvoid }
     }
   }
   $script:matches = $matches
+  $result
 }
 
 function Set-Script($s, $fmt){
@@ -308,17 +389,61 @@ function Invoke-SlimInstruction(){
           "/__VOID__/"
           return
         }elseif($ins[3] -eq 'execute'){
-          $script:decision_result = iex "$Script__ 2>&1"
+             # store the decision table test time.
+             $script:decision_time = measure-command {
+               $script:decision_result = Exec-Script -Script "$Script__ 2>&1"
+             }
           $slimvoid
           #$script:decision_result
           return
         }else{
-          if($ins[3] -ne 'Result'){
-            "Not Implemented"
-          }else{
-            if($symbol){$slimsymbols[$symbol] = $script:decision_result}
-            $script:decision_result
-          }
+          #if($ins[3] -ne 'Result'){
+          #  "Not Implemented"
+          #}else{
+          #  if($symbol){$slimsymbols[$symbol] = $script:decision_result}
+          #  $script:decision_result
+          #}
+             switch -regex ($ins[3]) {
+               # Support requesting the amount of time it took to process a decision table row.
+               '^Time(?<comp>\w+)?'     
+                          { if ( $Matches.ContainsKey( 'comp') ) {
+                              switch ( $matches.comp ) {
+                                 'Seconds'      { $script:decision_time.TotalSeconds }
+                                 'Days'         { $script:decision_time.TotalDays }
+                                 'Hours'        { $script:decision_time.TotalHours }
+                                 'Minutes'      { $script:decision_time.TotalMinutes }
+                                 'Milliseconds' { $script:decision_time.TotalMilliseconds }
+                                 default        { 'Invalid Duration: $_' }
+                              }
+                            } else {
+                              $script:decision_time.TotalSeconds 
+                            }
+                            break
+                          }
+               '^Result$'   { ResultTo-String ($script:decision_result)
+                              if ($symbol) {
+                                $slimsymbols[$symbol] = $script:decision_result
+                              }
+                              break
+                            }
+               '^Result(\S+)$'   
+                            { $prop = $Matches[1]
+                              $prop = $prop -replace '_','.'
+                              ResultTo-String (iex ('$script:decision_result.'+$prop))
+                              if ($symbol) {
+                                $slimsymbols[$symbol] = iex ('$script:decision_result.'+$prop)
+                              }
+                              break
+                            }
+               '^(\S+)$'    { $prop = $Matches[1]
+                              $prop = $prop -replace '_','.'
+                              ResultTo-String (iex ('$script:decision_result.'+$prop))
+                              if ($symbol) {
+                                $slimsymbols[$symbol] = iex ('$script:decision_result.'+$prop)
+                              }
+                            }
+               default    { 'Not Implemented'       }
+             }
           return
         }
       }
@@ -330,11 +455,15 @@ function Invoke-SlimInstruction(){
   }
   
   $error.clear()
-  $t = measure-command { $result = Invoke-SlimCall $ins[3] }
-  $Script__ + " : " + $t.TotalSeconds | Out-Default
-  if($error[0] -ne $null){ return $error[0] }
-  #if($null -eq $result){ return $slimvoid }
-  if($symbol){ $slimsymbols[$symbol] = $result }
+  # Measure the amount of time this step or command takes
+  $script:Command_Time = measure-command {
+    # Execution of the test's code occurs here. During the 'make' step this is simple
+    # the execution of the 'make' procedure.
+    $result = Invoke-SlimCall $ins[3]
+  }
+  $Script__ + " : " + $script:Command_Time.TotalSeconds | Out-Default
+
+  if($symbol){$slimsymbols[$symbol] = $result}
   
   $error.clear()
   switch ($ins[3]){
@@ -346,10 +475,13 @@ function Invoke-SlimInstruction(){
         $result = ResultTo-List @($result)
       }
     }
-    "eval" {$result = ResultTo-String $result}
+    "eval"  { $result = ResultTo-String $result }
   }
-  if($error[0] -ne $null){ return $error[0] }
-  else { $result.TrimEnd("`r`n") }
+  if ($result -is [String]) {
+    $result.TrimEnd("`r`n")
+  } else { 
+    $result
+  }
 }
 
 function Process-Instruction($ins){
@@ -421,16 +553,17 @@ function process_table() {
 
 function process_message($ps_stream){
 
-  if( ! $ps_stream.CanRead ){ return "buy" }
+  if( ! $ps_stream.CanRead ){ return "bye" }
 
   Write-Verbose "Started processing message."
 
+  $script:SLIM_ABORT_TEST = $false
   $error.clear()
   $ps_msg = get_message($ps_stream)
 
   $ps_msg
 
-  if ($error) { return "buy" }
+  if ($error) { return "bye" }
 
   if( !(ischunk $ps_msg) ){ return }
 

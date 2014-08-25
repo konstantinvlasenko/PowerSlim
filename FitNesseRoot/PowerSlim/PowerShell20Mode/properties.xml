@@ -11,6 +11,7 @@
 		<SuiteRemoting>.PowerSlim.OriginalMode.SuiteRemoting</SuiteRemoting>
 		<SuiteCommon>.PowerSlim.OriginalMode.SuiteCommon</SuiteCommon>
 		<SuiteSymbols>.PowerSlim.OriginalMode.SuiteSymbols</SuiteSymbols>
+		<SuiteExceptions>.PowerSlim.OriginalMode.SuiteExceptions</SuiteExceptions>
 		<SuiteFixes>.PowerSlim.OriginalMode.SuiteFixes</SuiteFixes>
 		<SuiteNoHangup>.PowerSlim.OriginalMode.SuiteNoHangup</SuiteNoHangup>
 	</SymbolicLinks>
