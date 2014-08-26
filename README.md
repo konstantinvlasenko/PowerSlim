@@ -27,9 +27,3 @@ Please Note: You can still use the PowerShell 2.0 or work in backward compatibil
 ### November 14, 2012
 
 * [Decision table magic](https://github.com/konstantinvlasenko/PowerSlim/blob/master/FitNesseRoot/PowerSlim/TestDecisionTable/content.txt)
-
-
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/konstantinvlasenko/powerslim/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
