@@ -1,0 +1,79 @@
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
+
+!|script|Remote |localhost|
+|show |eval |whoami |
+|eval |!- throw [System.IO.FileNotFoundException] "File not found !." -!|
