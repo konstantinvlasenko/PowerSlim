@@ -263,27 +263,27 @@ function Exec-Script( $Script ) {
   } catch [System.Management.Automation.RuntimeException] {
     $e = $_
     switch -regex ( $Error[0].FullyQualifiedErrorId ) {
-       # If the user script has thrown an exception and it starts with "StopTest", no further 
-       # tests should execute.
-       '^Stop(Test|Suite):?(.*)?' 
-                          { if ( $matches[2] ) {
-                              # The exception provides additional details about the error.
-                              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-                              $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + "]"
-                            } else {
-                              # No other details provided... just a throw "StopTest" was executed
-                              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-                              $exc_msg  = $exc_type + $matches[1] + " aborted." 
-                            }
-                            $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
-                            if ( $matches[1] -eq 'Suite' ) {
-                              $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
-                            }
-                          }
-       default           { 
-          $exc_type = '__EXCEPTION__:'+$_+':'
-          $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
-       }
+      # If the user script has thrown an exception and it starts with "StopTest", no further 
+      # tests should execute.
+      '^Stop(Test|Suite):?(.*)?' {
+        if ( $matches[2] ) {
+          # The exception provides additional details about the error.
+          $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+          $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + "]"
+        } else {
+          # No other details provided... just a throw "StopTest" was executed
+          $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+          $exc_msg  = $exc_type + $matches[1] + " aborted." 
+        }
+        $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
+        if ( $matches[1] -eq 'Suite' ) {
+          $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
+        }
+      }
+      default { 
+        $exc_type = '__EXCEPTION__:'+$_+':'
+        $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+      }
     }
   } catch {
     $exc_type = '__EXCEPTION__:UNKNOWN_ERROR:'
