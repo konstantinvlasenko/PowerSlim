@@ -252,42 +252,49 @@ function Exec-Script( $Script ) {
       # preserve the $matches value, if set by the expression
       $script:matches = $matches
     }
-  } catch [System.Management.Automation.CommandNotFoundException] {
-    $exc_type = '__EXCEPTION__:COMMAND_NOT_FOUND:'
-    $exc_msg  = $exc_type + $_
-  } catch [System.Management.Automation.ActionPreferenceStopException] { 
-    # if $ErrorActionPreference is set to stop and an error occurred, we end up here
-    $script:SLIM_ABORT_TEST = $true
-    $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-    $exc_msg  = $exc_type + $_ 
-  } catch [System.Management.Automation.RuntimeException] {
-    $e = $_
-    switch -regex ( $Error[0].FullyQualifiedErrorId ) {
-      # If the user script has thrown an exception and it starts with "StopTest", no further 
-      # tests should execute.
-      '^Stop(Test|Suite):?(.*)?' {
-        if ( $matches[2] ) {
-          # The exception provides additional details about the error.
-          $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-          $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + "]"
-        } else {
-          # No other details provided... just a throw "StopTest" was executed
-          $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-          $exc_msg  = $exc_type + $matches[1] + " aborted." 
-        }
-        $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
-        if ( $matches[1] -eq 'Suite' ) {
-          $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
+  } catch [System.Exception] {
+    switch($_.Exception.GetType().FullName) {
+      'System.Management.Automation.CommandNotFoundException' {
+        $exc_type = '__EXCEPTION__:COMMAND_NOT_FOUND:'
+        $exc_msg  = $exc_type + $_
+      }
+      'System.Management.Automation.ActionPreferenceStopException' {
+        # if $ErrorActionPreference is set to stop and an error occurred, we end up here
+        $script:SLIM_ABORT_TEST = $true
+        $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+        $exc_msg  = $exc_type + $_ 
+      }
+      'System.Management.Automation.RuntimeException' {
+        $e = $_
+        switch -regex ( $Error[0].FullyQualifiedErrorId ) {
+          # If the user script has thrown an exception and it starts with "StopTest", no further 
+          # tests should execute.
+          '^Stop(Test|Suite):?(.*)?' {
+            if ( $matches[2] ) {
+              # The exception provides additional details about the error.
+              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+              $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + "]"
+            } else {
+              # No other details provided... just a throw "StopTest" was executed
+              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+              $exc_msg  = $exc_type + $matches[1] + " aborted." 
+            }
+            $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
+            if ( $matches[1] -eq 'Suite' ) {
+              $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
+            }
+          }
+          default { 
+            $exc_type = '__EXCEPTION__:'+$_+':'
+            $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+          }
         }
       }
-      default { 
-        $exc_type = '__EXCEPTION__:'+$_+':'
-        $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
+      default {
+        $exc_type = "__EXCEPTION__:$($error[0].Exception):"
+        $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Message | out-string) -replace "`r`n",'' )
       }
     }
-  } catch {
-    $exc_type = '__EXCEPTION__:UNKNOWN_ERROR:'
-  	$exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
   } finally {
     if ( $Error[0] -ne $null ) {
        # An error has occurred. If $exc_type has a value, it was caught above.
