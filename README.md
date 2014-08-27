@@ -8,10 +8,13 @@ All stuff is under the [Beer-Ware-License](http://en.wikipedia.org/wiki/Beerware
 Examples are available in the acceptance tests FitnesseRoot/PowerSlim and in the examples FitnesseRoot/ExampleS
 
 Requirements:
-The Windows PowerShell 3.0 should be installed.
-The PowerShell 3.0 comes integrated with Windows 8 and with Windows Server 2012. Operating systems also supported are Windows 7 Service Pack 1, Windows Server 2008 R2 SP1, Windows Server 2008 Service Pack 2.
+Windows PowerShell 3.0 or higher.
 
 Please Note: You can still use the PowerShell 2.0 or work in backward compatibility with the PowerShell 2.0. But in order to support arrays and PSObjects verification in Queries the ConvertTo-Json CMDLet is used introduced in the PowerShell 3.0. For the verification to work with the PowerShell 2.0 you have to implement ConvertTo-Json CMDLet functionality via e.g. System.Web.Script.Serialization.JavaScriptSerializer (upgarade to .NET Framework 3.5 is reqquired). Otherwise you can stub the ConvertTo-Json CMDLet.
+
+### August 25, 2014
+
+* [Improved Error Handling](https://github.com/konstantinvlasenko/PowerSlim/pull/52)
 
 ### February 26, 2013
 
@@ -24,9 +27,3 @@ Please Note: You can still use the PowerShell 2.0 or work in backward compatibil
 ### November 14, 2012
 
 * [Decision table magic](https://github.com/konstantinvlasenko/PowerSlim/blob/master/FitNesseRoot/PowerSlim/TestDecisionTable/content.txt)
-
-
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/konstantinvlasenko/powerslim/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
