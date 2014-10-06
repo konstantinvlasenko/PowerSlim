@@ -1,4 +1,4 @@
-!include -c .PowerSlim.HelpExamples.ToInclude.CreateShare
+!include -c .ExampleS.ToInclude.CreateShare
 
 !define SHARE_NAME {Product Share}
 
