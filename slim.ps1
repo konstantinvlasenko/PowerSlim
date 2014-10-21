@@ -16,7 +16,8 @@ $slimsymbols = new-Object 'system.collections.generic.dictionary[string,object]'
 $REQUEST_READ_TIMEOUT = 10000
 $script:SLIM_ABORT_TEST = $false
 $script:SLIM_ABORT_SUITE = $false
-
+$script:POWERSLIM_PATH = $MyInvocation.MyCommand.Path
+$script:POWERSLIM_HOME = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Get-SlimTable($slimchunk){
 
