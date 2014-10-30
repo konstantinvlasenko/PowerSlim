@@ -3,6 +3,6 @@
 |check|eval|"whitespace at the end  "|whitespace at the end!-  -!|
 |check|eval|"there are 'quotes' in text"|there are 'quotes' in text|
 |check|eval|'there are "double quotes" in text'|there are "double quotes" in text|
-|check|eval|!-<pre>'&gt;' -eq '>'</pre>-!|True|
-|check|eval| '&gt;' -eq '<'|False|
-|show|eval|'&gt;'.Length|
+|check|eval|!-'&gt;' -eq '>'-!|True|
+|check|eval|!-'&gt;' -eq '<'-!|False|
+|check|eval|!-'&gt;'.Length-!|1|

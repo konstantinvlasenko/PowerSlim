@@ -16,7 +16,6 @@ function Get-RemoteSlimSymbols($inputTable)
 
 function script:process_table_remotely($ps_table, $ps_fitnesse){
 
-    #$targets = $ps_table[0][4].Trim(',').Split(',')
     try {
 
       $originalslimbuffer = $ps_buf1 + $ps_buf2

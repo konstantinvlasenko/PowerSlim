@@ -1,0 +1,4 @@
+Check .PowerSlim.OriginalMode.SuiteCommon.TestScenario for more information
+-!|script|
+|deleted1|10+10+10|scenario|30|
+|deleted2|10+10+10|scenario|30|

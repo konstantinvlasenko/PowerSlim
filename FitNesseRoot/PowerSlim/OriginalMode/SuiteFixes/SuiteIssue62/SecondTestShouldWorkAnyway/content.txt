@@ -1,0 +1,2 @@
+|script|Remote|localhost|
+|check|eval|1+1|2|

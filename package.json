@@ -1,0 +1,30 @@
+{
+  "name": "powerslim",
+  "description": "An implementation of FitNesse Slim in PowerShell",
+  "version": "0.6.0",
+  "homepage": "http://powerslim.org/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/konstantinvlasenko/PowerSlim"
+  },
+  "author": {
+    "name": "Konstantin Vlasenko",
+    "email": "konstantin.vlasenko@gmail.com",
+    "url": "http://vlasenko.org"
+  },
+  "licenses": [
+    {
+      "type": "Beer-Ware-License",
+      "url": "http://en.wikipedia.org/wiki/Beerware"
+    }
+  ],
+  "keywords": [
+    "slim",
+    "Fitnesse",
+    "Powershell"
+  ],
+  "bugs": {
+    "url" : "https://github.com/konstantinvlasenko/PowerSlim/issues"
+  },
+  "private": false
+}

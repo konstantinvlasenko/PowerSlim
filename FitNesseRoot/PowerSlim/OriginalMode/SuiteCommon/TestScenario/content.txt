@@ -1,15 +1,22 @@
-!* simple scenario
+!* '''Simple scenario'''
 |scenario|execute|command|check|result|
 |check|eval|@command|@result|
 
 -!|script|
 |execute|10+10+10|check|30|
 *!
-!* one in another
+!* '''Nested scenario'''
 |scenario|execute|command|twice|result|
 |execute|@command|check|@result|
 |execute|@command|check|@result|
 
 -!|script|
 |execute|"Hello World!"|twice|Hello World!|
+*!
+!* '''Missing scenario'''
+''Test should be RED in case of missing scenario''
+''Each missing scenario increments exceptions counter''
+''We are going to run .PowerSlim.SuiteWrongFailedException.TestMissingScenario trough command line''
+-!|script|
+|check|eval|java -jar fitnesse-standalone.jar -p 8023 -c "PowerSlim.SuiteWrongFailedException.TestMissingScenario?test&format=text"|=~/R:0.+W:0.+I:0.+E:2/|
 *!

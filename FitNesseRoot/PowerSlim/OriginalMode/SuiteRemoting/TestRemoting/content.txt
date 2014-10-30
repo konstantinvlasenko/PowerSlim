@@ -5,9 +5,9 @@
 |script|Remote|localhost|
 |check|eval|$x*$y|50|
 
-''An additional field '''COMPUTERNAME''' available for each result''
+''An additional field '''SLIM_COMPUTERNAME''' available for each result''
 !|Query:Remote|localhost,localhost|(1,22,333,4444,55555)|
-|Value|COMPUTERNAME|
+|Value|SLIM_COMPUTERNAME|
 |1||
 |22||
 |333||
