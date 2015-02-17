@@ -340,7 +340,7 @@ function Set-Script($s, $fmt){
   {
 	$s = $s -replace '</?pre>' #workaround fitnesse strange behavior
   }
-  if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_",$slimsymbols[$_] }}
+  if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_\b",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = [string]::Format( $fmt, $s)
   if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global}
