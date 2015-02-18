@@ -1,0 +1,6 @@
+'''Test for pull request #66 https://github.com/konstantinvlasenko/PowerSlim/pull/66'''
+!|Script|
+|$MySymbol=|eval|"Hello"|
+|$MySymbols=|eval|"Great"|
+|check|eval|"$MySymbol World!"|Hello World!|
+|check|eval|"$MySymbols World!"|Great World!|
