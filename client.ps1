@@ -10,99 +10,116 @@ $REMOTE_SERVER_READ_TIMEOUT = 60*60*1000
 
 function Get-RemoteSlimSymbols($inputTable)
 {
-  $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
-  $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
+    $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
+    $inputTable | Select-String $__pattern__ -AllMatches | % {
+        $_.matches
+    } | % {
+        @{
+            id   = $_.Groups[1].Value
+            name = $_.Groups[2].Value
+        }
+    }
 }
 
-function script:process_table_remotely($ps_table, $ps_fitnesse){
+function script:process_table_remotely($ps_table, $ps_fitnesse)
+{
+    try 
+    {
+        $originalslimbuffer = $ps_buf1 + $ps_buf2
 
-    try {
+        $result = New-Object -TypeName 'system.collections.generic.dictionary[string,object]'
 
-      $originalslimbuffer = $ps_buf1 + $ps_buf2
+        foreach($t in $targets)
+        {
+            $ps_computer, $ps_port = $t.split(':')
 
-      $result = new-Object 'system.collections.generic.dictionary[string,object]'
+            if($ps_computer.StartsWith('$'))
+            {
+                $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
+            }
 
-      foreach($t in $targets){ 
+            if($ps_port -eq $null)
+            {
+                $ps_port = 35
+            }
 
-          $ps_computer, $ps_port = $t.split(':')
-
-          if($ps_computer.StartsWith('$')){
-              $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
-          }
-
-          if($ps_port -eq $null){$ps_port = 35};
-
-          Write-Verbose "Connecting to $ps_computer, $ps_port"
+            Write-Verbose -Message "Connecting to $ps_computer, $ps_port"
           
-          if($slimsymbols.Count -ne 0){
+            if($slimsymbols.Count -ne 0)
+            {
+                "Connecting to $ps_computer $ps_port" | Out-Default
 
-              "Connecting to $ps_computer $ps_port" | Out-Default
+                $ps_sumbols_client = New-Object -TypeName System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
+                $remoteserver = $ps_sumbols_client.GetStream()
+                $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
 
-              $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
-              $remoteserver = $ps_sumbols_client.GetStream()
-              $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
-
-              "Connected" | Out-Default
+                'Connected' | Out-Default
                       
-              $list = @($slimsymbols.GetEnumerator() | % {$_})
-              $tr = "[" + (slimlen $list) + ":"
+                $list = @($slimsymbols.GetEnumerator() | % {
+                        $_
+                    }
+                )
+                $tr = '[' + (slimlen $list) + ':'
 
-              foreach ($obj in $list){
-                                  
-                  $itemstr = "[" +  (6).ToString("d6") + ":"
+                foreach ($obj in $list)
+                {
+                    $itemstr = '[' +  (6).ToString('d6') + ':'
 
-                  $itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
-                  $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
-                  $itemstr += (slimlen 'eval') + ":eval:"
+                    $itemstr += (slimlen 'scriptTable_0_0') + ':scriptTable_0_0:' + (slimlen 'callAndAssign') + ':callAndAssign:'
+                    $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ':scriptTableActor:'
+                    $itemstr += (slimlen 'eval') + ':eval:'
 
-                  $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+                    $itemstr +=  (($obj.Value.Length + 2).ToString('d6')) + ":'$($obj.Value)':"
     
-                  $itemstr += "]"
+                    $itemstr += ']'
           
-                  $tr += (slimlen $itemstr) + ":" + $itemstr + ":"
-              } 
+                    $tr += (slimlen $itemstr) + ':' + $itemstr + ':'
+                } 
 
-              $tr += "]"
+                $tr += ']'
               
-              $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
-              $s2 = [text.encoding]::utf8.getbytes($s2)
+                $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString('d6') + ':' + $tr                     
+                $s2 = [text.encoding]::utf8.getbytes($s2)
 
-              $tr | Out-Default 
+                $tr | Out-Default 
 
-              $remoteserver.Write($s2, 0, $s2.Length)
-              get_message($remoteserver)
+                $remoteserver.Write($s2, 0, $s2.Length)
+                get_message($remoteserver)
+            }
 
-          }
-
-         $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
-         $remoteserver = $ps_client.GetStream()
-         $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
+            $ps_client = New-Object -TypeName System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
+            $remoteserver = $ps_client.GetStream()
+            $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
     
-         $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
-         $result[$ps_computer] = get_message($remoteserver)
+            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
+            $result[$ps_computer] = get_message($remoteserver)
     
-          #backward symbols sharing
-         foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) {
-            $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
-         }
+            #backward symbols sharing
+            foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) 
+            {
+                $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
+                $slimsymbols[$symbol.name] = $result[$ps_computer] | Select-String $__pattern__ | % {
+                    $_.matches
+                } | % {
+                    $_.Groups[1].Value
+                }
+            }
       
-         $remoteserver.Close()         
-         $ps_client.Close() 
+            $remoteserver.Close()         
+            $ps_client.Close()
+        }
 
-      }
+        #if($result.Count -eq 1){
 
-      #if($result.Count -eq 1){
+        $res = $ps_buf1 + $ps_buf2
+        $ps_fitnesse.Write($res, 0, $res.Length)
 
-      $res = $ps_buf1 + $ps_buf2
-      $ps_fitnesse.Write($res, 0, $res.Length)
-
-      #}
-
+        #}
     }
-    catch [System.Exception] {
+    catch [System.Exception] 
+    {
         $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "$slimexception$($_.Exception.Message)") + ':' + "$slimexception$($_.Exception.Message)" + ':]'
-        $send = (slimlen $send) + ":" + $send + ":"
+        $send = (slimlen $send) + ':' + $send + ':'
         $send = [text.encoding]::utf8.getbytes((pack_results $send))
         $ps_fitnesse.Write($send, 0, $send.Length)
     }
@@ -111,9 +128,10 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 function script:Test-TcpPort($ps_remotehost, $ps_port)
 {
     $ErrorActionPreference = 'SilentlyContinue'
-    $s = new-object Net.Sockets.TcpClient
+    $s = New-Object -TypeName Net.Sockets.TcpClient
     $s.Connect($ps_remotehost, $ps_port)
-    if ($s.Connected) {
+    if ($s.Connected) 
+    {
         $s.Close()
         return $true
     }
@@ -122,5 +140,8 @@ function script:Test-TcpPort($ps_remotehost, $ps_port)
 
 function script:Wait-RemoteServer($ps_remotehost)
 {
-    while(!(Test-TcpPort $ps_remotehost 35)){sleep 10}
+    while(!(Test-TcpPort $ps_remotehost 35))
+    {
+        Start-Sleep 10
+    }
 }
