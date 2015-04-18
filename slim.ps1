@@ -138,7 +138,7 @@ function ObjectTo-Slim($ps_obj)
     $slimview = '[000002:' + (slimlen $ps_prop) + ':' + $ps_prop+ ':'
     if($($ps_obj.$ps_prop) -eq $null -or $($ps_obj.$ps_prop) -is [system.array])
     {
-        $slimview += '[000004:null:]'
+        $slimview += '000004:null:]'
     }
     else
     {
@@ -159,7 +159,7 @@ function PropertyTo-Slim($ps_obj,$ps_prop)
     $slimview = '[000002:' + (slimlen $ps_prop) + ':' + $ps_prop+ ':'
     if($($ps_obj.$ps_prop) -eq $null)
     {
-        $slimview += '[000004:null:]'
+        $slimview += '000004:null:]'
     }
     elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject])
     {
@@ -220,11 +220,6 @@ function ConvertTo-SimpleObject($ps_obj)
 function GetNullObject
 {
     ConvertTo 'Null' 
-}
-
-function isgenericdict($list)
-{
-    $list -is [array] -and $list.Count -eq 1 -and $list[0] -is 'system.collections.generic.dictionary[string,object]'
 }
 
 function ResultTo-List($list)
