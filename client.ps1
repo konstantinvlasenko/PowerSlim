@@ -117,7 +117,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
     }
     catch [System.Exception] 
     {
-        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "$slimexception$($_.Exception.Message)") + ':' + "$slimexception$($_.Exception.Message)" + ':]'
+        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "__EXCEPTION__:$($_.Exception.Message)") + ':' + "__EXCEPTION__:$($_.Exception.Message)" + ':]'
         $send = (slimlen $send) + ':' + $send + ':'
         $send = [text.encoding]::utf8.getbytes((pack_results $send))
         $ps_fitnesse.Write($send, 0, $send.Length)
