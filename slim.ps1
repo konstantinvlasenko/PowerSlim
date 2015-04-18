@@ -743,7 +743,7 @@ function set_remote_targets($ps_cell)
     # for example if it is just 'remote_host'.
     try {
         $script:targets = Invoke-Expression -Command $ps_cell
-    } catch [CommandNotFoundException] {}
+    } catch [System.Management.Automation.CommandNotFoundException] {}
 
     if($script:targets -eq $null)
     {

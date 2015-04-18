@@ -83,10 +83,10 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
 
             Write-Log "Connecting to $($ps_computer):$ps_port"
             
-            $ps_client = New-Object -TypeName System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
+            $ps_client = New-Object System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
             $remoteserver = $ps_client.GetStream()
             $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
-               
+
             $slimBufferString = [Text.Encoding]::UTF8.GetString($originalslimbuffer, 0, $originalslimbuffer.Length)
             Write-Log "Sending table to remote: '$slimBufferString'"
 
