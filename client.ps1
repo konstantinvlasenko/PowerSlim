@@ -27,7 +27,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
     {
         $originalslimbuffer = $ps_buf1 + $ps_buf2
 
-        $result = New-Object -TypeName 'system.collections.generic.dictionary[string,object]'
+        $result = New-Object 'system.collections.generic.dictionary[string,object]'
 
         foreach($t in $targets)
         {
@@ -41,24 +41,17 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
             if($ps_port -eq $null)
             {
                 $ps_port = 35
-            }
-
-            Write-Verbose -Message "Connecting to $ps_computer, $ps_port"
+            }           
           
             if($slimsymbols.Count -ne 0)
             {
-                "Connecting to $ps_computer $ps_port" | Out-Default
+                Write-Log "Connecting to $($ps_computer):$ps_port"
 
                 $ps_sumbols_client = New-Object -TypeName System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
                 $remoteserver = $ps_sumbols_client.GetStream()
                 $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
-
-                'Connected' | Out-Default
                       
-                $list = @($slimsymbols.GetEnumerator() | % {
-                        $_
-                    }
-                )
+                $list = @($slimsymbols.GetEnumerator() | % { $_ })
                 $tr = '[' + (slimlen $list) + ':'
 
                 foreach ($obj in $list)
@@ -69,7 +62,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
                     $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ':scriptTableActor:'
                     $itemstr += (slimlen 'eval') + ':eval:'
 
-                    $itemstr +=  (($obj.Value.Length + 2).ToString('d6')) + ":'$($obj.Value)':"
+                    $itemstr += (($obj.Value.Length + 2).ToString('d6')) + ":'$($obj.Value)':"
     
                     $itemstr += ']'
           
@@ -80,22 +73,32 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
               
                 $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString('d6') + ':' + $tr                     
                 $s2 = [text.encoding]::utf8.getbytes($s2)
-
-                $tr | Out-Default 
+              
+                Write-Log "Sending symbols to remote: '$tr'"
 
                 $remoteserver.Write($s2, 0, $s2.Length)
-                get_message($remoteserver)
+                $resultMessage = get_message($remoteserver)
+                Write-Log "Remote result: '$resultMessage'"
             }
 
+            Write-Log "Connecting to $($ps_computer):$ps_port"
+            
             $ps_client = New-Object -TypeName System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
             $remoteserver = $ps_client.GetStream()
             $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
-    
-            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
-            $result[$ps_computer] = get_message($remoteserver)
+               
+            $slimBufferString = [Text.Encoding]::UTF8.GetString($originalslimbuffer, 0, $originalslimbuffer.Length)
+            Write-Log "Sending table to remote: '$slimBufferString'"
+
+            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)           
+            
+            $resultMessage = get_message($remoteserver)
+            Write-Log "Remote result: '$resultMessage'"
+
+            $result[$ps_computer] = $resultMessage
     
             #backward symbols sharing
-            foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) 
+            foreach($symbol in Get-RemoteSlimSymbols($slimBufferString))
             {
                 $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
                 $slimsymbols[$symbol.name] = $result[$ps_computer] | Select-String $__pattern__ | % {
@@ -109,12 +112,8 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
             $ps_client.Close()
         }
 
-        #if($result.Count -eq 1){
-
         $res = $ps_buf1 + $ps_buf2
         $ps_fitnesse.Write($res, 0, $res.Length)
-
-        #}
     }
     catch [System.Exception] 
     {
@@ -125,23 +124,3 @@ function script:process_table_remotely($ps_table, $ps_fitnesse)
     }
 }
 
-function script:Test-TcpPort($ps_remotehost, $ps_port)
-{
-    $ErrorActionPreference = 'SilentlyContinue'
-    $s = New-Object -TypeName Net.Sockets.TcpClient
-    $s.Connect($ps_remotehost, $ps_port)
-    if ($s.Connected) 
-    {
-        $s.Close()
-        return $true
-    }
-    return $false
-}
-
-function script:Wait-RemoteServer($ps_remotehost)
-{
-    while(!(Test-TcpPort $ps_remotehost 35))
-    {
-        Start-Sleep 10
-    }
-}

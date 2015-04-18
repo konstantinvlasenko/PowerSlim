@@ -1,19 +1,17 @@
 ##########################
 # PowerSlim (Revision 47)#
 ##########################
+
 $slimver = "Slim -- V0.3`n"
-$slimnull = '000004:null:'
-#$slimvoid = "/__VOID__/"
 $slimvoid = ''
-$slimexception = '__EXCEPTION__:'
 $slimsymbols = New-Object -TypeName 'system.collections.generic.dictionary[string,object]'
-#$slimbuffer = new-object byte[] 102400
-#$slimbuffersize = 0
+
 #$VerbosePreference="Continue"
 
-#Support for slow connection
-#$ps_stream.ReadTimeout = 10000 #idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
+# Support for slow connection.
+# Idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
 $REQUEST_READ_TIMEOUT = 10000
+
 $script:SLIM_ABORT_TEST = $false
 $script:SLIM_ABORT_SUITE = $false
 $script:POWERSLIM_PATH = $MyInvocation.MyCommand.Path
@@ -22,11 +20,11 @@ $script:POWERSLIM_HOME = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
 function Write-Log ($message)
 {
     $timestamp = Get-Date -Format 'HH:mm:ss.fff'
-    Write-Host  -Object "$timestamp $message"
+    Write-Host "$timestamp $message"
 }
 function Get-SlimTable($slimchunk) 
 {
-    $ps_exp = $slimchunk -replace "'","''" -replace '000000::','000000:blank:'  -replace '(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))',',''$1''' -replace "'(\[\d{6})'", '$1' -replace ':\d{6}:', ',' -replace ':\]', ')' -replace '\[\d{6},', '(' -replace "'blank'", "''"
+    $ps_exp = $slimchunk -replace "'", "''" -replace '000000::', '000000:blank:'  -replace '(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))', ',''$1''' -replace "'(\[\d{6})'", '$1' -replace ':\d{6}:', ',' -replace ':\]', ')' -replace '\[\d{6},', '(' -replace "'blank'", "''"
 
     Write-Verbose -Message $ps_exp
 
@@ -41,12 +39,12 @@ function Test-OneRowTable($ps_table)
 
 function SlimException-NoClass($ps_class) 
 {
-    $slimexception + 'NO_CLASS ' + $ps_class
+    '__EXCEPTION__:NO_CLASS ' + $ps_class
 }
 
 function SlimException-CMD_NOT_FOUND($ps_cmd) 
 {
-    $slimexception + 'COMMAND_NOT_FOUND ' + $ps_cmd
+    '__EXCEPTION__:COMMAND_NOT_FOUND ' + $ps_cmd
 }
 
 New-Alias -Name noclass -Value SlimException-NoClass
@@ -140,7 +138,7 @@ function ObjectTo-Slim($ps_obj)
     $slimview = '[000002:' + (slimlen $ps_prop) + ':' + $ps_prop+ ':'
     if($($ps_obj.$ps_prop) -eq $null -or $($ps_obj.$ps_prop) -is [system.array])
     {
-        $slimview += $slimnull + ']'
+        $slimview += '[000004:null:]'
     }
     else
     {
@@ -152,7 +150,7 @@ function ObjectTo-Slim($ps_obj)
 function ConvertTo-Json20([object] $item)
 {
     Add-Type -AssemblyName system.web.extensions
-    $ps_js=New-Object -TypeName system.web.script.serialization.javascriptSerializer
+    $ps_js = New-Object -TypeName system.web.script.serialization.javascriptSerializer
     return $ps_js.Serialize($item) 
 }
 
@@ -161,7 +159,7 @@ function PropertyTo-Slim($ps_obj,$ps_prop)
     $slimview = '[000002:' + (slimlen $ps_prop) + ':' + $ps_prop+ ':'
     if($($ps_obj.$ps_prop) -eq $null)
     {
-        $slimview += $slimnull + ']'
+        $slimview += '[000004:null:]'
     }
     elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject])
     {
@@ -366,14 +364,14 @@ function Exec-Script( $Script )
                     default 
                     { 
                         $exc_type = '__EXCEPTION__:'+$_+':'
-                        $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Exception | Out-String) -replace "`r`n",'' )
+                        $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Exception | Out-String) -replace "`r`n", '' )
                     }
                 }
             }
             default 
             {
                 $exc_type = "__EXCEPTION__:$($error[0].Exception):"
-                $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Message | Out-String) -replace "`r`n",'' )
+                $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Message | Out-String) -replace "`r`n", '' )
             }
         }
     }
@@ -440,19 +438,19 @@ function Set-Script($s, $fmt)
     {
         return 
     }
-    $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','''$1'';'
+    $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>', '}' -replace '\t*<tr class="hash_row">\r\n', '' -replace '\t*</tr>\r\n', '' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n', '''$1'';'
     if($s.StartsWith('<pre>'))
     {
         $s = $s -replace '</?pre>' #workaround fitnesse strange behavior
     }
     if($slimsymbols.Count)
     {
-        $slimsymbols.Keys | Where-Object -FilterScript {
+        $slimsymbols.Keys | Where-Object {
             !($s -cmatch "\`$$_\s*=")
-        } | Where-Object -FilterScript {
+        } | Where-Object {
             $slimsymbols[$_] -is [string] 
         } | % {
-            $s=$s -creplace "\`$$_\b",$slimsymbols[$_] 
+            $s = $s -creplace "\`$$_\b", $slimsymbols[$_] 
         }
     }
     if($slimsymbols.Count)
@@ -462,13 +460,13 @@ function Set-Script($s, $fmt)
         }
     }
     $s = [string]::Format( $fmt, $s)
-    if($s.StartsWith('function',$true,$null))
+    if($s.StartsWith('function', $true, $null))
     {
-        Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global
+        Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()', 'function script:$1') -Scope Global
     }
     else
     {
-        Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)((?=\s*[\+|\*|\-|/|%]*=)|(?=\s*,\s*\$\w+.*=))','$script:$1') -Scope Global
+        Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)((?=\s*[\+|\*|\-|/|%]*=)|(?=\s*,\s*\$\w+.*=))', '$script:$1') -Scope Global
     }
 }
 
@@ -524,7 +522,7 @@ function Invoke-SlimInstruction()
         'callAndAssign' 
         {
             $symbol = $ins[2]
-            $ins = $ins[0,1 + 3 .. $ins.Count]
+            $ins = $ins[0, 1 + 3 .. $ins.Count]
         }
 
         'call*' 
@@ -611,7 +609,7 @@ function Invoke-SlimInstruction()
                         '^Result(\S+)$'   
                         {
                             $prop = $Matches[1]
-                            $prop = $prop -replace '_','.'
+                            $prop = $prop -replace '_', '.'
                             ResultTo-String (Invoke-Expression -Command ('$script:decision_result.'+$prop))
                             if ($symbol) 
                             {
@@ -622,7 +620,7 @@ function Invoke-SlimInstruction()
                         '^(\S+)$'    
                         {
                             $prop = $Matches[1]
-                            $prop = $prop -replace '_','.'
+                            $prop = $prop -replace '_', '.'
                             ResultTo-String (Invoke-Expression -Command ('$script:decision_result.'+$prop))
                             if ($symbol) 
                             {
@@ -644,15 +642,17 @@ function Invoke-SlimInstruction()
     {
         Set-Script $ins[4] $EvalFormat__
     }
-  
-    $error.clear()
+ 
+    Write-Log "Executing command: '$Script__'"
+
     # Measure the amount of time this step or command takes
-    $script:Command_Time = Measure-Command -Expression {
+    $script:Command_Time = Measure-Command  {
         # Execution of the test's code occurs here. During the 'make' step this is simple
         # the execution of the 'make' procedure.
         $result = Invoke-SlimCall $ins[3]
     }
-    $Script__ + ' : ' + $script:Command_Time.TotalSeconds | Out-Default
+
+    Write-Log "Result: '$result', execution time: $($script:Command_Time.ToString())"
 
     if($symbol)
     {
@@ -738,14 +738,16 @@ function set_remote_targets($ps_cell)
 {
     $script:Remote = $true
     $script:targets = $null
-
-    $script:targets = Invoke-Expression -Command $ps_cell
   
+    # The CommandNotFoundException is expected here if target is not an expression,
+    # for example if it is just 'remote_host'.
+    try {
+        $script:targets = Invoke-Expression -Command $ps_cell
+    } catch [CommandNotFoundException] {}
+
     if($script:targets -eq $null)
     {
-        $script:targets = $ps_cell.Split(',') | %{
-            $_.Trim(', ')
-        }
+        $script:targets = $ps_cell.Split(',') | %{ $_.Trim(', ') }
     }
 }
 
@@ -800,11 +802,10 @@ function process_message($ps_stream)
         Write-Verbose -Message "Buffer1 $ps_buf1"
         Write-Verbose -Message "Buffer2 $ps_buf2"
 
-        Write-Verbose -Message 'Processing table remotelly'
-
+        Write-Log 'Processing table remotely'
         process_table_remotely $script:ps_table $ps_stream;
 
-        Write-Verbose -Message 'Done remote call'
+        Write-Log 'Remote processing completed'
 
         return
     }
@@ -835,39 +836,38 @@ function process_message_ignore_remote($ps_stream)
 
 function Run-SlimServer($ps_server) 
 {
+    Write-Log 'Starting local PowerSlim server...'
+
     $ps_fitnesse_client = $ps_server.AcceptTcpClient()
     $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
     $ps_fitnesse_stream.ReadTimeout = $REQUEST_READ_TIMEOUT
-  
+ 
     send_slim_version($ps_fitnesse_stream)
-    $ps_fitnesse_client.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
-    while('bye' -ne (process_message($ps_fitnesse_stream)))
-    {
+    $ps_fitnesse_client.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead) | Out-Null
 
-    }
-    ;
+    while('bye' -ne (process_message($ps_fitnesse_stream))) { }
     $ps_fitnesse_client.Close()
 }
 
 function Run-RemoteServer($ps_server)
 {
-    'waiting...' | Out-Default
+    Write-Log 'Waiting for request...'
     while($ps_fitnesse_client = $ps_server.AcceptTcpClient())
     {
-        'accepted!' | Out-Default
+        Write-Log 'Request accepted'
         $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
         $ps_fitnesse_stream.ReadTimeout = $REQUEST_READ_TIMEOUT
     
         process_message_ignore_remote($ps_fitnesse_stream)
         $ps_fitnesse_stream.Close()
         $ps_fitnesse_client.Close()
-        'waiting...' | Out-Default
+        Write-Log 'Waiting for request...'
     }
 }
 
 if (!$args.Length) 
 { 
-    Write-Output -InputObject 'No arguments provided!'
+    Write-Output 'No arguments provided!'
     return; 
 }
 
@@ -884,4 +884,5 @@ else
 {
     Run-RemoteServer $ps_server 
 }
+
 $ps_server.Stop()
