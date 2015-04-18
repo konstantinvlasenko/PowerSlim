@@ -12,6 +12,9 @@ $slimsymbols = New-Object -TypeName 'system.collections.generic.dictionary[strin
 # Idea is that the client should send data, so the stream is in the read mode. We can wait 10 seconds or more?
 $REQUEST_READ_TIMEOUT = 10000
 
+#  Timeout for the Remote server is 1 hour
+$REMOTE_SERVER_READ_TIMEOUT = 60*60*1000
+
 $script:SLIM_ABORT_TEST = $false
 $script:SLIM_ABORT_SUITE = $false
 $script:POWERSLIM_PATH = $MyInvocation.MyCommand.Path
@@ -22,6 +25,123 @@ function Write-Log ($message)
     $timestamp = Get-Date -Format 'HH:mm:ss.fff'
     Write-Host "$timestamp $message"
 }
+
+function Get-RemoteSlimSymbols($inputTable)
+{
+    $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
+    $inputTable | Select-String $__pattern__ -AllMatches | % {
+        $_.matches
+    } | % {
+        @{
+            id   = $_.Groups[1].Value
+            name = $_.Groups[2].Value
+        }
+    }
+}
+function process_table_remotely($ps_table, $ps_fitnesse)
+{
+    try 
+    {
+        $originalslimbuffer = $ps_buf1 + $ps_buf2
+
+        $result = New-Object 'system.collections.generic.dictionary[string,object]'
+
+        foreach($t in $targets)
+        {
+            $ps_computer, $ps_port = $t.split(':')
+
+            if($ps_computer.StartsWith('$'))
+            {
+                $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
+            }
+
+            if($ps_port -eq $null)
+            {
+                $ps_port = 35
+            }           
+          
+            if($slimsymbols.Count -ne 0)
+            {
+                Write-Log "Connecting to $($ps_computer):$ps_port"
+
+                $ps_sumbols_client = New-Object -TypeName System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
+                $remoteserver = $ps_sumbols_client.GetStream()
+                $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
+                      
+                $list = @($slimsymbols.GetEnumerator() | % { $_ })
+                $tr = '[' + (slimlen $list) + ':'
+
+                foreach ($obj in $list)
+                {
+                    $itemstr = '[' +  (6).ToString('d6') + ':'
+
+                    $itemstr += (slimlen 'scriptTable_0_0') + ':scriptTable_0_0:' + (slimlen 'callAndAssign') + ':callAndAssign:'
+                    $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ':scriptTableActor:'
+                    $itemstr += (slimlen 'eval') + ':eval:'
+
+                    $itemstr += (($obj.Value.Length + 2).ToString('d6')) + ":'$($obj.Value)':"
+    
+                    $itemstr += ']'
+          
+                    $tr += (slimlen $itemstr) + ':' + $itemstr + ':'
+                } 
+
+                $tr += ']'
+              
+                $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString('d6') + ':' + $tr                     
+                $s2 = [text.encoding]::utf8.getbytes($s2)
+              
+                Write-Log "Sending symbols to remote: '$tr'"
+
+                $remoteserver.Write($s2, 0, $s2.Length)
+                $resultMessage = get_message($remoteserver)
+                Write-Log "Remote result: '$resultMessage'"
+            }
+
+            Write-Log "Connecting to $($ps_computer):$ps_port"
+            
+            $ps_client = New-Object System.Net.Sockets.TcpClient -ArgumentList ($ps_computer, $ps_port)
+            $remoteserver = $ps_client.GetStream()
+            $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
+
+            $slimBufferString = [Text.Encoding]::UTF8.GetString($originalslimbuffer, 0, $originalslimbuffer.Length)
+            Write-Log "Sending table to remote: '$slimBufferString'"
+
+            $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)           
+            
+            $resultMessage = get_message($remoteserver)
+            Write-Log "Remote result: '$resultMessage'"
+
+            $result[$ps_computer] = $resultMessage
+    
+            #backward symbols sharing
+            foreach($symbol in Get-RemoteSlimSymbols($slimBufferString))
+            {
+                $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
+                $slimsymbols[$symbol.name] = $result[$ps_computer] | Select-String $__pattern__ | % {
+                    $_.matches
+                } | % {
+                    $_.Groups[1].Value
+                }
+            }
+      
+            $remoteserver.Close()         
+            $ps_client.Close()
+        }
+
+        $res = $ps_buf1 + $ps_buf2
+        $ps_fitnesse.Write($res, 0, $res.Length)
+    }
+    catch [System.Exception] 
+    {
+        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "__EXCEPTION__:$($_.Exception.Message)") + ':' + "__EXCEPTION__:$($_.Exception.Message)" + ':]'
+        $send = (slimlen $send) + ':' + $send + ':'
+        $send = [text.encoding]::utf8.getbytes((pack_results $send))
+        $ps_fitnesse.Write($send, 0, $send.Length)
+    }
+}
+
+
 function Get-SlimTable($slimchunk) 
 {
     $ps_exp = $slimchunk -replace "'", "''" -replace '000000::', '000000:blank:'  -replace '(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))', ',''$1''' -replace "'(\[\d{6})'", '$1' -replace ':\d{6}:', ',' -replace ':\]', ')' -replace '\[\d{6},', '(' -replace "'blank'", "''"
@@ -871,8 +991,8 @@ $ps_server.Start()
 
 if(!$args[1]) 
 {
-    $scriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-    . $scriptPath\client.ps1
+ #   $scriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+ #   . $scriptPath\client.ps1
     Run-SlimServer $ps_server
 }
 else 
