@@ -4,6 +4,7 @@ Decision tables:
 - Should be at least one setter
 - use _ instead of . for nested properties
 - symbols in DT
+- dymanic DT not supported
 
 
 

@@ -395,7 +395,17 @@ function ResultTo-String($res)
         $result = ''
         foreach ($ps_obj in $res)
         {
-            $result += $ps_obj.ToString()
+            if($ps_obj -is [Boolean]) 
+            {
+                # To support script table's ensure/reject.
+                # They expect 'true' or 'false' in lower case.
+                $result += $ps_obj.ToString().ToLower()
+            }
+            else
+            {
+                $result += $ps_obj.ToString()
+            }
+
             $result += ','
         }
         $result.TrimEnd(',')
@@ -645,9 +655,9 @@ function Invoke-SlimInstruction()
 
         'call*' 
         { 
-            if($ins[2].StartsWith('decisionTable'))
+            if($ins[2] -match '^decisionTable|^dynamicDecisionTable')
             {
-                if($ins[3] -match ('table|beginTable|reset|endTable'))
+                if($ins[3] -match 'table|beginTable|reset|endTable')
                 {
                     '/__VOID__/'
                     return
@@ -655,8 +665,15 @@ function Invoke-SlimInstruction()
                 elseif($ins[3][0..2] -join '' -eq 'set')
                 {
                     # Processing decision table inputs, i.e. 'setSomeParameter'
-                    $ps_input_name = $($ins[3].Substring(3))
+                    $ps_input_name = $($ins[3].Substring(3))                    
                     $ps_input_value = "'$($ins[4])'"
+
+                    # Check if it is dynamic decision table
+                    if(-not $ps_input_name)
+                    {
+                        $ps_input_name = $ins[4]
+                        $ps_input_value = "'$($ins[5])'"
+                    }
 
                     Write-Log "Set variable: `$$ps_input_name = $ps_input_value"
                     Invoke-Expression "`$script:$ps_input_name = $ps_input_value"
