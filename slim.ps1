@@ -395,17 +395,7 @@ function ResultTo-String($res)
         $result = ''
         foreach ($ps_obj in $res)
         {
-            if($ps_obj -is [Boolean]) 
-            {
-                # To support script table's ensure/reject.
-                # They expect 'true' or 'false' in lower case.
-                $result += $ps_obj.ToString().ToLower()
-            }
-            else
-            {
-                $result += $ps_obj.ToString()
-            }
-
+            $result += $ps_obj.ToString()
             $result += ','
         }
         $result.TrimEnd(',')
@@ -627,7 +617,6 @@ function Invoke-SlimInstruction()
     # decisionTable_3_6 call decisionTable_3 setHomePhone 800-555-1212
     # decisionTable_3_0 make decisionTable_3 new-object PSObject -Property @{ Name = "$First $Last"; }
     $ins = $script:ps_row
-    write-log "    $ins"
 
     (Id)
 
