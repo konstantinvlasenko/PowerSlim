@@ -43,6 +43,7 @@ function Get-RemoteSlimSymbols($inputTable)
         }
     }
 }
+
 function process_table_remotely($ps_table, $ps_fitnesse)
 {
     try 
@@ -162,26 +163,13 @@ function Test-OneRowTable($ps_table)
     !($ps_table[0] -is [array])
 }
 
-function SlimException-NoClass($ps_class) 
-{
-    '__EXCEPTION__:NO_CLASS ' + $ps_class
-}
-
-function SlimException-CMD_NOT_FOUND($ps_cmd) 
-{
-    '__EXCEPTION__:COMMAND_NOT_FOUND ' + $ps_cmd
-}
-
-New-Alias -Name noclass -Value SlimException-NoClass
-New-Alias -Name nocommand -Value SlimException-CMD_NOT_FOUND
-
 function Get-SlimLength($ps_obj) 
 {
     if($ps_obj -is [array])
     {
         $ps_obj.Count.ToString('d6')
     }
-    elseif($ps_obj -is 'system.collections.generic.keyvaluepair[string,object]')
+    elseif($ps_obj -is 'System.Collections.Generic.KeyValuePair[String,Object]')
     {
         (1).ToString('d6')
     }
@@ -541,7 +529,7 @@ function Invoke-SlimCall($fnc)
         { 
             if ((Table-Type) -eq 'ScriptTableActor') 
             {
-                $result = nocommand $_ 
+                $result = '__EXCEPTION__:COMMAND_NOT_FOUND ' + $_
             }
             else
             {
