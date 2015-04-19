@@ -546,11 +546,13 @@ function Set-Script($s, $fmt)
     {
         return 
     }
+
     $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>', '}' -replace '\t*<tr class="hash_row">\r\n', '' -replace '\t*</tr>\r\n', '' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n', '''$1'';'
     if($s.StartsWith('<pre>'))
     {
         $s = $s -replace '</?pre>' #workaround fitnesse strange behavior
     }
+
     if($slimsymbols.Count)
     {
         $slimsymbols.Keys | Where-Object {
@@ -561,12 +563,14 @@ function Set-Script($s, $fmt)
             $s = $s -creplace "\`$$_\b", $slimsymbols[$_] 
         }
     }
+
     if($slimsymbols.Count)
     {
         $slimsymbols.Keys | % {
             Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global
         }
     }
+
     $s = [string]::Format( $fmt, $s)
     if($s.StartsWith('function', $true, $null))
     {
@@ -607,11 +611,17 @@ function Table-Type()
 
 function Invoke-SlimInstruction()
 {
+    # Some slim instruction samples:
+    # scriptTable_0_0 call scriptTableActor eval $server.Kill()
+    # scriptTable_0_0 callAndAssign CurrentPID scriptTableActor eval $PID
+    # decisionTable_3_6 call decisionTable_3 setHomePhone 800-555-1212
+    # decisionTable_3_0 make decisionTable_3 new-object PSObject -Property @{ Name = "$First $Last"; }
     $ins = $script:ps_row
+    write-log "    $ins"
 
     (Id)
 
-    switch -wildcard (Operation){
+    switch -wildcard (Operation) {
 
         'import' 
         {
@@ -644,28 +654,33 @@ function Invoke-SlimInstruction()
                 }
                 elseif($ins[3][0..2] -join '' -eq 'set')
                 {
-                    Invoke-Expression -Command "`$script:$($ins[3].Substring(3))='$($ins[4])'"
+                    # Processing decision table inputs, i.e. 'setSomeParameter'
+                    $ps_input_name = $($ins[3].Substring(3))
+                    $ps_input_value = "'$($ins[4])'"
+
+                    Write-Log "Set variable: `$$ps_input_name = $ps_input_value"
+                    Invoke-Expression "`$script:$ps_input_name = $ps_input_value"
+
                     '/__VOID__/'
                     return
                 }
                 elseif($ins[3] -eq 'execute')
                 {
-                    # store the decision table test time.
-                    $script:decision_time = Measure-Command -Expression {
+                    Write-Log "Executing decision table row: '$Script__'"
+
+                    # Store the decision table test time.
+                    $script:decision_time = Measure-Command {
                         $script:decision_result = Exec-Script -Script "$Script__ 2>&1"
                     }
+                    
+                    Write-Log "Result: '$script:decision_result', execution time: $($script:decision_time.ToString())"
+
                     $slimvoid
                     #$script:decision_result
                     return
                 }
                 else
                 {
-                    #if($ins[3] -ne 'Result'){
-                    #  "Not Implemented"
-                    #}else{
-                    #  if($symbol){$slimsymbols[$symbol] = $script:decision_result}
-                    #  $script:decision_result
-                    #}
                     switch -regex ($ins[3]) {
                         # Support requesting the amount of time it took to process a decision table row.
                         '^Time(?<comp>\w+)?'     
@@ -718,10 +733,10 @@ function Invoke-SlimInstruction()
                         {
                             $prop = $Matches[1]
                             $prop = $prop -replace '_', '.'
-                            ResultTo-String (Invoke-Expression -Command ('$script:decision_result.'+$prop))
+                            ResultTo-String (Invoke-Expression ('$script:decision_result.'+$prop))
                             if ($symbol) 
                             {
-                                $slimsymbols[$symbol] = Invoke-Expression -Command ('$script:decision_result.'+$prop)
+                                $slimsymbols[$symbol] = Invoke-Expression ('$script:decision_result.'+$prop)
                             }
                             break
                         }
@@ -729,10 +744,10 @@ function Invoke-SlimInstruction()
                         {
                             $prop = $Matches[1]
                             $prop = $prop -replace '_', '.'
-                            ResultTo-String (Invoke-Expression -Command ('$script:decision_result.'+$prop))
+                            ResultTo-String (Invoke-Expression ('$script:decision_result.'+$prop))
                             if ($symbol) 
                             {
-                                $slimsymbols[$symbol] = Invoke-Expression -Command ('$script:decision_result.'+$prop)
+                                $slimsymbols[$symbol] = Invoke-Expression ('$script:decision_result.'+$prop)
                             }
                         }
                         default    
@@ -771,7 +786,7 @@ function Invoke-SlimInstruction()
     switch ($ins[3]){
         'query' 
         {
-            if(($null -eq $result) -or ($result -is 'system.collections.generic.dictionary[string,object]' -and  $result.Count -eq 0))
+            if(($null -eq $result) -or ($result -is 'System.Collections.Generic.Dictionary[String,Object]' -and  $result.Count -eq 0))
             {
                 $result = ResultTo-List @()
             }
@@ -877,7 +892,7 @@ function process_table()
 
 function process_message($ps_stream)
 {
-    if( ! $ps_stream.CanRead )
+    if(!$ps_stream.CanRead )
     {
         return 'bye' 
     }
@@ -976,21 +991,21 @@ function Run-RemoteServer($ps_server)
 if (!$args.Length) 
 { 
     Write-Output 'No arguments provided!'
+    Write-Output 'Sample: .\slim.ps1 <port, i.e. 35> [Server]'
     return; 
 }
 
-$ps_server = New-Object -TypeName System.Net.Sockets.TcpListener -ArgumentList ($args[0])
+$ps_port = $args[0]
+$ps_server = New-Object -TypeName System.Net.Sockets.TcpListener -ArgumentList ($ps_port)
 $ps_server.Start()
 
-if(!$args[1]) 
+if($args[1] -eq 'Server') 
 {
- #   $scriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
- #   . $scriptPath\client.ps1
-    Run-SlimServer $ps_server
+    Run-RemoteServer $ps_server 
 }
 else 
 {
-    Run-RemoteServer $ps_server 
+    Run-SlimServer $ps_server
 }
 
 $ps_server.Stop()

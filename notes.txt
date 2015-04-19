@@ -1,0 +1,21 @@
+Decision tables:
+- different semantics - table header executed each for each row ('execute' method), it is always green
+- 'Decision:' prefix 
+- Should be at least one setter
+- use _ instead of . for nested properties
+- symbols in DT
+
+
+
+Symbol sharing
+
+powerslim:
+- timestamps, elapsed time
+- one file (slim.ps1)
+
+
+
+Fitnesse
+- autoformat
+- keyboard shortcuts - t,v,e, ctrl-s,s (search)
+- search: title, content
