@@ -548,16 +548,16 @@ function Set-Script($s, $fmt)
     }
 
     $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>', '}' -replace '\t*<tr class="hash_row">\r\n', '' -replace '\t*</tr>\r\n', '' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n', '''$1'';'
-    if($s.StartsWith('<pre>'))
+    if($s.TrimStart().StartsWith('<pre>'))
     {
         $s = $s -replace '</?pre>' #workaround fitnesse strange behavior
     }
 
     if($slimsymbols.Count)
     {
-        $slimsymbols.Keys | Where-Object {
+        $slimsymbols.Keys | ? {
             !($s -cmatch "\`$$_\s*=")
-        } | Where-Object {
+        } | ? {
             $slimsymbols[$_] -is [string] 
         } | % {
             $s = $s -creplace "\`$$_\b", $slimsymbols[$_] 
