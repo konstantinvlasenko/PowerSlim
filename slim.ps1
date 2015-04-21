@@ -9,6 +9,7 @@
 
 $slimver = "Slim -- V0.3`n"
 $slimvoid = ''
+$slimexception = '__EXCEPTION__'
 $slimsymbols = New-Object -TypeName 'system.collections.generic.dictionary[string,object]'
 
 #$VerbosePreference="Continue"
@@ -140,7 +141,7 @@ function process_table_remotely($ps_table, $ps_fitnesse)
     }
     catch [System.Exception] 
     {
-        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "__EXCEPTION__:$($_.Exception.Message)") + ':' + "__EXCEPTION__:$($_.Exception.Message)" + ':]'
+        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "${slimexception}:$($_.Exception.Message)") + ':' + "${slimexception}:$($_.Exception.Message)" + ':]'
         $send = (slimlen $send) + ':' + $send + ':'
         $send = [text.encoding]::utf8.getbytes((pack_results $send))
         $ps_fitnesse.Write($send, 0, $send.Length)
@@ -412,13 +413,13 @@ function Exec-Script( $Script )
         {
             # If another critical error has already been detected, we immediately end this 
             # test w/o executing it and return an error.
-            $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>'
+            $result = "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>"
         }
         elseif ( $script:SLIM_ABORT_SUITE ) 
         {
             # If another critical error has already been detected, we immediately end this 
             # test w/o executing it and return an error.
-            $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>'
+            $result = "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>"
         }
         else 
         {
@@ -433,14 +434,14 @@ function Exec-Script( $Script )
         switch($_.Exception.GetType().FullName) {
             'System.Management.Automation.CommandNotFoundException' 
             {
-                $exc_type = '__EXCEPTION__:COMMAND_NOT_FOUND:'
+                $exc_type = "${slimexception}:COMMAND_NOT_FOUND:"
                 $exc_msg  = $exc_type + $_
             }
             'System.Management.Automation.ActionPreferenceStopException' 
             {
                 # if $ErrorActionPreference is set to stop and an error occurred, we end up here
                 $script:SLIM_ABORT_TEST = $true
-                $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
                 $exc_msg  = $exc_type + $_ 
             }
             'System.Management.Automation.RuntimeException' 
@@ -454,13 +455,13 @@ function Exec-Script( $Script )
                         if ( $matches[2] ) 
                         {
                             # The exception provides additional details about the error.
-                            $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                            $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
                             $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + ']'
                         }
                         else 
                         {
                             # No other details provided... just a throw "StopTest" was executed
-                            $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                            $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
                             $exc_msg  = $exc_type + $matches[1] + ' aborted.' 
                         }
                         $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
@@ -471,14 +472,14 @@ function Exec-Script( $Script )
                     }
                     default 
                     { 
-                        $exc_type = '__EXCEPTION__:'+$_+':'
+                        $exc_type = $slimexception + ':' + $_ + ':'
                         $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Exception | Out-String) -replace "`r`n", '' )
                     }
                 }
             }
             default 
             {
-                $exc_type = "__EXCEPTION__:$($error[0].Exception):"
+                $exc_type = "${slimexception}:$($error[0].Exception):"
                 $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Message | Out-String) -replace "`r`n", '' )
             }
         }
@@ -494,9 +495,9 @@ function Exec-Script( $Script )
                 if ( $global:ErrorActionPreference -eq 'Stop' ) 
                 {
                     # if the user indicated they want to stop on all errors, Stop.
-                    $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
+                    $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
                 }
-                if ( $exc_type -eq '__EXCEPTION__:ABORT_SLIM_TEST:' ) 
+                if ( $exc_type -eq "${slimexception}:ABORT_SLIM_TEST:" ) 
                 {
                     $script:SLIM_ABORT_TEST = $true
                 }
@@ -529,7 +530,7 @@ function Invoke-SlimCall($fnc)
         { 
             if ((Table-Type) -eq 'ScriptTableActor') 
             {
-                $result = '__EXCEPTION__:COMMAND_NOT_FOUND ' + $_
+                $result = "${slimexception}:COMMAND_NOT_FOUND " + $_
             }
             else
             {
