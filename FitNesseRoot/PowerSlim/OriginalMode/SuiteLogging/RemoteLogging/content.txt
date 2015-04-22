@@ -1,0 +1,3 @@
+!define SLIM_REMOTE_LOG (remote_powerslim.log)
+
+!contents -R2 -g -p -f -h

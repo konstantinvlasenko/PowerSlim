@@ -1,0 +1,10 @@
+!|script                   |
+|$LocalSymbol=|eval|'local'|
+
+!|script       |remote|127.0.0.1|
+|$RemoteSymbol=|eval  |'remote' |
+
+!|script                                                                |
+|eval |$content = Get-Content ${SLIM_LOG}                               |
+|check|eval|$content|=~/Sending symbols to remote.+LocalSymbol.+'local'/|
+|check|eval|$content|=~/Remote symbols.+RemoteSymbol.+'remote'/         |

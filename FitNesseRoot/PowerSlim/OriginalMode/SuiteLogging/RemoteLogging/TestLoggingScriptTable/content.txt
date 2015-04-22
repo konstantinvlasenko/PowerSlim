@@ -1,0 +1,5 @@
+!|script|Remote|127.0.0.1                                   |
+|eval   |!-'my script' | Out-Null; 'my result'-!            |
+|check  |eval  |Get-Content ${SLIM_LOG}|=~/Sending table to remote.+'my script'/|
+|check  |eval  |Get-Content ${SLIM_REMOTE_LOG}|=~/Executing command:.+'my script'/|
+|check  |eval  |Get-Content ${SLIM_REMOTE_LOG}|=~/Result:\s+'my result'/          |

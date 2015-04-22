@@ -1,0 +1,3 @@
+!|script                                                          |
+|eval|$server.kill()                                              |
+|eval|Remove-Item ${SLIM_REMOTE_LOG} -ErrorAction SilentlyContinue|

@@ -1,0 +1,5 @@
+!|script                                                |
+|eval |!-'my script' | Out-Null; 'my result'-!          |
+|eval |$content = Get-Content ${SLIM_LOG}               |
+|check|eval|$content|=~/Executing command:.+'my script'/|
+|check|eval|$content|=~/Result:\s+'my result'/          |

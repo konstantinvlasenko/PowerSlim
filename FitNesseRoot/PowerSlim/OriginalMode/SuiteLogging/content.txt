@@ -1,0 +1,4 @@
+!define SLIM_LOG (powerslim.log)
+!define COMMAND_PATTERN (slim_runner.cmd ${SLIM_LOG})
+
+!contents -R2 -g -p -f -h

@@ -1,0 +1,3 @@
+!|script                                                                                                                                                |
+|eval|Remove-Item ${SLIM_REMOTE_LOG} -ErrorAction SilentlyContinue                                                                                      |
+|eval|$server = Start-Process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 35 server" -PassThru -RedirectStandardOutput ${SLIM_REMOTE_LOG}|

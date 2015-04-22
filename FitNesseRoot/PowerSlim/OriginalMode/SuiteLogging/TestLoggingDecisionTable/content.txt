@@ -1,0 +1,9 @@
+!|decision:'hello '+$Parameter      |
+|Parameter     |Result?             |
+|decision world|hello decision world|
+
+!|script                                                                     |
+|eval |$content = Get-Content ${SLIM_LOG}                                    |
+|check|eval|$content|=~/Set variable:.+\$Parameter = 'decision world'/       |
+|check|eval|$content|=~/Executing decision table row:.+'hello '\+\$Parameter/|
+|check|eval|$content|=~/Result:\s+'hello decision world'/                    |
