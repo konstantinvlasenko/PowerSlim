@@ -77,6 +77,8 @@ function process_table_remotely($ps_table, $ps_fitnesse)
                       
                 $list = @($slimsymbols.GetEnumerator() | % { $_ })
                 $tr = '[' + (slimlen $list) + ':'
+				
+				$log_message = '';
 
                 foreach ($obj in $list)
                 {
@@ -91,6 +93,8 @@ function process_table_remotely($ps_table, $ps_fitnesse)
                     $itemstr += ']'
           
                     $tr += (slimlen $itemstr) + ':' + $itemstr + ':'
+					
+					$log_message += "`$$($obj.Key) = '$($obj.Value)'; "
                 } 
 
                 $tr += ']'
@@ -98,11 +102,10 @@ function process_table_remotely($ps_table, $ps_fitnesse)
                 $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString('d6') + ':' + $tr                     
                 $s2 = [text.encoding]::utf8.getbytes($s2)
               
-                Write-Log "Sending symbols to remote: '$tr'"
+                Write-Log "Sending symbols to remote: $log_message"
 
                 $remoteserver.Write($s2, 0, $s2.Length)
                 $resultMessage = get_message($remoteserver)
-                Write-Log "Remote result: '$resultMessage'"
             }
 
             Write-Log "Connecting to $($ps_computer):$ps_port"
@@ -122,16 +125,22 @@ function process_table_remotely($ps_table, $ps_fitnesse)
             $result[$ps_computer] = $resultMessage
     
             #backward symbols sharing
+			$log_message = '';
             foreach($symbol in Get-RemoteSlimSymbols($slimBufferString))
             {
                 $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-                $slimsymbols[$symbol.name] = $result[$ps_computer] | Select-String $__pattern__ | % {
+				$symbol_value = $result[$ps_computer] | Select-String $__pattern__ | % {
                     $_.matches
                 } | % {
                     $_.Groups[1].Value
                 }
+				
+                $slimsymbols[$symbol.name] = $symbol_value
+				$log_message += "`$$($symbol.name) = '$symbol_value'; "
             }
-      
+      		
+			Write-Log "Remote symbols: $log_message"
+			
             $remoteserver.Close()         
             $ps_client.Close()
         }
