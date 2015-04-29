@@ -8,4 +8,10 @@
 |check|eval|!-'&gt;'.Length-!                                           |1                                        |
 |check|eval|!-<pre>'preformatted text'</pre>-!                          |preformatted text                        |
 |check|eval|!-  <pre>'preformatted text with leading whitespace'</pre>-!|preformatted text with leading whitespace|
+|check|eval|!-  <pre>'preformatted text with leading whitespace'</pre>-!|preformatted text with leading whitespace|
 
+!|scenario|Execute block|!- block -!  |result|!- result -!|
+|check    |eval         |!- &@block -!|@result            |
+
+!|script                                                                             |
+|Execute block|!-<pre>{'preformatted' + ' script'}</pre>-!|result|preformatted script|
