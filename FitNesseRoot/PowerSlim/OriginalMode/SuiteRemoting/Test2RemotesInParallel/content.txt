@@ -4,7 +4,7 @@
 |eval|sleep 1|
 
 !|script|remote|localhost:37,localhost:38|
-|eval|notepad|
+|eval|start notepad|
 
 -!|script|
 |eval|$server2.Kill()|

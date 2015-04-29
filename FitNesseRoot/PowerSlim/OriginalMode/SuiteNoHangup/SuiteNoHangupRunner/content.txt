@@ -4,9 +4,10 @@ This page executes the Suite tests via !-FitNesse's RESTful-! services. This is 
 !define Server     {localhost}
 !define Responder  {test}
 !define Inputs     {format=xml}
+!define RootUrl    (!-http://-!${Server}:${FITNESSE_PORT})
 
 | scenario | test page | TESTPAGE | results should contain | EXCEPTION_TEXT |
-| $URI= | eval | '${Server}/@TESTPAGE?responder=${Responder}&${Inputs}'       |
+| $URI= | eval | '${RootUrl}/@TESTPAGE?responder=${Responder}&${Inputs}'       |
 |         eval | $results = Invoke-RestMethod -Uri '$URI'                     |
 | check | eval | $results.testResults.result.content.indexOf( '@EXCEPTION_TEXT' ) -ge 0 | True |
 
