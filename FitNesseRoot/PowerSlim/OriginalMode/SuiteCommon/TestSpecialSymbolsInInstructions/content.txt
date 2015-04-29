@@ -1,3 +1,6 @@
+!|scenario|Execute block|!- block -!  |result|!- result -!|
+|check    |eval         |!- &@block -!|@result            |
+
 !|script                                                                                                          |
 |check|eval|"text with [brackets]"                                      |text with [brackets]                     |
 |check|eval|"whitespace at the end  "                                   |whitespace at the end!-  -!              |
@@ -8,9 +11,5 @@
 |check|eval|!-'&gt;'.Length-!                                           |1                                        |
 |check|eval|!-<pre>'preformatted text'</pre>-!                          |preformatted text                        |
 |check|eval|!-  <pre>'preformatted text with leading whitespace'</pre>-!|preformatted text with leading whitespace|
-
-!|scenario|Execute block|!- block -!  |result|!- result -!|
-|check    |eval         |!- &@block -!|@result            |
-
-!|script                                                                             |
+|check|eval|'<body><pre>preformatted text</pre></body>'|<body><pre>preformatted text</pre></body>|
 |Execute block|!-<pre>{'preformatted' + ' script'}</pre>-!|result|preformatted script|
