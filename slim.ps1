@@ -336,10 +336,10 @@ function Invoke-SlimCall($fnc){
 function Set-Script($s, $fmt){
   if(!$s){ return }
   $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '''$1''=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','''$1'';'
-  if($s.StartsWith('<pre>'))
-  {
+  #if($s.StartsWith('<pre>'))
+  #{
 	$s = $s -replace '</?pre>' #workaround fitnesse strange behavior
-  }
+  #}
   if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_\b",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = [string]::Format( $fmt, $s)
