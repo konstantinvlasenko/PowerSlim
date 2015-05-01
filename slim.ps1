@@ -237,88 +237,34 @@ function ResultTo-String($res){
 }
 
 function Exec-Script( $Script ) {
-  $Error.Clear()   # Clear out any prior errors. After executing the test, if error[0] <> $null, we know it came from the test.
-  try {
-    if ( $script:SLIM_ABORT_TEST ) {
-      # If another critical error has already been detected, we immediately end this 
-      # test w/o executing it and return an error.
-      $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>'
-    } elseif ( $script:SLIM_ABORT_SUITE ) {
-      # If another critical error has already been detected, we immediately end this 
-      # test w/o executing it and return an error.
-      $result = '__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>'
-    } else {
-      # execute the test and store the result.
-      $result = iex $Script
-      # preserve the $matches value, if set by the expression
-      $script:matches = $matches
-    }
-  } catch [System.Exception] {
-    switch($_.Exception.GetType().FullName) {
-      'System.Management.Automation.CommandNotFoundException' {
-        $exc_type = '__EXCEPTION__:COMMAND_NOT_FOUND:'
-        $exc_msg  = $exc_type + $_
-      }
-      'System.Management.Automation.ActionPreferenceStopException' {
-        # if $ErrorActionPreference is set to stop and an error occurred, we end up here
-        $script:SLIM_ABORT_TEST = $true
-        $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-        $exc_msg  = $exc_type + $_ 
-      }
-      'System.Management.Automation.RuntimeException' {
-        $e = $_
-        switch -regex ( $Error[0].FullyQualifiedErrorId ) {
-          # If the user script has thrown an exception and it starts with "StopTest", no further 
-          # tests should execute.
-          '^Stop(Test|Suite):?(.*)?' {
-            if ( $matches[2] ) {
-              # The exception provides additional details about the error.
-              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-              $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + "]"
-            } else {
-              # No other details provided... just a throw "StopTest" was executed
-              $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-              $exc_msg  = $exc_type + $matches[1] + " aborted." 
-            }
-            $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
-            if ( $matches[1] -eq 'Suite' ) {
-              $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
-            }
-          }
-          default { 
-            $exc_type = '__EXCEPTION__:'+$_+':'
-            $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Exception | out-string) -replace "`r`n",'' )
-          }
-        }
-      }
-      default {
-        $exc_type = "__EXCEPTION__:$($error[0].Exception):"
-        $exc_msg  = $exc_type + ((format-list -inputobject $error[0].Message | out-string) -replace "`r`n",'' )
-      }
-    }
-  } finally {
-    if ( $Error[0] -ne $null ) {
-       # An error has occurred. If $exc_type has a value, it was caught above.
-       if ( $exc_type -gt '' ) {
-         #an error occurred, so check $ErrorActionPreference to see if it's set to Stop
-         if ( $global:ErrorActionPreference -eq 'Stop' ) {
-            # if the user indicated they want to stop on all errors, Stop.
-            $exc_type = '__EXCEPTION__:ABORT_SLIM_TEST:'
-         }
-         if ( $exc_type -eq '__EXCEPTION__:ABORT_SLIM_TEST:' ) { 
+    if ( $script:SLIM_ABORT_TEST )  { return "__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>" }
+    if ( $script:SLIM_ABORT_SUITE ) { return "__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>" }
+   
+   try { 
+        iex $Script        
+        $script:matches = $matches # preserve the $matches value, if set by the expression
+   } catch { 
+        $errorType = $Error[0].FullyQualifiedErrorId
+        if($errorType -match "^Stop(Test|Suite):?(.*)?"){
+            # test or suite can be aborted by throw "StopTest"            
             $script:SLIM_ABORT_TEST = $true
-         }
-         $result = $exc_type+'message:<<'+$exc_msg+'>>'
-       } else {
-         # This is a non-terminating error and not caught as part of the special types
-         # above, so simply return the error text as the result of the instruction
-         $result = (''+$Error[0])
-       }
-    }
-  }
-  return $result
+            if ($matches[1] -eq 'Suite') {
+              $script:SLIM_ABORT_SUITE = $true
+            }
+            "__EXCEPTION__:ABORT_SLIM_TEST:message:<<__EXCEPTION__:ABORT_SLIM_TEST:$($matches[1]) aborted. : Additional Info[ $($_.Exception.ToString())  ]>>"
+        } else {
+            "__EXCEPTION__:UnhandledException:message:<<__EXCEPTION__:UnhandledException: Additional Info[ $($_.Exception.ToString()) ]>>"
+        }
+   }
+   if($Error[0] -ne $null) { Print-Error }
 }
 
+function Print-Error {
+    $Error | % {
+        "__EXCEPTION__:Error: " + ($_ | Out-String)
+        if($_.Exception) { $_.Exception.ToString() }
+    } | Out-String
+}
 
 function Invoke-SlimCall($fnc){
   switch ($fnc){

@@ -1,20 +1,22 @@
 This page executes the Suite tests via !-FitNesse's RESTful-! services. This is done to test for expected exceptions on the tests, which can't be tested directly from a test table because the expected result is in fact an exception.
+!include -c .PowerSlim.OriginalMode.SuiteExceptions.ScenarioLibrary
 
 !*****> Define variables and scenariofor the RESTful service invocation
 !define Server     {localhost}
 !define Responder  {test}
 !define Inputs     {format=xml}
+!define RootUrl    (!-http://-!${Server}:${FITNESSE_PORT})
 
-| scenario | test page | TESTPAGE | results should contain | EXCEPTION_TEXT |
-| $URI= | eval | '${Server}/@TESTPAGE?responder=${Responder}&${Inputs}'       |
-|         eval | $results = Invoke-RestMethod -Uri '$URI'                     |
-| check | eval | $results.testResults.result.content.indexOf( '@EXCEPTION_TEXT' ) -ge 0 | True |
+|scenario|test page|TESTPAGE                                                              |results should contain|EXCEPTION_TEXT|
+|$URL=   |eval     |'${RootUrl}/@TESTPAGE?responder=${Responder}&${Inputs}'                                                     |
+|eval    |$results = Run-Test '$URL'                                                                                            |
+|check   |eval     |$results.testResults.result.content.indexOf( '@EXCEPTION_TEXT' ) -ge 0|True                                 |
 
 ******!
 
-!| test page results should contain | 
-| TESTPAGE                                                       | EXCEPTION_TEXT                                                                           |
-| PowerSlim.OriginalMode.SuiteNoHangup.TestBasicHangup           | No connection could be made because the target machine actively refused it     |
-| PowerSlim.OriginalMode.SuiteNoHangup.TestNonSlimData           | Unable to read data from the transport connection: A connection attempt failed |
+!| test page results should contain                                                                                                 |
+|TESTPAGE                                            |EXCEPTION_TEXT                                                                |
+|PowerSlim.OriginalMode.SuiteNoHangup.TestBasicHangup|No connection could be made because the target machine actively refused it    |
+|PowerSlim.OriginalMode.SuiteNoHangup.TestNonSlimData|Unable to read data from the transport connection: A connection attempt failed|
 
 !note | PowerSlim.OriginalMode.SuiteNoHangup.TestConnectionInterrupted |                                                                                |

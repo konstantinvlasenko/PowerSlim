@@ -1,0 +1,18 @@
+Create the function used to run the tests. In v3 this function can be replaced with Invoke-RestMethod or Invoke-WebRequest
+|script|
+|eval  |!-
+function global:Run-Test ($url) {
+  [Net.HttpWebRequest] $req = [Net.WebRequest]::create($url)
+  $req.Method = "GET"
+  $req.Timeout = 60000 # = 1 minute
+
+  [Net.HttpWebResponse] $result = $req.GetResponse()
+  [IO.Stream] $stream = $result.GetResponseStream()
+  [IO.StreamReader] $reader = New-Object IO.StreamReader($stream)
+  [string] $output = $reader.readToEnd()
+  $stream.flush()
+  $stream.close()
+
+  return [xml] $output
+}
+-!||

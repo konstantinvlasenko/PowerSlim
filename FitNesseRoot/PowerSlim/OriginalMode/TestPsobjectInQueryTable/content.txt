@@ -1,0 +1,11 @@
+!2 Tests below don't work for Powershell 2.0. It doesn't support serialization for PSObject with property that is PSObject also
+[[PSMethod][http://msdn.microsoft.com/en-us/library/system.management.automation.psmethod(v=vs.85).aspx]] contains reference to a parent object. [[!-JavaScriptSerializer.Serialize-!][http://msdn.microsoft.com/en-us/library/bb340417(v=vs.90).aspx]] fails in this case.
+Powershell 3.0 uses !-ConvertTo-Json CMDLet-! that works perfect with this object
+
+!|Query:Local     |New-Object PSObject -property @{ title = 'test PSObject'; item1 = 'item1 value'; item2 = 'item2 value'; item3 = 'item3 value'; array = ('array item1', 'array item2', 'array item3'); psobject_item = New-Object PSObject -property @{ property1 = 'property1 value'; property2 = 'property2 value' } }|
+|title            |array                                                                     |item1                                     |item2                                     |item3                                     |psobject_item                                                                              |
+|!-test PSObject-!|!-["array item1","array item2","array item3"]-!                           |!-item1 value-!                           |!-item2 value-!                           |!-item3 value-!                           |!-{"property1":"property1 value","property2":"property2 value"}-!                          |
+
+!|Query:Local     |New-Object PSObject -property @{ psobject_item = New-Object PSObject -property @{ property1 = 'property1 value'; property2 = 'property2 value' } }|
+|psobject_item                                                                              |
+|!-{"property1":"property1 value","property2":"property2 value"}-!                          |

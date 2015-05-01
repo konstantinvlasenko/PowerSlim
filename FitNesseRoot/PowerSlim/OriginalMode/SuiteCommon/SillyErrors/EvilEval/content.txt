@@ -1,6 +1,3 @@
-!|script|
-|check|evil|$a = 10|please use eval|
-|evel|$a = 10|please use eval|
 
 !|script|
 |check|eval|$a = 11||
