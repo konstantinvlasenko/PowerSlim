@@ -3,6 +3,7 @@ PowerSlim - An implementation of FitNesse Slim in PowerShell
 All stuff is under the [Beer-Ware-License](http://en.wikipedia.org/wiki/Beerware).
 
 !define TEST_SYSTEM {slim}
+
 !define COMMAND_PATTERN (PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
 
 Examples are available in the acceptance tests FitnesseRoot/PowerSlim and in the examples FitnesseRoot/ExampleS
