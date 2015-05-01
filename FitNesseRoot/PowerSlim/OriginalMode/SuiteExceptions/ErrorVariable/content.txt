@@ -1,0 +1,3 @@
+|script                          |
+|eval |Get-Service invalidservice|
+|check|eval |"2+2=$(2+2)" |=~/4/ |

@@ -7,4 +7,4 @@ Note: This test page is intentionally disabled and run from the ExceptionTestRun
 | script |
 | eval  | write-host 'This command executes, but the one that follows produces an exception.' |
 | show  | eval | 1/0 |
-| check | eval | get-date -f 'yyyy-MM-dd' | =~/\d{4}-\d{2}-\d{2}/ |
+| check | eval | "2+2=$(2+2)" | =~/4/ |
