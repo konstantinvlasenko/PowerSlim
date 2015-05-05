@@ -1,4 +1,5 @@
-|script|
+!|script|
 |eval|Remove-Item "$env:temp\samefoldername" -erroraction silentlycontinue|
 |eval|New-Item "$env:temp\samefoldername" -ItemType directory|
 |eval|New-Item "$env:temp\samefoldername" -ItemType directory -erroraction silentlycontinue|
+|eval|New-Item "$env:temp\samefoldername" -ItemType directory -erroraction SilentlyContinue|

@@ -256,7 +256,7 @@ function Exec-Script( $Script ) {
             "__EXCEPTION__:UnhandledException:message:<<__EXCEPTION__:UnhandledException: Additional Info[ $($_.Exception.ToString()) ]>>"
         }
    }
-   if(($Error[0] -ne $null) -and ($Script.Contains('silentlycontinue') -eq $false) ) { Print-Error }
+   if(($Error[0] -ne $null) -and (($Script -like '*silentlycontinue*') -eq $false) ) { Print-Error }
 }
 
 function Print-Error {
