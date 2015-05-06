@@ -1,0 +1,3 @@
+!|script|
+|check|eval|try { throw 'Expected Exception' } catch { $Error[0].Exception }||
+|check|eval|try { throw 'Expected Exception with empty catch' } catch { }||
