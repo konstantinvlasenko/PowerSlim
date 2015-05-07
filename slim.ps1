@@ -18,6 +18,7 @@ $script:SLIM_ABORT_TEST = $false
 $script:SLIM_ABORT_SUITE = $false
 $script:POWERSLIM_PATH = $MyInvocation.MyCommand.Path
 $script:POWERSLIM_HOME = Split-Path -Parent $MyInvocation.MyCommand.Path
+$script:NonTerminatingIsException = $false
 
 function Get-SlimTable($slimchunk){
 
@@ -256,13 +257,18 @@ function Exec-Script( $Script ) {
             "__EXCEPTION__:UnhandledException:message:<<__EXCEPTION__:UnhandledException: Additional Info[ $($_.Exception.ToString()) ]>>"
         }
    }
-   if(($Error[0] -ne $null) -and (($Script -like '*silentlycontinue*') -eq $false) ) { Print-Error }
+   if($Error[0] -ne $null) { Print-Error }
 }
 
 function Print-Error {
     $Error | % {
-        "__EXCEPTION__:Error: " + ($_ | Out-String)
-        if($_.Exception) { $_.Exception.ToString() }
+        $details = ($_ | Out-String)
+        if($_.Exception) { $details += $_.Exception.ToString() }
+        if($script:NonTerminatingIsException){
+            "__EXCEPTION__:Error:message:<<__EXCEPTION__:Error: Additional Info[ $details ]>>"
+        } else {
+            $details
+        }
     } | Out-String
 }
 
