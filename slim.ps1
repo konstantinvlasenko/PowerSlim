@@ -276,6 +276,8 @@ function Invoke-SlimCall($fnc){
   switch ($fnc){
     'query' {$result = Exec-Script -Script $Script__ }
     'eval'  {$result = Exec-Script -Script $Script__ }
+    'get'  {$result = Exec-Script -Script "Invoke-RestMethod $Script__" }
+    'post'  {$result = Exec-Script -Script $Script__ }
     default { 
       if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
       else{ $result = $slimvoid }
@@ -283,6 +285,13 @@ function Invoke-SlimCall($fnc){
   }
   $script:matches = $matches
   $result
+}
+
+function Set-RestScript($method, $arguments)
+{
+  $uri, $body = $arguments -split ','
+  $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON),$method
+  Set-Variable -Name Script__ -Value $s -Scope Global
 }
 
 function Set-Script($s, $fmt){
@@ -294,7 +303,7 @@ function Set-Script($s, $fmt){
   }
   if($slimsymbols.Count){$slimsymbols.Keys | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_\b",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
-  $s = [string]::Format( $fmt, $s)
+  $s = $fmt -f $s
   if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global}
   else{Set-Variable -Name Script__ -Value ($s -replace '\$(\w+)((?=\s*[\+|\*|\-|/|%]*=)|(?=\s*,\s*\$\w+.*=))','$script:$1') -Scope Global}
 }
@@ -414,7 +423,12 @@ function Invoke-SlimInstruction(){
   }
   
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-    Set-Script $ins[4] $EvalFormat__
+    if($ins[3] -eq "post"){
+      Set-RestScript $ins[3] $ins[4]
+    }
+    else{
+      Set-Script $ins[4] $EvalFormat__
+    }
   }
   
   $error.clear()
@@ -439,6 +453,9 @@ function Invoke-SlimInstruction(){
       }
     }
     "eval"  { $result = ResultTo-String $result }
+    "get"  { Set-Variable -Name get -Value ($result) -Scope Global; $result = ResultTo-List @($result); }
+    "post"  { Set-Variable -Name post -Value ($result) -Scope Global; $result = ResultTo-List @($result); }
+    
   }
   if ($result -is [String]) {
     $result.TrimEnd("`r`n")
