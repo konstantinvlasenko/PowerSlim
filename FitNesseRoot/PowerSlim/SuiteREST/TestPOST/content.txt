@@ -1,0 +1,10 @@
+'''Creating a resource by using http://jsonplaceholder.typicode.com/'''
+!define TITLE (PowerSlim)
+!define BODY (Created by PowerSlim)
+
+!|script|
+|post|http://jsonplaceholder.typicode.com/posts, @{ title = '${TITLE}'; body = '${BODY}'; userId = 1}|
+
+!|Query:Local|$post|
+|title|body|userId|id|
+|${TITLE}|${BODY}|1||
