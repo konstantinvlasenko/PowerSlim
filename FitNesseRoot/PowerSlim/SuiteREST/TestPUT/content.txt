@@ -1,0 +1,11 @@
+'''Updating a resource by using http://jsonplaceholder.typicode.com/'''
+!define TITLE (PowerSlim)
+!define BODY (Created by PowerSlim)
+!define ID (1)
+
+!|script|
+|put|http://jsonplaceholder.typicode.com/posts/${ID}, @{ title = '${TITLE}'; body = '${BODY}'}|
+
+!|Query:Local|$put|
+|title|body|userId|id|
+|${TITLE}|${BODY}|1|${ID}|

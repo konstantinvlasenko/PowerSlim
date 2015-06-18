@@ -278,6 +278,8 @@ function Invoke-SlimCall($fnc){
     'eval'  {$result = Exec-Script -Script $Script__ }
     'get'  {$result = Exec-Script -Script "Invoke-RestMethod $Script__" }
     'post'  {$result = Exec-Script -Script $Script__ }
+    'patch'  {$result = Exec-Script -Script $Script__ }
+    'put'  {$result = Exec-Script -Script $Script__ }
     default { 
       if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
       else{ $result = $slimvoid }
@@ -423,7 +425,7 @@ function Invoke-SlimInstruction(){
   }
   
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-    if($ins[3] -eq "post"){
+    if('post','patch','put' -contains $ins[3]){
       Set-RestScript $ins[3] $ins[4]
     }
     else{
@@ -453,8 +455,10 @@ function Invoke-SlimInstruction(){
       }
     }
     "eval"  { $result = ResultTo-String $result }
-    "get"  { Set-Variable -Name get -Value ($result) -Scope Global; $result = ResultTo-List @($result); }
-    "post"  { Set-Variable -Name post -Value ($result) -Scope Global; $result = ResultTo-List @($result); }
+    "get"  { Set-Variable -Name get -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
+    "post"  { Set-Variable -Name post -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
+    "patch"  { Set-Variable -Name patch -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
+    "put"  { Set-Variable -Name put -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
     
   }
   if ($result -is [String]) {
