@@ -273,14 +273,10 @@ function Print-Error {
 }
 
 function Invoke-SlimCall($fnc){
-  switch ($fnc){
-    'query' {$result = Exec-Script -Script $Script__ }
-    'eval'  {$result = Exec-Script -Script $Script__ }
-    'get'  {$result = Exec-Script -Script "Invoke-RestMethod $Script__" }
-    'post'  {$result = Exec-Script -Script $Script__ }
-    'patch'  {$result = Exec-Script -Script $Script__ }
-    'put'  {$result = Exec-Script -Script $Script__ }
-    default { 
+  if($fnc -in 'eval','query','get','post','patch','put'}{
+    $result = Exec-Script -Script $Script__
+  }
+  else { 
       if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
       else{ $result = $slimvoid }
     }
@@ -292,7 +288,12 @@ function Invoke-SlimCall($fnc){
 function Set-RestScript($method, $arguments)
 {
   $uri, $body = $arguments -split ','
-  $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON),$method
+  if($body -ne $null) {
+    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON),$method
+  }
+  else {
+    $s = "Invoke-RestMethod {0} -Method {1} -ContentType 'application/json'" -f $uri, $method
+  }
   Set-Variable -Name Script__ -Value $s -Scope Global
 }
 
@@ -425,7 +426,7 @@ function Invoke-SlimInstruction(){
   }
   
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-    if('post','patch','put' -contains $ins[3]){
+    if($ins[3] -in 'get','post','patch','put'){
       Set-RestScript $ins[3] $ins[4]
     }
     else{
@@ -455,11 +456,7 @@ function Invoke-SlimInstruction(){
       }
     }
     "eval"  { $result = ResultTo-String $result }
-    "get"  { Set-Variable -Name get -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
-    "post"  { Set-Variable -Name post -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
-    "patch"  { Set-Variable -Name patch -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
-    "put"  { Set-Variable -Name put -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
-    
+    {$_ -in 'get','post','patch','put'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
   }
   if ($result -is [String]) {
     $result.TrimEnd("`r`n")
