@@ -1,6 +1,6 @@
-##########################
-# PowerSlim (Revision 47)#
-##########################
+######################
+# PowerSlim 20150617 #
+######################
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 #$slimvoid = "/__VOID__/"
@@ -262,24 +262,23 @@ function Exec-Script( $Script ) {
 
 function Print-Error {
     $Error | % {
-        $details = ($_ | Out-String)
-        if($_.Exception) { $details += $_.Exception.ToString() }
-        if($script:NonTerminatingIsException){
-            "__EXCEPTION__:Error:message:<<__EXCEPTION__:Error: Additional Info[ $details ]>>"
-        } else {
-            $details
-        }
+      $details = ($_ | Out-String)
+      if($_.Exception) { $details += $_.Exception.ToString() }
+      if($script:NonTerminatingIsException){
+          "__EXCEPTION__:Error:message:<<__EXCEPTION__:Error: Additional Info[ $details ]>>"
+      } else {
+          $details
+      }
     } | Out-String
 }
 
 function Invoke-SlimCall($fnc){
-  if($fnc -in 'eval','query','get','post','patch','put'}{
+  if($fnc -in 'eval','query','get','post','patch','put'){
     $result = Exec-Script -Script $Script__
   }
   else { 
-      if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
-      else{ $result = $slimvoid }
-    }
+    if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
+    else{ $result = $slimvoid }
   }
   $script:matches = $matches
   $result
