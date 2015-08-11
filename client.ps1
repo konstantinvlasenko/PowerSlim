@@ -67,8 +67,6 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
               $s2 = [text.encoding]::utf8.getbytes($s2)
 
-              $tr | Out-Default 
-
               $remoteserver.Write($s2, 0, $s2.Length)
               get_message($remoteserver)
 

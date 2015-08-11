@@ -24,8 +24,6 @@ function Get-SlimTable($slimchunk){
 
   $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 
-  Write-Verbose $ps_exp
-
   $script:ps_table = iex $ps_exp
 }
 
