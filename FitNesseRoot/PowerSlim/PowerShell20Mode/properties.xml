@@ -8,12 +8,12 @@
 	<Search/>
 	<Suite/>
 	<SymbolicLinks>
-		<SuiteRemoting>.PowerSlim.OriginalMode.SuiteRemoting</SuiteRemoting>
-		<SuiteCommon>.PowerSlim.OriginalMode.SuiteCommon</SuiteCommon>
-		<SuiteSymbols>.PowerSlim.OriginalMode.SuiteSymbols</SuiteSymbols>
-		<SuiteExceptions>.PowerSlim.OriginalMode.SuiteExceptions</SuiteExceptions>
-		<SuiteFixes>.PowerSlim.OriginalMode.SuiteFixes</SuiteFixes>
 		<SuiteNoHangup>.PowerSlim.OriginalMode.SuiteNoHangup</SuiteNoHangup>
+		<SuiteFixes>.PowerSlim.OriginalMode.SuiteFixes</SuiteFixes>
+		<SuiteRemoting>.PowerSlim.OriginalMode.SuiteRemoting</SuiteRemoting>
+		<SuiteSymbols>.PowerSlim.OriginalMode.SuiteSymbols</SuiteSymbols>
+		<SuiteCommon>.PowerSlim.OriginalMode.SuiteCommon</SuiteCommon>
+		<SuiteExceptions>.PowerSlim.OriginalMode.SuiteExceptions</SuiteExceptions>
 	</SymbolicLinks>
 	<Versions/>
 	<WhereUsed/>

@@ -1,0 +1,19 @@
+!|script|
+|show|eval|$obj= new-object PsObject -Property @{A=42;B="string value"}|
+|show|eval|!-($obj | fl | Out-String)-!|
+|show|eval|!-$extended = $obj | select *, @{Name='A1';Expression={$_.A*2}}, @{Name='B1';Expression={$_.B+" extended"}}-!|
+|show|eval|!-($extended | fl | Out-String)-!|
+
+!|script|
+|eval|function Get-NewString($val){ "$val NoteProperty without quotas" }|
+|show|eval|!-$obj | Add-Member NoteProperty -Name NewNoteProperty -Value ( Get-NewString $obj.B ) -!|
+|show|eval|!-($obj | fl | Out-String)-!|
+
+!|query:Local|$obj                            |
+|A           |B           |NewNoteProperty|
+|42          |string value|string value NoteProperty without quotas|
+
+!|query:Local|$extended                            |
+|A           |B           |A1|B1                   |
+|42          |string value|84|string value extended|
+
