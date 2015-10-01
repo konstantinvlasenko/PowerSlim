@@ -1,4 +1,4 @@
-!|scenario|Execute block|!- block -!  |result|!- result -!|
+!|scenario|Execute block| block   |result| result |
 |check    |eval         |!- &@block -!|@result            |
 
 !|script|

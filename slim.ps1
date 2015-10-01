@@ -1,6 +1,15 @@
 ######################
 # PowerSlim 20150617 #
 ######################
+[CmdletBinding()]
+Param(
+  [Parameter(Mandatory=$True,Position=0)]
+   [int]$Port,
+	
+   [Parameter(Mandatory=$False, Position=1)]
+   [string]$Mode="runner"
+)
+
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 #$slimvoid = "/__VOID__/"
@@ -143,6 +152,9 @@ function PropertyTo-Slim($ps_obj,$ps_prop){
   $slimview = "[000002:" + (slimlen $ps_prop) + ":" + $ps_prop+ ":"
   if($($ps_obj.$ps_prop) -eq $null){
     $slimview += $slimnull + "]"
+  }
+  elseif( $($ps_obj.$ps_prop) -is [string]){
+    $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop) + ":]"
   }
   elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject]){
     if ($Host.Version.Major -ge 3) { $slimview += (ConvertTo-Json -Compress $($ps_obj.$ps_prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }
@@ -615,18 +627,22 @@ function Run-RemoteServer($ps_server){
   }
 }
 
-if (!$args.Length) { 
-  Write-Output "No arguments provided!"
-  return; 
-}
+# if (!$args.Length) { 
+  # Write-Output "No arguments provided!"
+  # return; 
+# }
 
-$ps_server = New-Object System.Net.Sockets.TcpListener($args[0])
+"Starting SLIM $Mode on Port $Port" |Out-Default
+
+$ps_server = New-Object System.Net.Sockets.TcpListener($Port)
 $ps_server.Start()
 
-if(!$args[1]){
+if($Mode -eq "runner"){
   $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
   . $scriptPath\client.ps1
   Run-SlimServer $ps_server
 }
-else{ Run-RemoteServer $ps_server }
+else{ 
+    Run-RemoteServer $ps_server 
+}
 $ps_server.Stop()
