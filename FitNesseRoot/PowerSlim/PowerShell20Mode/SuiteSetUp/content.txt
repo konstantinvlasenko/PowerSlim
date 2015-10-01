@@ -1,0 +1,5 @@
+!4 !-[PowerShell -Version 2] can start PowerShell 3.0 if powershell.exe.config file contains v4.0 runtime support -!
+
+!|query:Local                    |!-[PsObject].Assembly | select ManifestModule,ImageRuntimeVersion,Location -!|
+|ManifestModule                  |ImageRuntimeVersion|Location                                                                                                  |
+|System.Management.Automation.dll|=~/v2.0.\d+/       |=~/.*System.Management.Automation.1.0.0.0.*/|

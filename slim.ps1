@@ -1,11 +1,15 @@
-##########################
-# PowerSlim (Revision 47)#
-##########################
+######################
+# PowerSlim 20151001 #
+######################
 
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <konstantin.vlasenko@gmail.com> wrote this file. As long as you retain this notice
-# you can do whatever you want with this stuff. If we meet some day, and you
-# think this stuff is worth it, you can buy me a beer in return.
+[CmdletBinding()]
+Param(
+   [Parameter(Mandatory = $True, Position = 0)]
+   [int]$Port,
+	
+   [Parameter(Mandatory = $False, Position = 1)]
+   [string]$Mode = "Runner"
+)
 
 $slimver = "Slim -- V0.3`n"
 $slimvoid = ''
@@ -283,6 +287,10 @@ function PropertyTo-Slim($ps_obj,$ps_prop)
     {
         $slimview += '000004:null:]'
     }
+    elseif($($ps_obj.$ps_prop) -is [string])
+    {
+        $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop) + ":]"
+    }
     elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject])
     {
         if ($Host.Version.Major -ge 3) 
@@ -474,7 +482,7 @@ function Print-Error
 
 function Invoke-SlimCall($fnc)
 {
-    if($fnc -in 'eval','query','get','post','patch','put')
+    if('eval','query','get','post','patch','put' -contains $fnc)
     {
         $result = Exec-Script -Script $Script__
     }
@@ -736,7 +744,7 @@ function Invoke-SlimInstruction()
   
     if($ins[3] -ne 'query' -and $ins[3] -ne 'table')
     {
-        if($ins[3] -in 'get','post','patch','put')
+        if('get','post','patch','put' -contains $ins[3])
         {
             Set-RestScript $ins[3] $ins[4]
         }
@@ -780,7 +788,7 @@ function Invoke-SlimInstruction()
             $result = ResultTo-String $result 
         }
 
-        {$_ -in 'get','post','patch','put'}
+        {$_ -match '^(get|post|patch|put)$'}
         {
             Set-Variable -Name $_ -Value ($result) -Scope Global
             $result = ResultTo-List @($result) 
@@ -974,24 +982,22 @@ function Run-RemoteServer($ps_server)
     }
 }
 
-if (!$args.Length) 
-{ 
-    Write-Output 'No arguments provided!'
-    Write-Output 'Sample: .\slim.ps1 <port, i.e. 35> [Server]'
-    return; 
-}
-
-$ps_port = $args[0]
-$ps_server = New-Object -TypeName System.Net.Sockets.TcpListener -ArgumentList ($ps_port)
+Write-Log "Starting PowerSlim $Mode on port $Port"
+$ps_server = New-Object -TypeName System.Net.Sockets.TcpListener($Port)
 $ps_server.Start()
 
-if($args[1] -eq 'Server') 
+if($Mode -eq 'Server') 
 {
     Run-RemoteServer $ps_server 
 }
-else 
+elseif($Mode -eq 'Runner') 
 {
     Run-SlimServer $ps_server
+}
+else
+{
+    Write-Error "Unknown mode $Mode, use either Server or Runner"
+    return; 
 }
 
 $ps_server.Stop()
