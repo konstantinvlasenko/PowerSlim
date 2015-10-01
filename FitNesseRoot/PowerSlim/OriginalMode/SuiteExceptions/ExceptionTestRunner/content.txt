@@ -5,67 +5,54 @@ Note: The test pages themselves are disabled in the suite, which makes sure they
 !*****> Define variables and scenario for the RESTful service invocation
 !define Server     {localhost}
 !define Inputs     {format=xml}
+!define RootUrl    (!-http://-!${Server}:${FITNESSE_PORT})
 
-Create the function used to run the tests. In v3 this function can be replaced with Invoke-RestMethod or Invoke-WebRequest
-| script |
-| eval |!-
-function global:Run-Test ($url) {
-  [Net.HttpWebRequest] $req = [Net.WebRequest]::create($url)
-  $req.Method = "GET"
-  $req.Timeout = 60000 # = 1 minute
 
-  [Net.HttpWebResponse] $result = $req.GetResponse()
-  [IO.Stream] $stream = $result.GetResponseStream()
-  [IO.StreamReader] $reader = New-Object IO.StreamReader($stream)
-  [string] $output = $reader.readToEnd()
-  $stream.flush()
-  $stream.close()
+|scenario|To prove test page continues after normal exceptions _|TESTPAGE, EXCEPTION_TEXT, PROOF_TESTS_CONTINUED               |
+|$URL=   |eval                                                  |'${RootUrl}/@TESTPAGE?test&${Inputs}'                         |
+|eval    |$results = Run-Test '$URL'                                                                                           |
+|check   |eval                                                  |$results.testResults.result.content|=~/@EXCEPTION_TEXT/       |
+|check   |eval                                                  |$results.testResults.result.content|=~/@PROOF_TESTS_CONTINUED/|
 
-  return [xml]$output
-}
--!||
+|scenario|To prove test page aborted after failure _|TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED|
+|$URL=   |eval                                      |'${RootUrl}/@TESTPAGE?@PAGETYPE&${Inputs}'                                |
+|eval    |$results = Run-Test '$URL'                                                                                           |
+|check   |eval                                      |$results.testResults.result.content      |=~/@FIRST_EXCEPTION/            |
+|check   |eval                                      |$results.testResults.result.content      |=~/@NEXT_EXCEPTION/             |
+|check   |eval                                      |$results.testResults.result.content      |=~/@PROOF_TESTING_STOPPED/      |
 
-| scenario | To prove test page continues after normal exceptions _ | TESTPAGE, EXCEPTION_TEXT, PROOF_TESTS_CONTINUED |
-| $URL= | eval | 'http' + ':' + '//${Server}/@TESTPAGE?responder=test&${Inputs}'       |
-|         eval | $results = Run-Test -url '$URL'                     |
-| check | eval | $results.testResults.result.content.indexOf( '@EXCEPTION_TEXT' ) -ge 0        | True |
-| check | eval | $results.testResults.result.content.indexOf( '@PROOF_TESTS_CONTINUED' ) -ge 0 | True |
-
-| scenario | To prove test page aborted after failure _ | TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED |
-| $URL= | eval | 'http' + ':' + '//${Server}/@TESTPAGE?responder=@PAGETYPE&${Inputs}'       |
-|         eval | $results = Run-Test -url '$URL'                     |
-| check | eval | $results.testResults.result.content.indexOf( '@FIRST_EXCEPTION' ) -ge 0       | True |
-| check | eval | $results.testResults.result.content.indexOf( '@NEXT_EXCEPTION' ) -ge 0        | True |
-| check | eval | $results.testResults.result.content.indexOf( '@PROOF_TESTING_STOPPED' ) -ge 0 | True |
-
-| scenario | To prove suite pages aborted after failure _ | TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED |
-| $URL= | eval | 'http' + ':' + '//${Server}/@TESTPAGE?responder=@PAGETYPE&${Inputs}'          |
-|         eval | $results = Run-Test -url '$URL'                                               |
-|         eval | $page1   = Run-Test -url ('http' + ':' + '//${Server}/' + $results.testresults.result[0].pagehistorylink + '&format=xml') |
-|         eval | $page2   = Run-Test -url ('http' + ':' + '//${Server}/' + $results.testresults.result[1].pagehistorylink + '&format=xml') |
-| check | eval | $page1.testResults.result.content.indexOf( '@FIRST_EXCEPTION' ) -ge 0       | True |
-| check | eval | $page1.testResults.result.content.indexOf( '@NEXT_EXCEPTION' ) -ge 0        | True |
-| check | eval | $page2.testResults.result.content.indexOf( '@PROOF_TESTING_STOPPED' ) -ge 0 | True |
+|scenario|To prove suite pages aborted after failure _|TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED|
+|$URL=   |eval                                        |'${RootUrl}/@TESTPAGE?@PAGETYPE&${Inputs}'                                |
+|eval    |$results = Run-Test '$URL'                                                                                             |
+|eval    |$page1   = Run-Test "${RootUrl}/$($results.testresults.result[0].pagehistorylink)&format=xml"                          |
+|eval    |$page2   = Run-Test "${RootUrl}/$($results.testresults.result[1].pagehistorylink)&format=xml"                          |
+|check   |eval                                        |$page1.testResults.result.content       |=~/@FIRST_EXCEPTION/             |
+|check   |eval                                        |$page1.testResults.result.content       |=~/@NEXT_EXCEPTION/              |
+|check   |eval                                        |$page2.testResults.result.content       |=~/@PROOF_TESTING_STOPPED/       |
 
 ******!
 
 The following tests show how normal exceptions are now handled. The error details are returned to !-FitNesse-! and displayed as an exception - neither a success or failure - and testing continues.
 
-!| To prove test page continues after normal exceptions | 
-| TESTPAGE                                                         | EXCEPTION_TEXT                                              | PROOF_TESTS_CONTINUED |
-| PowerSlim.OriginalMode.SuiteExceptions.CommandNotFoundException  | __EXCEPTION__:COMMAND_NOT_FOUND:                            | /\d{4}-\d{2}-\d{2}/   |
-| PowerSlim.OriginalMode.SuiteExceptions.RunTimeException          | __EXCEPTION__:RuntimeException:Attempted to divide by zero. | /\d{4}-\d{2}-\d{2}/   |
+!| To prove test page continues after normal exceptions                                                                                                                      |
+|TESTPAGE                                                                  |EXCEPTION_TEXT                                                             |PROOF_TESTS_CONTINUED|
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.RunTimeException         |__EXCEPTION__:[^<>]*Attempted to divide by zero                            |2\+2=4               |
+
+
+You can also enable $NonTerminatingIsException if you want to view all the errors, including non terminating.
+
+!| To prove test page continues after normal exceptions                                                                                                                      |
+|TESTPAGE                                                                  |EXCEPTION_TEXT                                                             |PROOF_TESTS_CONTINUED|
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.NonTerminatingIsException|__EXCEPTION__:[^<>]*Get-Service : Cannot find any service with service name|2\+2=4               |
 
 Next, test that aborting works correctly. When a test aborts, it should not run any more tests in the table in which it encountered an error, and !-FitNesse-! should recognize the abort and then not run any more tests that follow.
 
-To abort a test the developer can issue a {{{ throw "StopTest" }}} or {{{ throw "StopTest:Some additional error info" }}} This is useful when certain critical errors have occurred, such as failing to connect to a test database or some other problem.
+To abort a test or a suite the developer can issue a {{{ throw "StopTest" }}} This is useful when certain critical errors have occurred, such as failing to connect to a test database or some other problem.
 
-!| To prove test page aborted after failure |
-| TESTPAGE                                                                                       | PAGETYPE | FIRST_EXCEPTION                                                                                                    | NEXT_EXCEPTION                                                                        | PROOF_TESTING_STOPPED                                        |
-| PowerSlim.OriginalMode.SuiteExceptions.AbortExceptionStopTest                                  |  test    | <span class="fail">__EXCEPTION__:ABORT_SLIM_TEST:Test aborted.</span>                                              | <span class="fail">ABORT_TEST_INDICATED:Test not run</span>                           | <span class="ignore">Test not run</span>                     |
-| PowerSlim.OriginalMode.SuiteExceptions.AbortExceptionStopTestAdditionalInfo                    |  test    | <span class="fail">__EXCEPTION__:ABORT_SLIM_TEST:Test aborted. Additional Info[Something terrible happened]</span> | <span class="fail">ABORT_TEST_INDICATED:Test not run</span>                           | <span class="ignore">Test not run</span>                     |
-| PowerSlim.OriginalMode.SuiteExceptions.AbortExceptionErrorActionPreference                     |  test    | <span class="error">__EXCEPTION__:RuntimeException:Attempted to divide by zero.</span>                             | <span class="fail">__EXCEPTION__:RuntimeException:Attempted to divide by zero.</span> | <span class="fail">ABORT_TEST_INDICATED:Test not run</span>  |
+!| To prove test page aborted after failure                                                                                                                                                       |
+|TESTPAGE                                                               |PAGETYPE|FIRST_EXCEPTION                                  |NEXT_EXCEPTION                          |PROOF_TESTING_STOPPED|
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.AbortExceptionStopTest|test    |"fail">__EXCEPTION__:ABORT_SLIM_TEST:Test aborted|"fail">ABORT_TEST_INDICATED:Test not run|"ignore">Test not run|
 
-!| To prove suite pages aborted after failure |
-| TESTPAGE                                                                                       | PAGETYPE | FIRST_EXCEPTION                                                                                                    | NEXT_EXCEPTION                                                                        | PROOF_TESTING_STOPPED                                        |
-| PowerSlim.OriginalMode.SuiteExceptions.AbortExceptionStopSuiteTestPage.AbortExceptionStopSuite |  suite   | <span class="fail">__EXCEPTION__:ABORT_SLIM_TEST:Suite aborted.</span>                                             | <span class="fail">ABORT_TEST_INDICATED:Test not run</span>                           | <span class="fail">ABORT_SUITE_INDICATED:Test not run</span> |                   |
+!| To prove suite pages aborted after failure                                                                                                                                                                                       |
+|TESTPAGE                                                                                                |PAGETYPE|FIRST_EXCEPTION                                   |NEXT_EXCEPTION                          |PROOF_TESTING_STOPPED|
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.AbortExceptionStopSuiteTestPage.AbortExceptionStopSuite|suite   |"fail">__EXCEPTION__:ABORT_SLIM_TEST:Suite aborted|"fail">ABORT_TEST_INDICATED:Test not run|"ignore">Test not run|

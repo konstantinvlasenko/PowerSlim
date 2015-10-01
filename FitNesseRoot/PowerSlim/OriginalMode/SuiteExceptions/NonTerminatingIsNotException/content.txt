@@ -1,0 +1,4 @@
+|script                                                                                              |
+|eval |Get-Service invalidservice                                                                    |
+|check|eval|Get-Service invalidservice|=~/Cannot find any service with service name 'invalidservice'/|
+|check|eval|"2+2=$(2+2)"              |=~/4/                                                         |

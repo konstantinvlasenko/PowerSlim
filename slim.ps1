@@ -157,7 +157,6 @@ function process_table_remotely($ps_table, $ps_fitnesse)
     }
 }
 
-
 function Get-SlimTable($slimchunk) 
 {
     $ps_exp = $slimchunk -replace "'", "''" -replace '000000::', '000000:blank:'  -replace '(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))', ',''$1''' -replace "'(\[\d{6})'", '$1' -replace ':\d{6}:', ',' -replace ':\]', ')' -replace '\[\d{6},', '(' -replace "'blank'", "''"
@@ -414,115 +413,64 @@ function ResultTo-String($res)
 
 function Exec-Script( $Script ) 
 {
-    # Clear out any prior errors. After executing the test, if error[0] <> $null, we know it came from the test.
-    $Error.Clear()   
+    if ( $script:SLIM_ABORT_TEST ) 
+    {
+        # If another critical error has already been detected, we immediately end this 
+        # test w/o executing it and return an error.
+        return "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>"
+    }
+    elseif ( $script:SLIM_ABORT_SUITE ) 
+    {
+        # If another critical error has already been detected, we immediately end this 
+        # test w/o executing it and return an error.
+        return "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>"
+    }
+
     try 
     {
-        if ( $script:SLIM_ABORT_TEST ) 
-        {
-            # If another critical error has already been detected, we immediately end this 
-            # test w/o executing it and return an error.
-            $result = "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>"
-        }
-        elseif ( $script:SLIM_ABORT_SUITE ) 
-        {
-            # If another critical error has already been detected, we immediately end this 
-            # test w/o executing it and return an error.
-            $result = "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>"
-        }
-        else 
-        {
-            # execute the test and store the result.
-            $result = Invoke-Expression -Command $Script
-            # preserve the $matches value, if set by the expression
-            $script:matches = $matches
-        }
+        # execute the test and store the result.
+        Invoke-Expression -Command $Script
+        
+        # preserve the $matches value, if set by the expression
+        $script:matches = $matches
     }
-    catch [System.Exception] 
+    catch
     {
-        switch($_.Exception.GetType().FullName) {
-            'System.Management.Automation.CommandNotFoundException' 
-            {
-                $exc_type = "${slimexception}:COMMAND_NOT_FOUND:"
-                $exc_msg  = $exc_type + $_
-            }
-            'System.Management.Automation.ActionPreferenceStopException' 
-            {
-                # if $ErrorActionPreference is set to stop and an error occurred, we end up here
-                $script:SLIM_ABORT_TEST = $true
-                $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
-                $exc_msg  = $exc_type + $_ 
-            }
-            'System.Management.Automation.RuntimeException' 
-            {
-                $e = $_
-                switch -regex ( $Error[0].FullyQualifiedErrorId ) {
-                    # If the user script has thrown an exception and it starts with "StopTest", no further 
-                    # tests should execute.
-                    '^Stop(Test|Suite):?(.*)?' 
-                    {
-                        if ( $matches[2] ) 
-                        {
-                            # The exception provides additional details about the error.
-                            $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
-                            $exc_msg  = $exc_type + $matches[1] + ' aborted. Additional Info[' + $matches[2] + ']'
-                        }
-                        else 
-                        {
-                            # No other details provided... just a throw "StopTest" was executed
-                            $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
-                            $exc_msg  = $exc_type + $matches[1] + ' aborted.' 
-                        }
-                        $script:SLIM_ABORT_TEST = $true # Make sure any additional tests in the table abort.
-                        if ( $matches[1] -eq 'Suite' ) 
-                        {
-                            $script:SLIM_ABORT_SUITE = $true # Make sure any additional tests in the table abort.
-                        }
-                    }
-                    default 
-                    { 
-                        $exc_type = $slimexception + ':' + $_ + ':'
-                        $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Exception | Out-String) -replace "`r`n", '' )
-                    }
-                }
-            }
-            default 
-            {
-                $exc_type = "${slimexception}:$($error[0].Exception):"
-                $exc_msg  = $exc_type + ((Format-List -InputObject $error[0].Message | Out-String) -replace "`r`n", '' )
-            }
-        }
-    }
-    finally 
-    {
-        if ( $Error[0] -ne $null ) 
+        $errorType = $Error[0].FullyQualifiedErrorId
+        if($errorType -match "^Stop(Test|Suite):?(.*)?")
         {
-            # An error has occurred. If $exc_type has a value, it was caught above.
-            if ( $exc_type -gt '' ) 
+            # test or suite can be aborted by throw "StopTest"            
+            $script:SLIM_ABORT_TEST = $true
+            if ($matches[1] -eq 'Suite')
             {
-                #an error occurred, so check $ErrorActionPreference to see if it's set to Stop
-                if ( $global:ErrorActionPreference -eq 'Stop' ) 
-                {
-                    # if the user indicated they want to stop on all errors, Stop.
-                    $exc_type = "${slimexception}:ABORT_SLIM_TEST:"
-                }
-                if ( $exc_type -eq "${slimexception}:ABORT_SLIM_TEST:" ) 
-                {
-                    $script:SLIM_ABORT_TEST = $true
-                }
-                $result = $exc_type+'message:<<'+$exc_msg+'>>'
+              $script:SLIM_ABORT_SUITE = $true
             }
-            else 
-            {
-                # This is a non-terminating error and not caught as part of the special types
-                # above, so simply return the error text as the result of the instruction
-                $result = (''+$Error[0])
-            }
+            "${slimexception}:ABORT_SLIM_TEST:message:<<${slimexception}:ABORT_SLIM_TEST:$($matches[1]) aborted. : Additional Info[ $($_.Exception.ToString())  ]>>"
+        }
+        else
+        {
+            "${slimexception}:UnhandledException:message:<<${slimexception}:UnhandledException: Additional Info[ $($_.Exception.ToString()) ]>>"
         }
     }
-    return $result
+    
+    if($Error[0] -ne $null)
+    {
+        Print-Error
+    }
 }
 
+function Print-Error
+{
+    $Error | % {
+      $details = ($_ | Out-String)
+      if($_.Exception) { $details += $_.Exception.ToString() }
+      if($script:NonTerminatingIsException){
+          "${slimexception}:Error:message:<<${slimexception}:Error: Additional Info[ $details ]>>"
+      } else {
+          $details
+      }
+    } | Out-String
+}
 
 function Invoke-SlimCall($fnc)
 {
@@ -541,6 +489,8 @@ function Invoke-SlimCall($fnc)
             $result = $slimvoid 
         }
     }
+
+    $script:matches = $matches
     $result
 }
 
@@ -832,7 +782,7 @@ function Invoke-SlimInstruction()
 
         {$_ -in 'get','post','patch','put'}
         {
-            Set-Variable -Name $_ -Value ($result) -Scope Global;
+            Set-Variable -Name $_ -Value ($result) -Scope Global
             $result = ResultTo-List @($result) 
         }
     }
