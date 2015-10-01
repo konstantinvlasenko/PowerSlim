@@ -423,23 +423,16 @@ function Exec-Script( $Script )
 {
     if ( $script:SLIM_ABORT_TEST ) 
     {
-        # If another critical error has already been detected, we immediately end this 
-        # test w/o executing it and return an error.
         return "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>"
     }
     elseif ( $script:SLIM_ABORT_SUITE ) 
     {
-        # If another critical error has already been detected, we immediately end this 
-        # test w/o executing it and return an error.
         return "${slimexception}:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>"
     }
 
     try 
     {
-        # execute the test and store the result.
         Invoke-Expression -Command $Script
-        
-        # preserve the $matches value, if set by the expression
         $script:matches = $matches
     }
     catch
