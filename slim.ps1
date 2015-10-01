@@ -1,6 +1,15 @@
 ######################
 # PowerSlim 20150617 #
 ######################
+[CmdletBinding()]
+Param(
+  [Parameter(Mandatory=$True,Position=0)]
+   [int]$Port,
+	
+   [Parameter(Mandatory=$False, Position=1)]
+   [string]$Mode="runner"
+)
+
 $slimver = "Slim -- V0.3`n"
 $slimnull = "000004:null:"
 #$slimvoid = "/__VOID__/"
@@ -144,6 +153,9 @@ function PropertyTo-Slim($ps_obj,$ps_prop){
   if($($ps_obj.$ps_prop) -eq $null){
     $slimview += $slimnull + "]"
   }
+  elseif( $($ps_obj.$ps_prop) -is [string]){
+    $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop) + ":]"
+  }
   elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject]){
     if ($Host.Version.Major -ge 3) { $slimview += (ConvertTo-Json -Compress $($ps_obj.$ps_prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }
         else { $slimview += ConvertTo-JSON20 ($ps_obj.$ps_prop) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }        
@@ -271,7 +283,7 @@ function Print-Error {
 }
 
 function Invoke-SlimCall($fnc){
-  if($fnc -in 'eval','query','get','post','patch','put'){
+  if('eval','query','get','post','patch','put' -contains $fnc){
     $result = Exec-Script -Script $Script__
   }
   else { 
@@ -423,7 +435,7 @@ function Invoke-SlimInstruction(){
   }
   
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-    if($ins[3] -in 'get','post','patch','put'){
+    if('get','post','patch','put' -contains $ins[3]){
       Set-RestScript $ins[3] $ins[4]
     }
     else{
@@ -453,7 +465,7 @@ function Invoke-SlimInstruction(){
       }
     }
     "eval"  { $result = ResultTo-String $result }
-    {$_ -in 'get','post','patch','put'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
+    {$_ -match '^(get|post|patch|put)$'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
   }
   if ($result -is [String]) {
     $result.TrimEnd("`r`n")
@@ -615,18 +627,22 @@ function Run-RemoteServer($ps_server){
   }
 }
 
-if (!$args.Length) { 
-  Write-Output "No arguments provided!"
-  return; 
-}
+# if (!$args.Length) { 
+  # Write-Output "No arguments provided!"
+  # return; 
+# }
 
-$ps_server = New-Object System.Net.Sockets.TcpListener($args[0])
+"Starting SLIM $Mode on Port $Port" |Out-Default
+
+$ps_server = New-Object System.Net.Sockets.TcpListener($Port)
 $ps_server.Start()
 
-if(!$args[1]){
+if($Mode -eq "runner"){
   $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
   . $scriptPath\client.ps1
   Run-SlimServer $ps_server
 }
-else{ Run-RemoteServer $ps_server }
+else{ 
+    Run-RemoteServer $ps_server 
+}
 $ps_server.Stop()

@@ -1,0 +1,25 @@
+-!|script|
+|eval|!-function Get-NewString($val){ return "$val no quotes" }-!|
+
+
+-!|script                                                                                                                |
+|show|eval|$obj= new-object PsObject -Property @{A=42;B="string value";C=(Get-NewString "it is")}|
+#|check|eval|$obj.C|it is no quotes|
+
+!|script|
+|show|eval|!-$extended = $obj | select *, @{Name='A1';Expression={$_.A*2}}, @{Name='B1';Expression={$_.B+" extended"}}-!|
+#|check|eval|$extended.A1|84|
+#|check|eval|$extended.B1|string value extended|
+
+-!|script                                                                                      |
+|show|eval|!-$obj | add-member NoteProperty -Name NewProperty -Value (Get-NewString $obj.B) -!|
+#|check|eval|$obj.NewProperty|string value no quotes|
+
+!|query:Local|$obj                               |
+|A           |B           |NewProperty           |C|
+|42          |string value|string value no quotes|it is no quotes|
+
+!|query:Local|$extended                            |
+|A           |B           |A1|B1                   |
+|42          |string value|84|string value extended|
+
