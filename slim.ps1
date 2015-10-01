@@ -271,7 +271,7 @@ function Print-Error {
 }
 
 function Invoke-SlimCall($fnc){
-  if($fnc -in 'eval','query','get','post','patch','put'){
+  if('eval','query','get','post','patch','put' -contains $fnc){
     $result = Exec-Script -Script $Script__
   }
   else { 
@@ -423,7 +423,7 @@ function Invoke-SlimInstruction(){
   }
   
   if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-    if($ins[3] -in 'get','post','patch','put'){
+    if('get','post','patch','put' -contains $ins[3]){
       Set-RestScript $ins[3] $ins[4]
     }
     else{
@@ -453,7 +453,7 @@ function Invoke-SlimInstruction(){
       }
     }
     "eval"  { $result = ResultTo-String $result }
-    {$_ -in 'get','post','patch','put'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
+    {$_ -match '^(get|post|patch|put)$'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
   }
   if ($result -is [String]) {
     $result.TrimEnd("`r`n")
