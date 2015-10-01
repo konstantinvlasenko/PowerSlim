@@ -1,0 +1,18 @@
+'''Get all forks by using https://developer.github.com/v3/repos/forks/'''
+
+!|script|
+|get|https://api.github.com/repos/konstantinvlasenko/powerslim/forks|
+
+!|Query:local|$get|
+|full_name|
+|skalitin/PowerSlim|
+|DylanLiu1/PowerSlim|
+|LyudmilaEpikhina/PowerSlim|
+|EvgenyGusev/PowerSlim|
+|EKibort/PowerSlim|
+|2xmax/PowerSlim|
+|ALuckyGuy/PowerSlim|
+|SergeyZalyadeev/PowerSlim|
+|maxbeard12/PowerSlim|
+|mikeplavsky/PowerSlim|
+|testdemo1001/PowerSlim|

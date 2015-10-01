@@ -526,28 +526,34 @@ function Exec-Script( $Script )
 
 function Invoke-SlimCall($fnc)
 {
-    switch ($fnc){
-        'query' 
+    if($fnc -in 'eval','query','get','post','patch','put')
+    {
+        $result = Exec-Script -Script $Script__
+    }
+    else
+    {
+        if ((Table-Type) -eq 'ScriptTableActor') 
         {
-            $result = Exec-Script -Script $Script__ 
+            $result = "${slimexception}:COMMAND_NOT_FOUND " + $_
         }
-        'eval'  
+        else
         {
-            $result = Exec-Script -Script $Script__ 
-        }
-        default 
-        { 
-            if ((Table-Type) -eq 'ScriptTableActor') 
-            {
-                $result = "${slimexception}:COMMAND_NOT_FOUND " + $_
-            }
-            else
-            {
-                $result = $slimvoid 
-            }
+            $result = $slimvoid 
         }
     }
     $result
+}
+
+function Set-RestScript($method, $arguments)
+{
+  $uri, $body = $arguments -split ','
+  if($body -ne $null) {
+    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON),$method
+  }
+  else {
+    $s = "Invoke-RestMethod {0} -Method {1} -ContentType 'application/json'" -f $uri, $method
+  }
+  Set-Variable -Name Script__ -Value $s -Scope Global
 }
 
 function Set-Script($s, $fmt)
@@ -582,7 +588,7 @@ function Set-Script($s, $fmt)
         }
     }
 
-    $s = [string]::Format( $fmt, $s)
+    $s = $fmt -f $s
     if($s.StartsWith('function', $true, $null))
     {
         Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()', 'function script:$1') -Scope Global
@@ -780,7 +786,14 @@ function Invoke-SlimInstruction()
   
     if($ins[3] -ne 'query' -and $ins[3] -ne 'table')
     {
-        Set-Script $ins[4] $EvalFormat__
+        if($ins[3] -in 'get','post','patch','put')
+        {
+            Set-RestScript $ins[3] $ins[4]
+        }
+        else
+        {
+            Set-Script $ins[4] $EvalFormat__
+        }
     }
  
     Write-Log "Executing command: '$Script__'"
@@ -815,6 +828,12 @@ function Invoke-SlimInstruction()
         'eval'  
         {
             $result = ResultTo-String $result 
+        }
+
+        {$_ -in 'get','post','patch','put'}
+        {
+            Set-Variable -Name $_ -Value ($result) -Scope Global;
+            $result = ResultTo-List @($result) 
         }
     }
     if ($result -is [String]) 
