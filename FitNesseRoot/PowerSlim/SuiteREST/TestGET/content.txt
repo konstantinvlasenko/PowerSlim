@@ -16,3 +16,4 @@
 |maxbeard12/PowerSlim|
 |mikeplavsky/PowerSlim|
 |testdemo1001/PowerSlim|
+|DmitryKonev/PowerSlim|

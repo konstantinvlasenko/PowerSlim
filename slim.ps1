@@ -450,7 +450,7 @@ function Invoke-SlimInstruction(){
     # the execution of the 'make' procedure.
     $result = Invoke-SlimCall $ins[3]
   }
-  $Script__ + " : " + $script:Command_Time.TotalSeconds | Out-Default
+  Write-Log $Script__ : $script:Command_Time.TotalSeconds
 
   if($symbol){$slimsymbols[$symbol] = $result}
   
@@ -614,17 +614,22 @@ function Run-SlimServer($ps_server){
 }
 
 function Run-RemoteServer($ps_server){
-  "waiting..." | Out-Default
+  Write-Log "waiting..."
   while($ps_fitnesse_client = $ps_server.AcceptTcpClient()){
-    "accepted!" | Out-Default
+    Write-Log "accepted!"
     $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
     $ps_fitnesse_stream.ReadTimeout = $REQUEST_READ_TIMEOUT
     
     process_message_ignore_remote($ps_fitnesse_stream)
     $ps_fitnesse_stream.Close()
     $ps_fitnesse_client.Close()
-    "waiting..." | Out-Default
+    Write-Log "waiting..."
   }
+}
+
+function Write-Log (){
+  $timestamp = Get-Date -f "dd.MM.yy HH:mm:ss.fff"
+  Write-Host $timestamp"`t"$args
 }
 
 # if (!$args.Length) { 
@@ -632,7 +637,7 @@ function Run-RemoteServer($ps_server){
   # return; 
 # }
 
-"Starting SLIM $Mode on Port $Port" |Out-Default
+Write-Log "========== Starting SLIM $Mode on Port $Port =========="
 
 $ps_server = New-Object System.Net.Sockets.TcpListener($Port)
 $ps_server.Start()
