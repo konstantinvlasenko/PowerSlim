@@ -1,4 +1,4 @@
-!define HASH (!{first:Bob, last name:Martin})
+!define HASH (!{'first':'Bob', 'last name':'Martin'})
 
 http://fitnesse.org/FitNesse.UserGuide.MarkupHashTable
 '''simple usage'''
@@ -6,6 +6,16 @@ http://fitnesse.org/FitNesse.UserGuide.MarkupHashTable
 |eval|$name=${HASH}|
 |check|eval|$name.first|Bob|
 |check|eval|$name['last name']|Martin|
+
+'''Different Types of Parameters'''
+!|scenario|getParameters|hash|
+|check|eval|@hash.hash|System.Collections.Hashtable|
+|check|eval|@hash.array|a,b,c,d|
+|check|eval|@hash.int|100|
+|check|eval|@hash.string|Test String|
+
+|script|
+|getParameters|!{hash:!-@{first='apple';second=1}-!,array:!-"a","b","c","d"-!,int:100,string:"Test String"}|
 
 '''In scenario'''
 !|scenario|FirstNameShouldBeBob|hash|
