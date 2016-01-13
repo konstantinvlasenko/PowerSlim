@@ -12,7 +12,7 @@
 
 |script| local |
 | eval | !-
-	$tcpclient=New-Object System.Net.Sockets.TcpClient
+    $tcpclient=New-Object System.Net.Sockets.TcpClient
     $iar=$tcpclient.BeginConnect('127.0.0.1',41,$null,$null) 
     $wait=$iar.AsyncWaitHandle.WaitOne(30,$false) 
     $tcpclient.Close()
