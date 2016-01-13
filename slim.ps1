@@ -82,7 +82,16 @@ function get_message_length($ps_stream){
   $script:ps_buf1 = new-object byte[] 7
 
   $t = read_message $ps_stream $ps_buf1
-  [int][text.encoding]::utf8.getstring($ps_buf1, 0, 6)
+  $str = [text.encoding]::utf8.getstring($ps_buf1, 0, 6)
+  $res = $null
+  if([int32]::TryParse($str, [ref]$res))
+  {
+    $res
+  } else
+  {
+    Write-Verbose "Bad length!"
+    -1
+  }
 
   Write-Verbose "Length: $ps_buf1"
 }
@@ -123,6 +132,11 @@ function get_message($ps_stream){
   $ps_size = get_message_length($ps_stream)
 
   Write-Verbose "Length: $ps_size"
+  if($ps_size -lt 0)
+  {
+    " "
+    return
+  }
 
   $script:ps_buf2 = new-object byte[] $ps_size
   $t = read_message $ps_stream $ps_buf2
