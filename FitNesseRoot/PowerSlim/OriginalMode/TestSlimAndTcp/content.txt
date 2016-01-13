@@ -1,0 +1,25 @@
+| script | local |
+| eval | !- $sut = Start-Process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!|
+#|check|eval|!-$sut= start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru -Verbose -!||
+
+!| script | remote | localhost:41 |
+| eval | $VerbosePreference="Continue" |
+| eval | !- $a=10 -! |
+
+# this expression will be executed twice
+| script | remote | localhost:41 |
+| check  | eval | !- $a = $a + 1; $a -! | 11 |
+
+|script| local |
+| eval | !-
+    $tcpclient=New-Object System.Net.Sockets.TcpClient
+    $iar=$tcpclient.BeginConnect('127.0.0.1',41,$null,$null) 
+    $wait=$iar.AsyncWaitHandle.WaitOne(30,$false) 
+    $tcpclient.Close()
+-! |
+
+| script | remote | localhost:41 |
+| check  | eval | !-$a -! | 11 |
+
+| script | local |
+| eval | $sut.Kill() |
