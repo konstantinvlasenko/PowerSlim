@@ -312,10 +312,10 @@ function Set-RestScript($method, $arguments)
 {
   $uri, $body = $arguments -split ','
   if($body -ne $null) {
-    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON),$method
+    $s = "(Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json') | ConvertFrom-JSON" -f $uri,(iex $body | ConvertTo-JSON),$method
   }
   else {
-    $s = "Invoke-RestMethod {0} -Method {1} -ContentType 'application/json'" -f $uri, $method
+    $s = "(Invoke-RestMethod {0} -Method {1} -ContentType 'application/json') | ConvertFrom-JSON" -f $uri, $method
   }
   Set-Variable -Name Script__ -Value $s -Scope Global
 }
