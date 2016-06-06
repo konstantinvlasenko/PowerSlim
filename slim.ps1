@@ -320,7 +320,7 @@ function Set-RestScript($method, $arguments)
   if($headers -ne $null){
     $s += ' -Headers $script:headers'
   }
-  $s = "($s) | ConvertFrom-JSON"
+  #$s = "($s) | ConvertFrom-JSON"
 
   Set-Variable -Name Script__ -Value $s -Scope Global
 }
