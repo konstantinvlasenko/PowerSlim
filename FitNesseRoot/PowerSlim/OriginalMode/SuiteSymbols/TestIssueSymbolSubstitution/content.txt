@@ -1,0 +1,9 @@
+'''https://github.com/konstantinvlasenko/PowerSlim/pull/82'''
+
+|script                       |
+|$SymbolPrefix = |eval|"test1"|
+|$SymbolPrefix1 =|eval|"test2"|
+
+|script                                     |
+|check|eval|"$SymbolPrefix_test" |test1_test|
+|check|eval|"$SymbolPrefix1_test"|test2_test|
