@@ -1,8 +1,5 @@
 !define REMOTE_SERVER {localhost:35}
 
-
-
-
 !|script|Remote|${REMOTE_SERVER}|
 |eval|!-<pre>function GetRemoteComputerCommands()
 {
@@ -30,9 +27,10 @@
 |$commandNames=|eval|$computerCmds.Name|
 
 
-
+!* Now we can use the symbol (complex type) again on the same remote agent but in the different table
 !|script|Remote|${REMOTE_SERVER}|
 |$whereIsMyCommandNames=|eval|$computerCmds.Name|
-|check|eval||$whereIsMyCommandNames|$commandNames|
+|check|eval|$whereIsMyCommandNames|$commandNames|
+*!
 
 

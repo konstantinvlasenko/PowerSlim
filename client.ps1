@@ -101,6 +101,11 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
                 $_.Groups[1].Value
               }
             }
+            # remove symbol if it get's empty value from remote agent
+            # this will fix the issue #83
+            # but in general this is incorrect as the issue with sharing back the complex objects. remote agent sends nothing
+            # the issue #83 would be fixed because we woudn't override a Powershell variable at the original agent.
+            if(!$slimsymbols[$symbol.name]){ $slimsymbols.Remove($symbol.name) }
          }
       
          $remoteserver.Close()         
