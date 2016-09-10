@@ -1,0 +1,38 @@
+!define REMOTE_SERVER {localhost:35}
+
+
+
+
+!|script|Remote|${REMOTE_SERVER}|
+|eval|!-<pre>function GetRemoteComputerCommands()
+{
+    $ret = New-Object -TypeName PSObject -Property @{
+            "Success" = $false
+            "Name" = $null
+            "CommandType"  = $null
+            "ModuleName" = $null
+    }
+    try{
+        $cmds = Get-Command *Computer
+    }
+    catch{
+        return $ret
+    }
+    $ret.Success     = $true
+    $ret.Name        = $cmds.Name
+    $ret.CommandType = $cmds.CommandType
+    $ret.ModuleName  = $cmds.ModuleName
+    return $ret
+}
+</pre>-!|
+|$computerCmds=|eval|GetRemoteComputerCommands|
+|check|eval|$computerCmds.Success|True|
+|$commandNames=|eval|$computerCmds.Name|
+
+
+
+!|script|Remote|${REMOTE_SERVER}|
+|$whereIsMyCommandNames=|eval|$computerCmds.Name|
+|check|eval||$whereIsMyCommandNames|$commandNames|
+
+
