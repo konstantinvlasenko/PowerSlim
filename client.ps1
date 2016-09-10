@@ -14,6 +14,10 @@ function Get-RemoteSlimSymbols($inputTable)
   $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
 }
 
+function Is-Numeric ($Value) {
+    return $Value -match "^[\d\.]+$"
+}
+
 function script:process_table_remotely($ps_table, $ps_fitnesse){
 
     try {
@@ -55,7 +59,13 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
                   $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
                   $itemstr += (slimlen 'eval') + ":eval:"
 
-                  $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+                  if($obj.Value -is [string]){
+                    $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
+                  }elseif($obj.Value -is [int]){
+                    $itemstr +=  ((([string]$obj.Value).Length).ToString("d6")) + ":$($obj.Value):"
+                  }else{
+                    $itemstr +=  ((3 + 2).ToString("d6")) + ":'NOT':"
+                  }
     
                   $itemstr += "]"
           
@@ -79,10 +89,18 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
          $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
          $result[$ps_computer] = get_message($remoteserver)
     
-          #backward symbols sharing
+         #$result[$ps_computer] | out-default
+         
+         #backward symbols sharing
          foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) {
             $__pattern__ = "$($symbol.id):\d{6}:(?<value>.+?):\]"
-            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {$_.Groups[1].Value}
+            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {
+              if(Is-Numeric $_.Groups[1].Value){
+                [int]$_.Groups[1].Value
+              }else{
+                $_.Groups[1].Value
+              }
+            }
          }
       
          $remoteserver.Close()         
