@@ -31,7 +31,7 @@
     return "[$user] ran commands:[$cmds] from [$where]"
 }
 </pre>-!|
-|check|eval|UserActionLog "$user" "su root" "here"|[Shawn] ran commands:[su root] from [here]|
+|check|eval|UserActionLog $user "su root" "here"|[Shawn] ran commands:[su root] from [here]|
 
 !* Now we can use the symbol (complex type) again on the same remote agent but in the different table
 !|script|Remote|${REMOTE_SERVER}|
