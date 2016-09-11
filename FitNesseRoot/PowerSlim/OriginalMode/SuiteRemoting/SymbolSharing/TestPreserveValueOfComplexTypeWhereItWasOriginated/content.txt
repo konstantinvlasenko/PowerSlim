@@ -25,7 +25,13 @@
 |$computerCmds=|eval|GetRemoteComputerCommands|
 |check|eval|$computerCmds.Success|True|
 |$commandNames=|eval|$computerCmds.Name|
-
+|$user=|eval|"CN=Shawn,OU=Babel,DC=Tower"|
+|eval|!-<pre>function UserActionLog([string]$user, [string]$cmds, [string]$where)
+{
+    return "[$user] ran commands:[$cmds] from [$where]"
+}
+</pre>-!|
+|check|eval|UserActionLog "$user" "su root" "here"|[CN=Shawn,OU=Babel,DC=Tower] ran commands:[su root] from [here]|
 
 !* Now we can use the symbol (complex type) again on the same remote agent but in the different table
 !|script|Remote|${REMOTE_SERVER}|
