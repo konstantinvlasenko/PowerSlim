@@ -7,5 +7,5 @@
 |put|http://jsonplaceholder.typicode.com/posts/${ID}, @{ title = '${TITLE}'; body = '${BODY}'}|
 
 !|Query:Local|$put|
-|title|body|userId|id|
-|${TITLE}|${BODY}|1|${ID}|
+|title|body|id|
+|${TITLE}|${BODY}|${ID}|
