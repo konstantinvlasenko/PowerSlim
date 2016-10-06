@@ -17,3 +17,7 @@
 |mikeplavsky/PowerSlim|
 |testdemo1001/PowerSlim|
 |DmitryKonev/PowerSlim|
+|lonestep/PowerSlim|
+|anbeel/PowerSlim|
+|Alexander-Vakushkin/PowerSlim|
+|HenryHan/PowerSlim|
