@@ -1,5 +1,5 @@
 ######################
-# PowerSlim 20160908 #
+# PowerSlim 20161005 #
 ######################
 [CmdletBinding()]
 Param(
@@ -277,8 +277,14 @@ function Exec-Script( $Script ) {
               $script:SLIM_ABORT_SUITE = $true
             }
             "__EXCEPTION__:ABORT_SLIM_TEST:message:<<__EXCEPTION__:ABORT_SLIM_TEST:$($matches[1]) aborted. : Additional Info[ $($_.Exception.ToString())  ]>>"
+            "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.ToString())>>"
         } else {
-            "__EXCEPTION__:UnhandledException:message:<<__EXCEPTION__:UnhandledException: Additional Info[ $($_.Exception.ToString()) ]>>"
+            if($_.Exception -is [System.Net.WebException]){
+              $script:SLIM_ABORT_TEST = $true
+              "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.Message)>>"
+            }else{
+              "__EXCEPTION__:UnhandledException:message:<<$($_.Exception.ToString())>>"
+            }
         }
    }
    if($Error[0] -ne $null) { Print-Error }
