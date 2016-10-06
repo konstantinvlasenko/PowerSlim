@@ -1,0 +1,21 @@
+!define REMOTE_SERVER {localhost:35}
+!* Numeric should be numeric
+!|script|Remote|${REMOTE_SERVER}|
+|$NUM=|eval|1|
+|$DECIMAL=|eval|1.12|
+
+!|script|Remote|${REMOTE_SERVER}|
+|check|eval|$NUM.GetType()|System.Int32|
+|check|eval|$DECIMAL.GetType()|System.Int32|
+*!
+!* String should be string
+!|script|Remote|${REMOTE_SERVER}|
+|$VERSIONSTR=|eval|"11.2.0.2888"|
+
+!|script|Remote|${REMOTE_SERVER}|
+|check|eval|"$VERSIONSTR".GetType()|System.String|
+*!
+
+
+
+

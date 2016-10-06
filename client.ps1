@@ -15,7 +15,7 @@ function Get-RemoteSlimSymbols($inputTable)
 }
 
 function Is-Numeric ($Value) {
-    return $Value -match "^[\d\.]+$"
+    return $Value -match "^\d+(\.\d+)?$"
 }
 
 function script:process_table_remotely($ps_table, $ps_fitnesse){
