@@ -471,25 +471,30 @@ function Invoke-SlimInstruction(){
   }
   Write-Log $Script__ : $script:Command_Time.TotalSeconds
 
-  if($symbol){$slimsymbols[$symbol] = $result}
   
-  $error.clear()
-  switch ($ins[3]){
-    "query" {
-      if(($null -eq $result) -or ($result -is 'system.collections.generic.dictionary[string,object]' -and  $result.Count -eq 0)){ 
-        $result = ResultTo-List @()
+  if($error[0] -ne $null) {
+    $error.clear()
+    ResultTo-String $result
+  }else {
+    if($symbol){$slimsymbols[$symbol] = $result}
+    $error.clear()
+    switch ($ins[3]){
+      "query" {
+        if(($null -eq $result) -or ($result -is 'system.collections.generic.dictionary[string,object]' -and  $result.Count -eq 0)){ 
+          $result = ResultTo-List @()
+        }
+        else{
+          $result = ResultTo-List @($result)
+        }
       }
-      else{
-        $result = ResultTo-List @($result)
-      }
+      "eval"  { $result = ResultTo-String $result }
+      {$_ -match '^(get|post|patch|put)$'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
     }
-    "eval"  { $result = ResultTo-String $result }
-    {$_ -match '^(get|post|patch|put)$'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
-  }
-  if ($result -is [String]) {
-    $result.TrimEnd("`r`n")
-  } else { 
-    $result
+    if ($result -is [String]) {
+      $result.TrimEnd("`r`n")
+    } else { 
+      $result
+    }
   }
 }
 
