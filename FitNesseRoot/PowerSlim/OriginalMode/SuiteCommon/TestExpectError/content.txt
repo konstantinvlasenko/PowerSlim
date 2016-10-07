@@ -2,5 +2,5 @@
 |check|get_error|https://notasite.org|The remote name could not be resolved: 'notasite.org'|
 
 !|script|
-|check|eval_error|1/0|The remote name could not be resolved: 'notasite.org'|
+|check|eval_error|1/0|Attempted to divide by zero.|
 

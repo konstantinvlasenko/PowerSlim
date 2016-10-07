@@ -308,8 +308,8 @@ function Print-Error {
 }
 
 function Invoke-SlimCall($fnc){
-  $name, $error_to_result = $fnc.split('_');
-  if('eval','query','get','post','patch','put' -contains $name){
+  $ps_action, $error_to_result = $fnc.split('_');
+  if('eval','query','get','post','patch','put' -contains $ps_action){
     $result = Exec-Script -Script $Script__ $error_to_result
   }
   else { 
@@ -465,10 +465,10 @@ function Invoke-SlimInstruction(){
     }
   }
 
-  $name = $ins[3].split('_')[0];
-  if($name -ne "query" -and $name -ne "table"){
-    if('get','post','patch','put' -contains $name){
-      Set-RestScript $name $ins[4]
+  $ps_action = $ins[3].split('_')[0];
+  if($ps_action -ne "query" -and $ps_action -ne "table"){
+    if('get','post','patch','put' -contains $ps_action){
+      Set-RestScript $ps_action $ins[4]
     }
     else{
       Set-Script $ins[4] $EvalFormat__
@@ -491,7 +491,7 @@ function Invoke-SlimInstruction(){
   }else {
     if($symbol){$slimsymbols[$symbol] = $result}
     $error.clear()
-    switch ($name){
+    switch ($ps_action){
       "query" {
         if(($null -eq $result) -or ($result -is 'system.collections.generic.dictionary[string,object]' -and  $result.Count -eq 0)){ 
           $result = ResultTo-List @()
@@ -502,7 +502,14 @@ function Invoke-SlimInstruction(){
       }
       "eval"  { $result = ResultTo-String $result }
 
-      {$_ -match '^(get|post|patch|put)$'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
+      {$_ -match '^(get|post|patch|put)$'}{ 
+        Set-Variable -Name $_ -Value ($result) -Scope Global;
+        if ($result -is [String]){ 
+          $result = ResultTo-String $result 
+        }else {
+          $result = ResultTo-List @($result)
+        }
+      }
     }
     if ($result -is [String]) {
       $result.TrimEnd("`r`n")
@@ -513,7 +520,6 @@ function Invoke-SlimInstruction(){
 }
 
 function Process-Instruction($ins){
-  $ins | out-default
   $script:ps_row = $ins
   $result = Invoke-SlimInstruction
 

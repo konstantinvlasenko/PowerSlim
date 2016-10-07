@@ -36,7 +36,7 @@ The following tests show how normal exceptions are now handled. The error detail
 
 !| To prove test page continues after normal exceptions                                                                                                                      |
 |TESTPAGE                                                                  |EXCEPTION_TEXT                                                             |PROOF_TESTS_CONTINUED|
-|PowerSlim.OriginalMode.SuiteExceptions.TestCases.RunTimeException         |__EXCEPTION__:[^<>]*Attempted to divide by zero                            |2\+2=4               |
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.RunTimeException         |Attempted to divide by zero                            |2\+2=4               |
 
 
 You can also enable $NonTerminatingIsException if you want to view all the errors, including non terminating.
