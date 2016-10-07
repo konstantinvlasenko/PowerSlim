@@ -261,7 +261,7 @@ function ResultTo-String($res){
   }
 }
 
-function Exec-Script( $Script ) {
+function Exec-Script( $Script, $error_to_result) {
     if ( $script:SLIM_ABORT_TEST )  { return "__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_TEST_INDICATED:Test not run>>" }
     if ( $script:SLIM_ABORT_SUITE ) { return "__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>" }
    
@@ -269,22 +269,27 @@ function Exec-Script( $Script ) {
         iex $Script        
         $script:matches = $matches # preserve the $matches value, if set by the expression
    } catch { 
-        $errorType = $Error[0].FullyQualifiedErrorId
-        if($errorType -match "^Stop(Test|Suite):?(.*)?"){
-            # test or suite can be aborted by throw "StopTest"            
-            $script:SLIM_ABORT_TEST = $true
-            if ($matches[1] -eq 'Suite') {
-              $script:SLIM_ABORT_SUITE = $true
-            }
-            "__EXCEPTION__:ABORT_SLIM_TEST:message:<<__EXCEPTION__:ABORT_SLIM_TEST:$($matches[1]) aborted. : Additional Info[ $($_.Exception.ToString())  ]>>"
-            "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.ToString())>>"
-        } else {
-            if($_.Exception -is [System.Net.WebException]){
+        if($error_to_result){
+          $_.Exception.Message
+          $error.clear()
+        }else{
+          $errorType = $Error[0].FullyQualifiedErrorId
+          if($errorType -match "^Stop(Test|Suite):?(.*)?"){
+              # test or suite can be aborted by throw "StopTest"            
               $script:SLIM_ABORT_TEST = $true
-              "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.Message)>>"
-            }else{
-              "__EXCEPTION__:UnhandledException:message:<<$($_.Exception.ToString())>>"
-            }
+              if ($matches[1] -eq 'Suite') {
+                $script:SLIM_ABORT_SUITE = $true
+              }
+              "__EXCEPTION__:ABORT_SLIM_TEST:message:<<__EXCEPTION__:ABORT_SLIM_TEST:$($matches[1]) aborted. : Additional Info[ $($_.Exception.ToString())  ]>>"
+              "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.ToString())>>"
+          } else {
+              if($_.Exception -is [System.Net.WebException]){
+                $script:SLIM_ABORT_TEST = $true
+                "__EXCEPTION__:ABORT_SLIM_TEST:message:<<$($_.Exception.Message)>>"
+              }else{
+                "__EXCEPTION__:UnhandledException:message:<<$($_.Exception.ToString())>>"
+              }
+          }
         }
    }
    if($Error[0] -ne $null) { Print-Error }
@@ -303,8 +308,9 @@ function Print-Error {
 }
 
 function Invoke-SlimCall($fnc){
-  if('eval','query','get','post','patch','put' -contains $fnc){
-    $result = Exec-Script -Script $Script__
+  $name, $error_to_result = $fnc.split('_');
+  if('eval','query','get','post','patch','put' -contains $name){
+    $result = Exec-Script -Script $Script__ $error_to_result
   }
   else { 
     if ((Table-Type) -eq "ScriptTableActor") { $result = nocommand $_ }
@@ -458,10 +464,11 @@ function Invoke-SlimInstruction(){
       }
     }
   }
-  
-  if($ins[3] -ne "query" -and $ins[3] -ne "table"){
-    if('get','post','patch','put' -contains $ins[3]){
-      Set-RestScript $ins[3] $ins[4]
+
+  $name = $ins[3].split('_')[0];
+  if($name -ne "query" -and $name -ne "table"){
+    if('get','post','patch','put' -contains $name){
+      Set-RestScript $name $ins[4]
     }
     else{
       Set-Script $ins[4] $EvalFormat__
@@ -484,7 +491,7 @@ function Invoke-SlimInstruction(){
   }else {
     if($symbol){$slimsymbols[$symbol] = $result}
     $error.clear()
-    switch ($ins[3]){
+    switch ($name){
       "query" {
         if(($null -eq $result) -or ($result -is 'system.collections.generic.dictionary[string,object]' -and  $result.Count -eq 0)){ 
           $result = ResultTo-List @()
@@ -494,6 +501,7 @@ function Invoke-SlimInstruction(){
         }
       }
       "eval"  { $result = ResultTo-String $result }
+
       {$_ -match '^(get|post|patch|put)$'}{ Set-Variable -Name $_ -Value ($result) -Scope Global; $result = ResultTo-List @($result) }
     }
     if ($result -is [String]) {
@@ -505,7 +513,7 @@ function Invoke-SlimInstruction(){
 }
 
 function Process-Instruction($ins){
-
+  $ins | out-default
   $script:ps_row = $ins
   $result = Invoke-SlimInstruction
 

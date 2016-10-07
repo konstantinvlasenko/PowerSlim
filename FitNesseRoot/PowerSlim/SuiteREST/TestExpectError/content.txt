@@ -1,0 +1,6 @@
+!|script|
+|check|get_error|https://notasite.org|The remote name could not be resolved: 'notasite.org'|
+
+!|script|
+|check|eval_error|1/0|The remote name could not be resolved: 'notasite.org'|
+
