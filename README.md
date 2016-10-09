@@ -1,6 +1,6 @@
 PowerSlim - An implementation of FitNesse Slim in PowerShell
 
-All stuff is under the [Beer-Ware-License](http://en.wikipedia.org/wiki/Beerware).
+https://powerslim.slack.com
 
 !define TEST_SYSTEM {slim}
 
@@ -12,6 +12,10 @@ Requirements:
 Windows PowerShell 3.0 or higher.
 
 Please Note: You can still use the PowerShell 2.0 or work in backward compatibility with the PowerShell 2.0. But in order to support arrays and PSObjects verification in Queries the ConvertTo-Json CMDLet is used introduced in the PowerShell 3.0. For the verification to work with the PowerShell 2.0 you have to implement ConvertTo-Json CMDLet functionality via e.g. System.Web.Script.Serialization.JavaScriptSerializer (upgarade to .NET Framework 3.5 is reqquired). Otherwise you can stub the ConvertTo-Json CMDLet.
+
+### October 7, 2016
+
+ * [Expect Error](https://github.com/konstantinvlasenko/PowerSlim/blob/master/FitNesseRoot/PowerSlim/OriginalMode/SuiteCommon/TestExpectError/content.txt)
 
 ### June 17, 2015
 
