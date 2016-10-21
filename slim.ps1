@@ -309,7 +309,7 @@ function Print-Error {
 
 function Invoke-SlimCall($fnc){
   $ps_action, $error_to_result = $fnc.split('_');
-  if('eval','query','get','post','patch','put' -contains $ps_action){
+  if('eval','query','get','post','patch','put','delete' -contains $ps_action){
     $result = Exec-Script -Script $Script__ $error_to_result
   }
   else { 
@@ -324,7 +324,7 @@ function Set-RestScript($method, $arguments)
 { 
   $uri, $body = $arguments -split ','
   if($body -ne $null) {
-    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON),$method
+    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON -Depth 3),$method
   }
   else {
     $s = "Invoke-RestMethod {0} -Method {1} -ContentType 'application/json'" -f $uri, $method
@@ -467,7 +467,7 @@ function Invoke-SlimInstruction(){
 
   $ps_action = $ins[3].split('_')[0];
   if($ps_action -ne "query" -and $ps_action -ne "table"){
-    if('get','post','patch','put' -contains $ps_action){
+    if('get','post','patch','put','delete' -contains $ps_action){
       Set-RestScript $ps_action $ins[4]
     }
     else{
@@ -502,7 +502,7 @@ function Invoke-SlimInstruction(){
       }
       "eval"  { $result = ResultTo-String $result }
 
-      {$_ -match '^(get|post|patch|put)$'}{ 
+      {$_ -match '^(get|post|patch|put|delete)$'}{ 
         Set-Variable -Name $_ -Value ($result) -Scope Global;
         if ($result -is [String]){ 
           $result = ResultTo-String $result 
