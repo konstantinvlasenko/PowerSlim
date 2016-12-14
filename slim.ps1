@@ -653,7 +653,7 @@ function Run-SlimServer($ps_server){
   
   send_slim_version($ps_fitnesse_stream)
   $ps_fitnesse_client.Client.Poll(-1, [System.Net.Sockets.SelectMode]::SelectRead)
-  while("bye" -ne (process_message($ps_fitnesse_stream))){};
+  while($ps_fitnesse_client.Connected -and "bye" -ne (process_message($ps_fitnesse_stream))){};
   $ps_fitnesse_client.Close()
 }
 
