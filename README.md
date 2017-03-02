@@ -3,7 +3,7 @@ PowerSlim - An implementation of FitNesse Slim in PowerShell
 https://powerslim.slack.com
 
 !define TEST_SYSTEM {slim}
-
+!define SLIM_PORT (8090)
 !define COMMAND_PATTERN (PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
 
 Examples are available in the acceptance tests FitnesseRoot/PowerSlim and in the examples FitnesseRoot/ExampleS
