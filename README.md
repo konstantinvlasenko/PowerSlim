@@ -13,7 +13,7 @@ Windows PowerShell 3.0 or higher.
 
 Please Note: You can still use the PowerShell 2.0 or work in backward compatibility with the PowerShell 2.0. But in order to support arrays and PSObjects verification in Queries the ConvertTo-Json CMDLet is used introduced in the PowerShell 3.0. For the verification to work with the PowerShell 2.0 you have to implement ConvertTo-Json CMDLet functionality via e.g. System.Web.Script.Serialization.JavaScriptSerializer (upgarade to .NET Framework 3.5 is reqquired). Otherwise you can stub the ConvertTo-Json CMDLet.
 
-### March 2, 2017
+### March 4, 2017
 
   * Now you can run PowerSlim on Linux or Ubuntu server! Thanks to [@mikeplavsky](https://github.com/mikeplavsky)
 
