@@ -15,7 +15,7 @@ Please Note: You can still use the PowerShell 2.0 or work in backward compatibil
 
 ### March 2, 2017
 
-  * Now you can run PowerSlim on Linux or Ubuntu server! Thanks to @mikeplavsky
+  * Now you can run PowerSlim on Linux or Ubuntu server! Thanks to [@mikeplavsky](https://github.com/mikeplavsky)
 
 ### March 1, 2017
 
