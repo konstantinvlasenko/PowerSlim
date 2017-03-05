@@ -647,7 +647,9 @@ function process_message_ignore_remote($ps_stream){
 }
 
 function Run-SlimServer($ps_server){
-  $ps_fitnesse_client = $ps_server.AcceptTcpClient()
+  $ps_fitnesse_client_task = $ps_server.AcceptTcpClientAsync()
+  $ps_fitnesse_client = $ps_fitnesse_client_task.Result
+  
   $ps_fitnesse_stream = $ps_fitnesse_client.GetStream()
   $ps_fitnesse_stream.ReadTimeout = $REQUEST_READ_TIMEOUT
   
@@ -676,14 +678,9 @@ function Write-Log (){
   Write-Host $timestamp"`t"$args
 }
 
-# if (!$args.Length) { 
-  # Write-Output "No arguments provided!"
-  # return; 
-# }
-
 Write-Log "========== Starting SLIM $Mode on Port $Port =========="
 
-$ps_server = New-Object System.Net.Sockets.TcpListener($Port)
+$ps_server = New-Object System.Net.Sockets.TcpListener('0.0.0.0', $Port)
 $ps_server.Start()
 
 if($Mode -eq "runner"){
