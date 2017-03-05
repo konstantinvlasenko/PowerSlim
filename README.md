@@ -9,8 +9,10 @@ https://powerslim.slack.com
 ```
 Examples are available in the acceptance tests [FitnesseRoot/PowerSlim](https://github.com/konstantinvlasenko/PowerSlim/tree/master/FitNesseRoot/PowerSlim) and in the examples FitnesseRoot/ExampleS
 
-Requirements:
- * Windows PowerShell 3.0 or higher.
+### Supported Platforms
+ * Windows
+ * Linux
+ * Ubuntu
 
 ### March 4, 2017
 
