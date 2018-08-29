@@ -1,0 +1,19 @@
+https://github.com/konstantinvlasenko/PowerSlim/issues/91
+
+|script|
+|eval|!-<pre>
+$i=0
+$arr = new-object int[] 4
+For ($a=0; $a -lt 2; $a++)
+{
+	For($b=0; $b -lt 2; $b++)
+	{
+		$arr[$i]=$i
+		$i++
+	}
+}
+</pre>-!|
+|check|eval|$arr[0]|0|
+|check|eval|$arr[1]|1|
+|check|eval|$arr[2]|2|
+|check|eval|$arr[3]|3|
