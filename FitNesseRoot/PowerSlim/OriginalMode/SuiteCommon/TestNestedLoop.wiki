@@ -5,10 +5,12 @@ https://github.com/konstantinvlasenko/PowerSlim/issues/91
 $i=0
 $arr = new-object int[] 4
 For ($a=0; $a -lt 2; $a++)
-{
+{	
+    if($script:b -ne $null) { Write-Verbose "---$b" }
+
 	For($b=0; $b -lt 2; $b++)
 	{
-		$arr[$i]=$i
+        $arr[$i]=$i
 		$i++
 	}
 }
