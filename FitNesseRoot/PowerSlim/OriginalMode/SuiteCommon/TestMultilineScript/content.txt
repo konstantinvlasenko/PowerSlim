@@ -4,6 +4,15 @@ Line2
 Line3"-!|!-Line1
 Line2
 Line3-!|
+
+!* Test Here-String
+!|script|
 |check|eval|!-@"
 "Hello World"
-"@-!|!-"Hello World"-!|
+"@-!|"Hello World"|
+|eval|$var1 = "Hello"|
+|eval|$var2 = "World"|
+|check|eval|!-@"
+"$var1" "$var2"
+"@-!|"Hello" "World"|
+*!
