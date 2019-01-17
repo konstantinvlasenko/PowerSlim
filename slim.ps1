@@ -342,7 +342,7 @@ function Set-Script($s, $fmt){
   $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '$1=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','$1;'
   if($s -match '^\s*&?<pre>')
   {
-	$s = $s -replace '</?pre>' #workaround fitnesse strange behavior
+	$s = $s -replace '<.?pre>' #workaround fitnesse strange behavior
   }
   if($slimsymbols.Count){$slimsymbols.Keys | Sort Length -Descending | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_",$slimsymbols[$_] }}
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
