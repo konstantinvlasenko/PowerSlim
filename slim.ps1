@@ -630,6 +630,7 @@ function process_message($ps_stream){
 function process_message_ignore_remote($ps_stream){
 
   Write-Verbose "Process Message & Ignore Remote"
+  $script:SLIM_ABORT_TEST = $false
 
   $ps_msg = get_message($ps_stream)
 
