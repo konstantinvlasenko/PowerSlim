@@ -4,3 +4,6 @@ Line2
 Line3"-!|!-Line1
 Line2
 Line3-!|
+|check|eval|!-@"
+"Hello World"
+"@-!|!-"Hello World"-!|
