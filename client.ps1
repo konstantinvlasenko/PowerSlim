@@ -96,7 +96,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
             $__pattern__ = "$($symbol.id):\d{6}:(?<value>.*?):\]"
             $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {
               if(Is-Numeric $_.Groups[1].Value){
-                [int]$_.Groups[1].Value
+                try { [int]$_.Groups[1].Value } catch { }
               }else{
                 $_.Groups[1].Value
               }
