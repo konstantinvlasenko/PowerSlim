@@ -1,0 +1,4 @@
+|script|remote|localhost                 |
+|eval  |$i1 = (Get-Date).Ticks           |
+|check |eval  |$i1.GetType()|System.Int64|
+|$i2=  |eval  |$i1                       |
