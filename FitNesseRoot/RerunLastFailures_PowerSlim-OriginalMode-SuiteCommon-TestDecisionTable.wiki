@@ -1,0 +1,10 @@
+---
+Help: Lists tests failed during last run, so they can be run again (without running all tests that passed).
+Suite
+---
+
+!note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
+
+Tests failed (first failure was at 2021-06-15T13:58:59.295964):
+
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestDecisionTable][.PowerSlim.OriginalMode.SuiteCommon.TestDecisionTable]]

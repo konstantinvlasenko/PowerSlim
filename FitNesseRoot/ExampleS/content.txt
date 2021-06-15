@@ -21,7 +21,7 @@
 !contents -R2 -g -p -f -h
 
 !define TEST_SYSTEM {slim}
-!define COMMAND_PATTERN (PowerShell -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
+!define COMMAND_PATTERN (pwsh -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
 
 !define CONSOLELAB {192.168.193.143}
 !define INSTALLEDPATH {C:\Program Files\MegaProduct}

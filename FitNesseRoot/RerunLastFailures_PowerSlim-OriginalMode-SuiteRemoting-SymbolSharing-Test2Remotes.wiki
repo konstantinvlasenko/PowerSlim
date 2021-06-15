@@ -1,0 +1,10 @@
+---
+Help: Lists tests failed during last run, so they can be run again (without running all tests that passed).
+Suite
+---
+
+!note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
+
+Tests failed (first failure was at 2021-06-15T14:08:27.674800):
+
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.Test2Remotes][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.Test2Remotes]]

@@ -1,0 +1,40 @@
+---
+Help: Lists tests failed during last run, so they can be run again (without running all tests that passed).
+Suite
+---
+
+!note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
+
+Tests failed (first failure was at 2021-06-15T13:54:30.536894):
+
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestDecisionTable][.PowerSlim.OriginalMode.SuiteCommon.TestDecisionTable]]
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestExpectError][.PowerSlim.OriginalMode.SuiteCommon.TestExpectError]]
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestFile][.PowerSlim.OriginalMode.SuiteCommon.TestFile]]
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestFitnesseHashTable][.PowerSlim.OriginalMode.SuiteCommon.TestFitnesseHashTable]]
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestQueryTable][.PowerSlim.OriginalMode.SuiteCommon.TestQueryTable]]
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestScenario][.PowerSlim.OriginalMode.SuiteCommon.TestScenario]]
+!see [[PowerSlim.OriginalMode.SuiteCommon.TestTiming][.PowerSlim.OriginalMode.SuiteCommon.TestTiming]]
+!see [[PowerSlim.OriginalMode.SuiteExceptions.ExceptionTestRunner][.PowerSlim.OriginalMode.SuiteExceptions.ExceptionTestRunner]]
+!see [[PowerSlim.OriginalMode.SuiteExceptions.NonTerminatingIsNotException][.PowerSlim.OriginalMode.SuiteExceptions.NonTerminatingIsNotException]]
+!see [[PowerSlim.OriginalMode.SuiteFixes.TestIssue18][.PowerSlim.OriginalMode.SuiteFixes.TestIssue18]]
+!see [[PowerSlim.OriginalMode.SuiteNoHangup.SuiteNoHangupRunner][.PowerSlim.OriginalMode.SuiteNoHangup.SuiteNoHangupRunner]]
+!see [[PowerSlim.OriginalMode.SuiteSymbols.TestSymbols][.PowerSlim.OriginalMode.SuiteSymbols.TestSymbols]]
+!see [[PowerSlim.OriginalMode.TestPsobjectInQueryTable][.PowerSlim.OriginalMode.TestPsobjectInQueryTable]]
+!see [[PowerSlim.OriginalMode.TestSlimAndTcp][.PowerSlim.OriginalMode.TestSlimAndTcp]]
+!see [[PowerSlim.OriginalMode.SuiteFixes.SuiteIssue62.RunTest][.PowerSlim.OriginalMode.SuiteFixes.SuiteIssue62.RunTest]]
+!see [[PowerSlim.OriginalMode.SuiteFixes.SuiteIssue62.SecondTestShouldWorkAnyway][.PowerSlim.OriginalMode.SuiteFixes.SuiteIssue62.SecondTestShouldWorkAnyway]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.Test2Remotes][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.Test2Remotes]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestBackward][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestBackward]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestForward][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestForward]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestManyTables][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestManyTables]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestNumeric][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestNumeric]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestPreserveValueOfComplexTypeWhereItWasOriginated][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestPreserveValueOfComplexTypeWhereItWasOriginated]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestSymbolNotInWordBoundary][.PowerSlim.OriginalMode.SuiteRemoting.SymbolSharing.TestSymbolNotInWordBoundary]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.Test2RemotesInParallel][.PowerSlim.OriginalMode.SuiteRemoting.Test2RemotesInParallel]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestBigInteger][.PowerSlim.OriginalMode.SuiteRemoting.TestBigInteger]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestDecision][.PowerSlim.OriginalMode.SuiteRemoting.TestDecision]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestQuery][.PowerSlim.OriginalMode.SuiteRemoting.TestQuery]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestRemoting][.PowerSlim.OriginalMode.SuiteRemoting.TestRemoting]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestScenario][.PowerSlim.OriginalMode.SuiteRemoting.TestScenario]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestSwitchContext][.PowerSlim.OriginalMode.SuiteRemoting.TestSwitchContext]]
+!see [[PowerSlim.OriginalMode.SuiteRemoting.TestTargetAsExpression][.PowerSlim.OriginalMode.SuiteRemoting.TestTargetAsExpression]]
