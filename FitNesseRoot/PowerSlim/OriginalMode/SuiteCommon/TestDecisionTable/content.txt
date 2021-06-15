@@ -1,7 +1,7 @@
 |(dir $path).Length                                 |
 |path       |result?                                |
-|c:\        |>0                                     |
-|c:\vlasenko|=~/.*Cannot find path.*[Cc]:\\vlasenko/|
+|/        |>0                                     |
+|/vlasenko|=~/.*Cannot find path.*/|
 
 |"$arg1 $arg2"                    |
 |arg1 |arg2      |result?         |
