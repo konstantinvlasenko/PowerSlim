@@ -5,8 +5,6 @@ Suite
 
 !note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
 
-Tests failed (first failure was at 2021-06-15T15:46:13.008498):
+Tests failed (first failure was at 2021-06-15T15:45:48.862273):
 
-!see [[PowerSlim.OriginalMode.SuiteCommon.TestFitnesseHashTable][.PowerSlim.OriginalMode.SuiteCommon.TestFitnesseHashTable]]
-!see [[PowerSlim.OriginalMode.SuiteCommon.TestScenario][.PowerSlim.OriginalMode.SuiteCommon.TestScenario]]
 !see [[PowerSlim.OriginalMode.SuiteCommon.TestTiming][.PowerSlim.OriginalMode.SuiteCommon.TestTiming]]

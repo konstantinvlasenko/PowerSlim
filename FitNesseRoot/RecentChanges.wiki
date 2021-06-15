@@ -1,3 +1,5 @@
+|PowerSlim.OriginalMode.SuiteCommon.TestTiming||15:45:44 Tue, Jun 15, 2021|
+|PowerSlim.OriginalMode||15:38:41 Tue, Jun 15, 2021|
 |PowerSlim.OriginalMode.SuiteCommon.TestFile||14:20:09 Tue, Jun 15, 2021|
 |PowerSlim.OriginalMode.SuiteCommon.TestExpectError||14:12:52 Tue, Jun 15, 2021|
 |PowerSlim.OriginalMode.SuiteCommon.TestDecisionTable||14:11:34 Tue, Jun 15, 2021|
@@ -5,5 +7,4 @@
 |PowerSlim.OriginalMode.SuiteRemoting.SuiteSetUp||14:07:19 Tue, Jun 15, 2021|
 |PowerSlim.SuiteREST||13:53:45 Tue, Jun 15, 2021|
 |PowerSlim.PowerShell20Mode||13:52:42 Tue, Jun 15, 2021|
-|PowerSlim.OriginalMode||13:51:48 Tue, Jun 15, 2021|
 |ExampleS||13:47:49 Tue, Jun 15, 2021|
