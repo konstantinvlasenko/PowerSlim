@@ -324,10 +324,10 @@ function Set-RestScript($method, $arguments)
 { 
   $uri, $body = $arguments -split ','
   if($body -ne $null) {
-    $s = "Invoke-RestMethod {0} -SkipCertificateCheck -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON -Depth 3),$method
+    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON -Depth 3),$method
   }
   else {
-    $s = "Invoke-RestMethod {0} -SkipCertificateCheck -Method {1} -ContentType 'application/json'" -f $uri, $method
+    $s = "Invoke-RestMethod {0} -Method {1} -ContentType 'application/json'" -f $uri, $method
   }
   if($headers -ne $null){
     $s += ' -Headers $script:headers'
