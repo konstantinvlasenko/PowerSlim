@@ -20,7 +20,7 @@ Examples are available in the acceptance tests [FitnesseRoot/PowerSlim](https://
 
 ### March 1, 2017
 
- * [Fitnesse 20161106](http://fitnesse.org/.FrontPage.FitNesseDevelopment.FitNesseRelease20161106) introduced bracking change. _FitNesse and Slim can now communicate over stdin/stdout. This removes the hassle with network ports [977](https://github.com/unclebob/fitnesse/pull/977)_
+ * [Fitnesse 20161106](http://fitnesse.org/.FrontPage.FitNesseDevelopment.FitNesseRelease20161106) introduced a breaking change. _FitNesse and Slim can now communicate over stdin/stdout. This removes the hassle with network ports [977](https://github.com/unclebob/fitnesse/pull/977)_
  You need to set [SLIM_PORT](https://github.com/konstantinvlasenko/PowerSlim/blob/02dc82325d639123874beebbeb5229ba202f867b/FitNesseRoot/PowerSlim/OriginalMode/content.txt#L2) variable to make PowerSlim work again
    
 
