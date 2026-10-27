@@ -11,7 +11,7 @@ $REMOTE_SERVER_READ_TIMEOUT = 60*60*1000
 function Get-RemoteSlimSymbols($inputTable)
 {
   $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
-  $inputTable | select-string $__pattern__ -allmatches | % {$_.matches} | % {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
+  $inputTable | select-string $__pattern__ -allmatches | ForEach-Object {$_.matches} | ForEach-Object {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
 }
 
 function Is-Numeric ($Value) {
@@ -54,7 +54,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
           }
 
-          if($ps_port -eq $null){$ps_port = Get-RemoteDefaultPort};
+          if($null -eq $ps_port){$ps_port = Get-RemoteDefaultPort};
 
           Write-Verbose "Connecting to $ps_computer, $ps_port"
           
@@ -68,7 +68,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 
               "Connected" | Out-Default
                       
-              $list = @($slimsymbols.GetEnumerator() | % {$_})
+              $list = @($slimsymbols.GetEnumerator() | ForEach-Object {$_})
               $tr = "[" + (slimlen $list) + ":"
 
               foreach ($obj in $list){
@@ -114,9 +114,9 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
          #backward symbols sharing
          foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) {
             $__pattern__ = "$($symbol.id):\d{6}:(?<value>.*?):\]"
-            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | % {$_.matches} | % {
+            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | ForEach-Object {$_.matches} | ForEach-Object {
               if(Is-Numeric $_.Groups[1].Value){
-                try { [int]$_.Groups[1].Value } catch { }
+                try { [int]$_.Groups[1].Value } catch { Write-Verbose "Not an Int32, symbol dropped: $($_.Exception.Message)" }
               }else{
                 $_.Groups[1].Value
               }

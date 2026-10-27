@@ -1,7 +1,7 @@
 https://github.com/konstantinvlasenko/PowerSlim/issues/18
 
-''The query below yields an array of $null values (originally Get-AuthenticodeSignature ... SignerCertificate, which is Windows-only; LinkTarget is $null for every regular file)''
-!|Subset Query:Local|!-Get-ChildItem . | ? {$_.PSIsContainer -eq $false} | % { $_.LinkTarget }-!|
+''A query whose result is an array of $null values (originally Get-AuthenticodeSignature ... SignerCertificate over a folder of unsigned files) must return one Null row per element''
+!|Query:Local|!-1..10 | % { $_.MissingProperty }-!|
 |Value|
 |Null|
 |Null|

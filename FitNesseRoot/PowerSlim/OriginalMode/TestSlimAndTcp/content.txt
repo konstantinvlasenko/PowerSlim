@@ -1,6 +1,6 @@
 | script | local |
-| eval | !- $sut = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!|
-#|check|eval|!-$sut= Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru -Verbose -!||
+| eval | !- $sut = Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!|
+#|check|eval|!-$sut= Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru -Verbose -!||
 
 !| script | remote | localhost:8041 |
 | eval | $VerbosePreference="Continue" |

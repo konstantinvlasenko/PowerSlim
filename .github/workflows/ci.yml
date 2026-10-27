@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PESTER_VERSION: 6.2.0
+  PSSCRIPTANALYZER_VERSION: 1.25.0
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -RequiredVersion $env:PSSCRIPTANALYZER_VERSION -Scope CurrentUser -Force -Repository PSGallery
+          $findings = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $findings | Format-Table -AutoSize ScriptName, Line, Severity, RuleName, Message | Out-String -Width 300
+          if ($findings) { throw "$(@($findings).Count) PSScriptAnalyzer finding(s)" }
+
+  test:
+    name: test (${{ matrix.os }}, ${{ matrix.shell }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, shell: pwsh }
+          - { os: macos-latest, shell: pwsh }
+          - { os: windows-latest, shell: pwsh }
+          - { os: windows-latest, shell: powershell } # Windows PowerShell 5.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: corretto
+          java-version: '21'
+
+      # Same script twice because `shell:` cannot come from the matrix
+      - name: Unit tests (Pester, pwsh)
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
+        run: &pester |
+          $PSVersionTable.PSVersion.ToString()
+          Install-Module Pester -RequiredVersion $env:PESTER_VERSION -Scope CurrentUser -Force -SkipPublisherCheck -Repository PSGallery
+          Import-Module Pester -RequiredVersion $env:PESTER_VERSION
+          Invoke-Pester ./tests -CI
+
+      - name: Unit tests (Pester, Windows PowerShell 5.1)
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: *pester
+
+      # The runner script always uses pwsh; -Shell picks the PowerShell that runs slim.ps1 and the remote agents
+      - name: Acceptance tests (FitNesse)
+        shell: pwsh
+        env:
+          SLIM_SHELL: ${{ matrix.shell }}
+        run: ./tests/Invoke-AcceptanceTests.ps1 -Shell $env:SLIM_SHELL

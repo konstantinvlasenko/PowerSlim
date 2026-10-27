@@ -1,3 +1,0 @@
-!4 Use !-!include -c .PatH.FromRoot.ToInclude.UsefulPage-!
-
-!3 Check .ExampleS.CreateProductShare to get "how to use"

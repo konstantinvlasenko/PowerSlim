@@ -1,10 +1,10 @@
 !|script|
-|eval|$server2 = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8037 server" -PassThru|
-|eval|$server3 = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8038 server" -PassThru|
+|eval|$server2 = Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8037 server" -PassThru|
+|eval|$server3 = Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8038 server" -PassThru|
 |eval|Start-Sleep -Seconds 1|
 
 !|script|remote|localhost:8037,localhost:8038|
-|eval|Start-Process pwsh '-NoProfile -Command exit' -Wait|
+|eval|Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) '-NoProfile -Command exit' -Wait|
 
 -!|script|
 |eval|$server2.Kill()|

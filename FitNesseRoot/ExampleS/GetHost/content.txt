@@ -1,3 +1,0 @@
-|Query:Remote|${CONSOLELAB}|get-host|
-|Version|
-|3.0|

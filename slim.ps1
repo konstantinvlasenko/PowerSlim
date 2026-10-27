@@ -40,7 +40,7 @@ function Get-SlimTable($slimchunk){
 
   $ps_exp = $slimchunk -replace "'","''" -replace "000000::","000000:blank:"  -replace "(?S):\d{6}:(.*?)(?=(:\d{6}:|:\]))",',''$1''' -replace "'(\[\d{6})'", '$1' -replace ":\d{6}:", "," -replace ":\]", ")" -replace "\[\d{6},", "(" -replace "'blank'", "''"
 
-  $script:ps_table = iex $ps_exp
+  $script:ps_table = Invoke-Expression $ps_exp
 }
 
 
@@ -88,8 +88,8 @@ function get_message_length($ps_stream){
 
   $script:ps_buf1 = new-object byte[] 7
 
-  $t = read_message $ps_stream $ps_buf1
-  $str = [text.encoding]::utf8.getstring($ps_buf1, 0, 6)
+  $null = read_message $ps_stream $script:ps_buf1
+  $str = [text.encoding]::utf8.getstring($script:ps_buf1, 0, 6)
   $res = $null
   if([int32]::TryParse($str, [ref]$res))
   {
@@ -100,7 +100,7 @@ function get_message_length($ps_stream){
     -1
   }
 
-  Write-Verbose "Length: $ps_buf1"
+  Write-Verbose "Length: $script:ps_buf1"
 }
 
 function read_message($ps_stream, $buf, $offset = 0){
@@ -146,14 +146,14 @@ function get_message($ps_stream){
   }
 
   $script:ps_buf2 = new-object byte[] $ps_size
-  $t = read_message $ps_stream $ps_buf2
-  [text.encoding]::utf8.getstring($ps_buf2)
+  $null = read_message $ps_stream $script:ps_buf2
+  [text.encoding]::utf8.getstring($script:ps_buf2)
 
 }
 
 function ObjectTo-Slim($ps_obj){
   $slimview = "[000002:" + (slimlen $ps_prop) + ":" + $ps_prop+ ":"
-  if($($ps_obj.$ps_prop) -eq $null -or $($ps_obj.$ps_prop) -is [system.array]){
+  if($null -eq $($ps_obj.$ps_prop) -or $($ps_obj.$ps_prop) -is [system.array]){
     $slimview += $slimnull + "]"
   }
   else{
@@ -164,14 +164,14 @@ function ObjectTo-Slim($ps_obj){
 
 function PropertyTo-Slim($ps_obj,$ps_prop){
   $slimview = "[000002:" + (slimlen $ps_prop) + ":" + $ps_prop+ ":"
-  if($($ps_obj.$ps_prop) -eq $null){
+  if($null -eq $($ps_obj.$ps_prop)){
     $slimview += $slimnull + "]"
   }
   elseif( $($ps_obj.$ps_prop) -is [string]){
     $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop) + ":]"
   }
   elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject]){
-    $slimview += (ConvertTo-Json -Compress $($ps_obj.$ps_prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"}
+    $slimview += (ConvertTo-Json -Compress -InputObject $($ps_obj.$ps_prop)) |ForEach-Object {(slimlen $_) + ":" + $_.ToString() + ":]"}
   }
   else{
     $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop).ToString() + ":]"
@@ -181,7 +181,7 @@ function PropertyTo-Slim($ps_obj,$ps_prop){
 
 function Convert-Hashtable-2Object($hashtable){
    $ps_object = New-Object PSObject
-   $hashtable.GetEnumerator() | % { Add-Member -inputObject $ps_object -memberType NoteProperty -name $_.Name -value $_.Value }
+   $hashtable.GetEnumerator() | ForEach-Object { Add-Member -inputObject $ps_object -memberType NoteProperty -name $_.Name -value $_.Value }
    Add-Member -inputObject $ps_object -memberType NoteProperty -name "SLIM_COMPUTERNAME" -value $env:COMPUTERNAME
    $ps_object
 }
@@ -231,9 +231,9 @@ function ResultTo-List($list){
       if ($null -eq $ps_obj){ 
         $ps_obj = GetNullObject 
       }
-      $fieldscount = ($ps_obj  | gm -membertype Property, NoteProperty  | measure-object).Count
+      $fieldscount = ($ps_obj  | Get-Member -membertype Property, NoteProperty  | measure-object).Count
       $itemstr = "[" +  $fieldscount.ToString("d6") + ":"
-      $ps_obj  | gm -membertype Property, NoteProperty | % {$itemstr += PropertyTo-Slim $ps_obj $_.Name }
+      $ps_obj  | Get-Member -membertype Property, NoteProperty | ForEach-Object {$itemstr += PropertyTo-Slim $ps_obj $_.Name }
       $itemstr += "]"
     
       $result += (slimlen $itemstr) + ":" + $itemstr + ":"
@@ -247,7 +247,7 @@ function ResultTo-List($list){
 }
 
 function ResultTo-String($res){
-  if($res -eq $null){
+  if($null -eq $res){
     $slimvoid
   }
   else{
@@ -265,7 +265,7 @@ function Exec-Script( $Script, $error_to_result) {
     if ( $script:SLIM_ABORT_SUITE ) { return "__EXCEPTION__:ABORT_SLIM_TEST:message:<<ABORT_SUITE_INDICATED:Test not run>>" }
    
    try { 
-        iex $Script        
+        Invoke-Expression $Script        
         $script:matches = $matches # preserve the $matches value, if set by the expression
    } catch { 
         if($error_to_result){
@@ -291,11 +291,11 @@ function Exec-Script( $Script, $error_to_result) {
           }
         }
    }
-   if($Error[0] -ne $null) { Print-Error }
+   if($null -ne $Error[0]) { Print-Error }
 }
 
 function Print-Error {
-    $Error | % {
+    $Error | ForEach-Object {
       $details = ($_ | Out-String)
       if($_.Exception) { $details += $_.Exception.ToString() }
       if($script:NonTerminatingIsException){
@@ -322,13 +322,13 @@ function Invoke-SlimCall($fnc){
 function Set-RestScript($method, $arguments)
 { 
   $uri, $body = $arguments -split ','
-  if($body -ne $null) {
-    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(iex $body | ConvertTo-JSON -Depth 3),$method
+  if($null -ne $body) {
+    $s = "Invoke-RestMethod {0} -Body '{1}' -Method {2} -ContentType 'application/json'" -f $uri,(Invoke-Expression $body | ConvertTo-JSON -Depth 3),$method
   }
   else {
     $s = "Invoke-RestMethod {0} -Method {1} -ContentType 'application/json'" -f $uri, $method
   }
-  if($headers -ne $null){
+  if($null -ne $headers){
     $s += ' -Headers $script:headers'
   }
   #$s = "($s) | ConvertFrom-JSON"
@@ -344,8 +344,8 @@ function Set-Script($s, $fmt){
   {
 	$s = $s -replace '<.?pre>' #workaround fitnesse strange behavior
   }
-  if($slimsymbols.Count){$slimsymbols.Keys | Sort-Object Length -Descending | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "(?<!\])\`$$_",$slimsymbols[$_] }} # keep typed variables like [string]$user (e.g. param declarations) intact; they get the global variable below
-  if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
+  if($slimsymbols.Count){$slimsymbols.Keys | Sort-Object Length -Descending | Where-Object {!($s -cmatch "\`$$_\s*=")} | Where-Object {$slimsymbols[$_] -is [string] } | ForEach-Object {$s=$s -creplace "(?<!\])\`$$_",$slimsymbols[$_] }} # keep typed variables like [string]$user (e.g. param declarations) intact; they get the global variable below
+  if($slimsymbols.Count){$slimsymbols.Keys | ForEach-Object { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = $fmt -f $s
   if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global}
   else{Set-Variable -Name Script__ -Value ($s -replace '\$(?![\$_])(\w+)((?=\s*[\+|\*|\-|\/|%]*=)|(?=\s*,\s*\$\w+.*=))*','$script:$1') -Scope Global}
@@ -374,7 +374,7 @@ function Invoke-SlimInstruction(){
 
     "import" {
 
-      iex ". .\$(Module)" 
+      Invoke-Expression ". .\$($script:ps_row[2])"
       "OK"
       return
 
@@ -400,7 +400,7 @@ function Invoke-SlimInstruction(){
           "/__VOID__/"
           return
         }elseif($ins[3][0..2] -join '' -eq 'set'){
-          iex "`$script:$($ins[3].Substring(3))='$($ins[4])'"
+          Invoke-Expression "`$script:$($ins[3].Substring(3))='$($ins[4])'"
           "/__VOID__/"
           return
         }elseif($ins[3] -eq 'execute'){
@@ -445,17 +445,17 @@ function Invoke-SlimInstruction(){
                '^Result(\S+)$'   
                             { $prop = $Matches[1]
                               $prop = $prop -replace '_','.'
-                              ResultTo-String (iex ('$script:decision_result.'+$prop))
+                              ResultTo-String (Invoke-Expression ('$script:decision_result.'+$prop))
                               if ($symbol) {
-                                $slimsymbols[$symbol] = iex ('$script:decision_result.'+$prop)
+                                $slimsymbols[$symbol] = Invoke-Expression ('$script:decision_result.'+$prop)
                               }
                               break
                             }
                '^(\S+)$'    { $prop = $Matches[1]
                               $prop = $prop -replace '_','.'
-                              ResultTo-String (iex ('$script:decision_result.'+$prop))
+                              ResultTo-String (Invoke-Expression ('$script:decision_result.'+$prop))
                               if ($symbol) {
-                                $slimsymbols[$symbol] = iex ('$script:decision_result.'+$prop)
+                                $slimsymbols[$symbol] = Invoke-Expression ('$script:decision_result.'+$prop)
                               }
                             }
                default    { 'Not Implemented'       }
@@ -478,15 +478,15 @@ function Invoke-SlimInstruction(){
   
   $error.clear()
   # Measure the amount of time this step or command takes
-  $script:Command_Time = measure-command {
-    # Execution of the test's code occurs here. During the 'make' step this is simple
-    # the execution of the 'make' procedure.
-    $result = Invoke-SlimCall $ins[3]
-  }
+  # Execution of the test's code occurs here. During the 'make' step this is simple
+  # the execution of the 'make' procedure.
+  $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+  $result = Invoke-SlimCall $ins[3]
+  $script:Command_Time = $stopwatch.Elapsed
   Write-Log $Script__ : $script:Command_Time.TotalSeconds
 
   
-  if($error[0] -ne $null) {
+  if($null -ne $error[0]) {
     $error.clear()
     ResultTo-String $result
   }else {
@@ -538,7 +538,7 @@ function Process-Instruction($ins){
 function pack_results($results){
   if($results -is [array]){
     $ps_send = "[" + (slimlen $results) + ":"
-    $results | % {$ps_send += $_}
+    $results | ForEach-Object {$ps_send += $_}
   }
   else{
     $ps_send = "[000001:$results"
@@ -575,10 +575,10 @@ function set_remote_targets($ps_cell) {
   $script:Remote = $true
   $script:targets = $null
 
-  $script:targets = iex $ps_cell
+  $script:targets = Invoke-Expression $ps_cell
   
-  if($script:targets -eq $null){
-    $script:targets = $ps_cell.Split(",") | %{$_.Trim(", ")}
+  if($null -eq $script:targets){
+    $script:targets = $ps_cell.Split(",") | ForEach-Object{$_.Trim(", ")}
   }
 
 }
@@ -586,7 +586,7 @@ function set_remote_targets($ps_cell) {
 function process_table() {
 
   if(Test-OneRowTable $script:ps_table){ $ps_results = Process-Instruction $script:ps_table }
-  else { $ps_results = $script:ps_table | % { Process-Instruction $_ } }
+  else { $ps_results = $script:ps_table | ForEach-Object { Process-Instruction $_ } }
 
   $ps_results
 
@@ -644,7 +644,7 @@ function process_message_ignore_remote($ps_stream){
   if(ischunk($ps_msg)){
 
     $script:QueryFormat__ = $script:EvalFormat__ = "{0}"
-    $ps_table = Get-SlimTable $ps_msg
+    Get-SlimTable $ps_msg
 
     $ps_results = process_table
 

@@ -7,7 +7,7 @@ NOTE: This test page is intentionally disabled so that it doesn't run automatica
 
 !*> Test setup
 !|script|
-|eval|$sut = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru|
+|eval|$sut = Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru|
 *!
 !* fake slim protocol 
 '''connect to SLIM server'''

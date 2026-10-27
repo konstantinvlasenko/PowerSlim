@@ -1,8 +1,8 @@
 NOTE: This test page is intentionally disabled so that it doesn't run automatically via the Suite test but is instead run from SuiteNoHangupRunner page.
 
 |script|
-|check|eval|!-$sut= Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru -Verbose -!||
-#|check|eval|!-$sut= Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!||
+|check|eval|!-$sut= Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru -Verbose -!||
+#|check|eval|!-$sut= Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!||
 
 !|script|Remote|localhost:8041|
 |eval|$VerbosePreference="Continue"|

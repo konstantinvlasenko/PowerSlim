@@ -1,3 +1,0 @@
-!|Query:Local|!-get-service | ? {$_.DisplayName -like '* Time*'}-!|
-|DisplayName|Status|
-|Windows Time|Running|

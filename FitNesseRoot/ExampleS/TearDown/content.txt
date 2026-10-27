@@ -1,2 +1,0 @@
-!|script|Script|
-|eval|Pop-Location|

@@ -1,5 +1,7 @@
 PowerSlim - An implementation of FitNesse Slim in PowerShell
 
+[![CI](https://github.com/konstantinvlasenko/PowerSlim/actions/workflows/ci.yml/badge.svg)](https://github.com/konstantinvlasenko/PowerSlim/actions/workflows/ci.yml)
+
 https://powerslim.slack.com
 
 ```
@@ -9,12 +11,15 @@ https://powerslim.slack.com
 ```
 Requires PowerShell 7+ (`pwsh`) on any platform, or Windows PowerShell 5.1 (use `powershell` instead of `pwsh` in `COMMAND_PATTERN`). PowerShell 2.0–5.0 are no longer supported.
 
-### Running the acceptance tests
+### Running the tests
+Requires Java 11+ and [Pester](https://pester.dev) 5+.
 ```
-curl -L -o fitnesse-standalone.jar https://repo1.maven.org/maven2/org/fitnesse/fitnesse/20260313/fitnesse-20260313-standalone.jar
-java -jar fitnesse-standalone.jar -o -p 8085 -c "PowerSlim.OriginalMode?suite&format=text"
-java -jar fitnesse-standalone.jar -o -p 8085 -c "PowerSlim.SuiteREST?suite&format=text"
+./tests/Invoke-AcceptanceTests.ps1                     # FitNesse suites (downloads the pinned FitNesse jar)
+./tests/Invoke-AcceptanceTests.ps1 -Shell powershell   # same, with Windows PowerShell 5.1 running slim.ps1
+Invoke-Pester ./tests                                  # unit tests for the SLIM protocol helpers
+Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
 ```
+CI runs all of these on Linux, macOS and Windows (PowerShell 7 and 5.1).
 `PowerSlim.SuiteWrongFailedException` fails on purpose; it is checked from `SuiteCommon.TestScenario`.
 
 ### Remote agents
@@ -22,7 +27,7 @@ java -jar fitnesse-standalone.jar -o -p 8085 -c "PowerSlim.SuiteREST?suite&forma
 An agent runs any PowerShell it receives, unauthenticated, so only expose it on a trusted private network: `./slim.ps1 35 server -BindAddress 0.0.0.0`.
 Targets without an explicit port (`|script|Remote|myhost|`) use port 35, or `$env:POWERSLIM_REMOTE_PORT` if set.
 
-Examples are available in the acceptance tests [FitnesseRoot/PowerSlim](https://github.com/konstantinvlasenko/PowerSlim/tree/master/FitNesseRoot/PowerSlim) and in the examples FitnesseRoot/ExampleS
+Examples are available in the acceptance tests [FitNesseRoot/PowerSlim](https://github.com/konstantinvlasenko/PowerSlim/tree/master/FitNesseRoot/PowerSlim).
 
 ### Supported Platforms
  * Windows: PowerShell 7+ or Windows PowerShell 5.1

@@ -1,3 +1,3 @@
 !|script|
 |eval|[Environment]::SetEnvironmentVariable('POWERSLIM_REMOTE_PORT', '8035')|
-|eval|$server = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8035 server" -PassThru|
+|eval|$server = Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8035 server" -PassThru|

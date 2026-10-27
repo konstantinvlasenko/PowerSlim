@@ -1,4 +1,0 @@
-!|Query:Local|!-gc slim.ps1 | select -first 2-!|
-|Value|
-|#|
-|# "THE BEER-WARE LICENSE" (Revision 42):|
