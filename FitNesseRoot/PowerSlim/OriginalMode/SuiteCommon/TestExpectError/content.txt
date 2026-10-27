@@ -1,6 +1,7 @@
+''The .invalid TLD is reserved (RFC 2606) and never resolves. The DNS error wording is OS-specific:''
+''Windows PowerShell 5.1 "The remote name could not be resolved", PowerShell 7 on Windows "No such host is known.", Linux "Name or service not known", macOS "nodename nor servname provided, or not known"''
 !|script|
-|check|get_error|https://notasite.org|The remote name could not be resolved: 'notasite.org'|
+|check|get_error|https://notasite.invalid|=~/(not known!-|-!No such host is known!-|-!could not be resolved).*notasite\.invalid/|
 
 !|script|
 |check|eval_error|1/0|Attempted to divide by zero.|
-

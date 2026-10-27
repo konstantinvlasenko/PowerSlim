@@ -1,13 +1,20 @@
 ######################
 # PowerSlim 20170303 #
 ######################
+#Requires -Version 5.1
 [CmdletBinding()]
 Param(
   [Parameter(Mandatory=$True,Position=0)]
    [int]$Port,
 	
    [Parameter(Mandatory=$False, Position=1)]
-   [string]$Mode="runner"
+   [string]$Mode="runner",
+
+   # Interface to listen on. Defaults to loopback: the runner is only ever reached by the local
+   # FitNesse process. Remote "server" agents execute arbitrary PowerShell for any caller, so only
+   # widen this (e.g. -BindAddress 0.0.0.0) on a trusted, private network.
+   [Parameter(Mandatory=$False)]
+   [string]$BindAddress="127.0.0.1"
 )
 
 $slimver = "Slim -- V0.3`n"
@@ -155,13 +162,6 @@ function ObjectTo-Slim($ps_obj){
   (slimlen $slimview) + ":" + $slimview + ":"
 }
 
-function ConvertTo-Json20([object] $item)
-{
-    add-type -assembly system.web.extensions
-    $ps_js=new-object system.web.script.serialization.javascriptSerializer
-    return $ps_js.Serialize($item) 
-}
-
 function PropertyTo-Slim($ps_obj,$ps_prop){
   $slimview = "[000002:" + (slimlen $ps_prop) + ":" + $ps_prop+ ":"
   if($($ps_obj.$ps_prop) -eq $null){
@@ -171,8 +171,7 @@ function PropertyTo-Slim($ps_obj,$ps_prop){
     $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop) + ":]"
   }
   elseif($($ps_obj.$ps_prop) -is [system.array] -or $($ps_obj.$ps_prop) -is [psobject]){
-    if ($Host.Version.Major -ge 3) { $slimview += (ConvertTo-Json -Compress $($ps_obj.$ps_prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }
-        else { $slimview += ConvertTo-JSON20 ($ps_obj.$ps_prop) |% {(slimlen $_) + ":" + $_.ToString() + ":]"} }        
+    $slimview += (ConvertTo-Json -Compress $($ps_obj.$ps_prop)) |% {(slimlen $_) + ":" + $_.ToString() + ":]"}
   }
   else{
     $slimview += (slimlen $($ps_obj.$ps_prop)) + ":" + $($ps_obj.$ps_prop).ToString() + ":]"
@@ -339,12 +338,13 @@ function Set-RestScript($method, $arguments)
 
 function Set-Script($s, $fmt){
   if(!$s){ return }
-  $s = $s -replace '<table class="hash_table">\r\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r\n','' -replace '\t*</tr>\r\n','' -replace '\t*<td class="hash_key">(.*)</td>\r\n', '$1=' -replace '\t*<td class="hash_value">(.*)</td>\r\n','$1;'
+  # FitNesse renders hash tables with platform line endings (CRLF on Windows, LF elsewhere)
+  $s = $s -replace '<table class="hash_table">\r?\n', '@{' -replace '</table>','}' -replace '\t*<tr class="hash_row">\r?\n','' -replace '\t*</tr>\r?\n','' -replace '\t*<td class="hash_key">(.*)</td>\r?\n', '$1=' -replace '\t*<td class="hash_value">(.*)</td>\r?\n','$1;'
   if($s -match '^\s*&?<pre>')
   {
 	$s = $s -replace '<.?pre>' #workaround fitnesse strange behavior
   }
-  if($slimsymbols.Count){$slimsymbols.Keys | Sort Length -Descending | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "\`$$_",$slimsymbols[$_] }}
+  if($slimsymbols.Count){$slimsymbols.Keys | Sort-Object Length -Descending | ? {!($s -cmatch "\`$$_\s*=")} | ? {$slimsymbols[$_] -is [string] } | % {$s=$s -creplace "(?<!\])\`$$_",$slimsymbols[$_] }} # keep typed variables like [string]$user (e.g. param declarations) intact; they get the global variable below
   if($slimsymbols.Count){$slimsymbols.Keys | % { Set-Variable -Name $_ -Value $slimsymbols[$_] -Scope Global}}
   $s = $fmt -f $s
   if($s.StartsWith('function',$true,$null)){Set-Variable -Name Script__ -Value ($s -replace 'function\s+(.+)(?=\()','function script:$1') -Scope Global}
@@ -420,7 +420,8 @@ function Invoke-SlimInstruction(){
           #}
              switch -regex ($ins[3]) {
                # Support requesting the amount of time it took to process a decision table row.
-               '^Time(?<comp>\w+)?'     
+               # Newer FitNesse versions keep the dot: "Time.Seconds?" arrives as "Time.Seconds"
+               '^Time\.?(?<comp>\w+)?$'     
                           { if ( $Matches.ContainsKey( 'comp') ) {
                               switch ( $matches.comp ) {
                                  'Seconds'      { $script:decision_time.TotalSeconds }
@@ -522,6 +523,12 @@ function Invoke-SlimInstruction(){
 function Process-Instruction($ins){
   $script:ps_row = $ins
   $result = Invoke-SlimInstruction
+
+  # Stringify scalars once so the SLIM length prefix matches the serialized text. On .NET Core,
+  # Double.ToString() is round-trip precise while PowerShell string conversion uses 15 digits.
+  if($null -ne $result[1] -and $result[1] -isnot [string] -and $result[1] -isnot [array]){
+    $result[1] = [string]$result[1]
+  }
 
   $s = '[000002:' + (slimlen $result[0]) + ':' + $result[0] + ':' + (slimlen $result[1]) + ':' + $result[1] + ':]'
   (slimlen $s) + ":" + $s + ":"
@@ -679,14 +686,14 @@ function Write-Log (){
   Write-Host $timestamp"`t"$args
 }
 
-Write-Log "========== Starting SLIM $Mode on Port $Port =========="
+Write-Log "========== Starting SLIM $Mode on ${BindAddress}:$Port =========="
 
-$ps_server = New-Object System.Net.Sockets.TcpListener('0.0.0.0', $Port)
+$ps_server = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Parse($BindAddress), $Port)
 $ps_server.Start()
 
 if($Mode -eq "runner"){
   $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition
-  . $scriptPath\client.ps1
+  . (Join-Path $scriptPath client.ps1)
   Run-SlimServer $ps_server
 }
 else{ 

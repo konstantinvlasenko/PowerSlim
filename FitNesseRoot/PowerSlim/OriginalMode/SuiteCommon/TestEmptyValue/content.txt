@@ -1,7 +1,4 @@
 '''Interesting case'''
-In !-PowerShell-! 3.0: ''$emptyvalue.count'' returns '''0'''
-In !-PowerShell-! 2.0: ''$emptyvalue.count'' returns '''nothing'''
-
+''$emptyvalue.count'' on an undefined variable returns '''0'''
 -!|script|
-|$Expected=|eval|if($host.Version.Major -ge 3){0}|
-|check|eval|$emptyvalue.count|$Expected|
+|check|eval|$emptyvalue.count|0|

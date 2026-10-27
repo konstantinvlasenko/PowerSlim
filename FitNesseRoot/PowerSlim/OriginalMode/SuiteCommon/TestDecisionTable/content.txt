@@ -1,7 +1,7 @@
 |(dir $path).Length                                 |
 |path       |result?                                |
-|c:\        |>0                                     |
-|c:\vlasenko|=~/.*Cannot find path.*[Cc]:\\vlasenko/|
+|.                         |>0                                          |
+|./powerslim-missing-item  |=~/.*Cannot find path.*powerslim-missing-item/|
 
 |"$arg1 $arg2"                    |
 |arg1 |arg2      |result?         |
@@ -23,9 +23,9 @@
 !* Symbols in decision table
 |"$arg1 $arg2"      |
 |arg1 |arg2 |result?|
-|Hello|World|$V=    |
+|Hello|World|$DecisionSymbol=|
 
 |script                              |
-|check|eval|"Hello World"|$V         |
-|check|eval|"$V"         |Hello World|
+|check|eval|"Hello World"|$DecisionSymbol|
+|check|eval|"$DecisionSymbol"|Hello World|
 *!

@@ -1,4 +1,6 @@
 fitnesse.jar
 fitnesse-standalone.jar
+ps-log.txt
+ps-error.txt
 file*.txt
 *.swp

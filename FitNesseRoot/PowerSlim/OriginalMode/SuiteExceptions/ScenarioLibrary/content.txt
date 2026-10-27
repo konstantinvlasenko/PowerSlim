@@ -1,18 +1,12 @@
-Create the function used to run the tests. In v3 this function can be replaced with Invoke-RestMethod or Invoke-WebRequest
+Create the function used to run the tests. It runs the page in a nested !-FitNesse-! through the command line (no HTTP server required) and returns the XML report.
+The nested run uses its own SLIM_PORT so it does not collide with the !-PowerSlim-! instance running this page.
 |script|
 |eval  |!-
-function global:Run-Test ($url) {
-  [Net.HttpWebRequest] $req = [Net.WebRequest]::create($url)
-  $req.Method = "GET"
-  $req.Timeout = 60000 # = 1 minute
-
-  [Net.HttpWebResponse] $result = $req.GetResponse()
-  [IO.Stream] $stream = $result.GetResponseStream()
-  [IO.StreamReader] $reader = New-Object IO.StreamReader($stream)
-  [string] $output = $reader.readToEnd()
-  $stream.flush()
-  $stream.close()
-
-  return [xml] $output
+function global:Run-Test ($page) {
+  $output = java -jar fitnesse-standalone.jar -o -p 8024 -c "$page&format=xml&SLIM_PORT=8091" | Out-String
+  # [char]60 is the less-than sign; a literal XML declaration in this cell would be parsed as markup by FitNesse
+  $start = $output.IndexOf([char]60 + '?xml')
+  if ($start -lt 0) { throw "No XML report for '$page': $output" }
+  return [xml] $output.Substring($start)
 }
 -!||

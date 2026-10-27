@@ -7,12 +7,12 @@ NOTE: This test page is intentionally disabled so that it doesn't run automatica
 
 !*> Test setup
 !|script|
-|eval|$sut = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 41 server" -PassThru|
+|eval|$sut = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru|
 *!
 !* fake slim protocol 
 '''connect to SLIM server'''
 !|comment|
-|check|eval|$client = New-Object System.Net.Sockets.TcpClient localhost, 41||
+|check|eval|$client = New-Object System.Net.Sockets.TcpClient localhost, 8041||
 |check|eval|$stream = $client.GetStream()||
 
 '''send table size'''
@@ -26,7 +26,7 @@ NOTE: This test page is intentionally disabled so that it doesn't run automatica
 |check|eval|$stream.Write($data,0,$data.Length)||
 |check|eval|$client.Close()||
 *!
-!|comment|Remote|localhost:41|
+!|comment|Remote|localhost:8041|
 |check|eval|1+2|3|
 !*> Test teardown
 !|script|

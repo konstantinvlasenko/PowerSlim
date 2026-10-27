@@ -5,14 +5,28 @@ https://powerslim.slack.com
 ```
 !define TEST_SYSTEM {slim}
 !define SLIM_PORT (8090)
-!define COMMAND_PATTERN (powershell -NonInteractive -file ./slim.ps1)
+!define COMMAND_PATTERN (pwsh -NoProfile -NonInteractive -File ./slim.ps1)
 ```
+Requires PowerShell 7+ (`pwsh`) on any platform, or Windows PowerShell 5.1 (use `powershell` instead of `pwsh` in `COMMAND_PATTERN`). PowerShell 2.0–5.0 are no longer supported.
+
+### Running the acceptance tests
+```
+curl -L -o fitnesse-standalone.jar https://repo1.maven.org/maven2/org/fitnesse/fitnesse/20260313/fitnesse-20260313-standalone.jar
+java -jar fitnesse-standalone.jar -o -p 8085 -c "PowerSlim.OriginalMode?suite&format=text"
+java -jar fitnesse-standalone.jar -o -p 8085 -c "PowerSlim.SuiteREST?suite&format=text"
+```
+`PowerSlim.SuiteWrongFailedException` fails on purpose; it is checked from `SuiteCommon.TestScenario`.
+
+### Remote agents
+`./slim.ps1 <port> server` starts a remote agent. It listens on `127.0.0.1` by default.
+An agent runs any PowerShell it receives, unauthenticated, so only expose it on a trusted private network: `./slim.ps1 35 server -BindAddress 0.0.0.0`.
+Targets without an explicit port (`|script|Remote|myhost|`) use port 35, or `$env:POWERSLIM_REMOTE_PORT` if set.
+
 Examples are available in the acceptance tests [FitnesseRoot/PowerSlim](https://github.com/konstantinvlasenko/PowerSlim/tree/master/FitNesseRoot/PowerSlim) and in the examples FitnesseRoot/ExampleS
 
 ### Supported Platforms
- * Windows
- * Linux
- * Ubuntu
+ * Windows: PowerShell 7+ or Windows PowerShell 5.1
+ * Linux and macOS: PowerShell 7+
 
 ### March 4, 2017
 

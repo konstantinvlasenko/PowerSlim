@@ -1,4 +1,4 @@
-!define REMOTE_SERVER {localhost:35}
+!define REMOTE_SERVER {localhost:8035}
 
 !|script|Remote|${REMOTE_SERVER}|
 |eval|!-<pre>function GetRemoteComputerCommands()

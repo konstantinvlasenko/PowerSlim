@@ -1,10 +1,7 @@
 !include -c .PowerSlim.OriginalMode.SuiteExceptions.ScenarioLibrary
-!define Server     {localhost}
-!define Inputs     {format=xml}
-!define RootUrl    (!-http://-!${Server}:${FITNESSE_PORT})
 
 !|script                                                                                                                   |
-|$URL=|eval|'${RootUrl}/PowerSlim.OriginalMode.SuiteFixes.SuiteIssue62.FirstThrowsExceptions?test&${Inputs}'               |
-|eval |$results = Run-Test -url '$URL'                                                                                     |
+|$URL=|eval|'PowerSlim.OriginalMode.SuiteFixes.SuiteIssue62.FirstThrowsExceptions?test'               |
+|eval |$results = Run-Test '$URL'                                                                                     |
 |check|eval|([regex]::Matches(($results.testResults.result !-|-!  ConvertTo-Xml -As String), "System.IO.FileNotFoundException" )).count|>=40|
 |show |eval|$results.testResults.result !-|-!  ConvertTo-Xml -As String                                                                   |
