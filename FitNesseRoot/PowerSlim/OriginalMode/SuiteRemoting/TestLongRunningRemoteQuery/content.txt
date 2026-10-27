@@ -1,2 +1,2 @@
 |script|Remote|localhost|
-|eval|sleep 21|
+|eval|Start-Sleep -Seconds 21|

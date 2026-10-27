@@ -1,4 +1,4 @@
-|script                                |
-|eval |$NonTerminatingIsException=$true|
-|eval |Get-Service invalidservice      |
-|check|eval   |"2+2=$(2+2)"   |=~/4/   |
+|script                                  |
+|eval |$NonTerminatingIsException=$true  |
+|eval |Get-Item ./powerslim-missing-item |
+|check|eval   |"2+2=$(2+2)"     |=~/4/    |

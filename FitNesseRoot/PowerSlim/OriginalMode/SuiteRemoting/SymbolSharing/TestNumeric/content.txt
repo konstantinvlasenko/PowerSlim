@@ -1,4 +1,4 @@
-!define REMOTE_SERVER {localhost:35}
+!define REMOTE_SERVER {localhost:8035}
 !* Numeric should be numeric
 !|script|Remote|${REMOTE_SERVER}|
 |$NUM=|eval|1|

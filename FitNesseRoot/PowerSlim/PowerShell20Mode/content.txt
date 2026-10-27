@@ -1,8 +1,0 @@
-!define TEST_SYSTEM {slim}
-!define SLIM_PORT (8090)
-''This suite is for whom has the !-PowerShell-! 3.0 installed
-In that case you can run !-PowerShell-! in 2.0 compatibility mode.
-Useful in case of !-SharePoint-! CMDLets. You can't use them in the !-PowerShell-! 3.0''
-!define COMMAND_PATTERN (PowerShell -v 2 -NonInteractive -ExecutionPolicy unrestricted -file .\slim.ps1)
-!define HOST_VERSION (2.0)
-!contents -R2 -g -p -f -h

@@ -1,7 +1,7 @@
-!define Lab (@{id='ami-00db570a'; type='m1.small'; name='localhost'}, @{id='ami-00db570b'; type='m1.small'; name='localhost:36'})
+!define Lab (@{id='ami-00db570a'; type='m1.small'; name='localhost'}, @{id='ami-00db570b'; type='m1.small'; name='localhost:8036'})
 
 -!|script|
-|eval|$server36 = start-process PowerShell "-ExecutionPolicy unrestricted -file .\slim.ps1 36 server" -PassThru|
+|eval|$server36 = Start-Process pwsh "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8036 server" -PassThru|
 
 |script|Remote|${Lab} !-|-! % {$_.name}|
 |check|eval|2+2|4|

@@ -1,13 +1,12 @@
-'''Get all forks by using https://developer.github.com/v3/repos/forks/'''
-
+'''Get all forks by using https://docs.github.com/en/rest/repos/forks'''
+''Forks come and go, so this is a Subset Query: each listed fork must be present, extra forks are fine''
 !|script|
-|get|https://api.github.com/repos/konstantinvlasenko/powerslim/forks|
+|get|https://api.github.com/repos/konstantinvlasenko/powerslim/forks?per_page=100|
 
-!|Query:local|$get|
+!|Subset Query:local|$get|
 |full_name|
 |skalitin/PowerSlim|
 |DylanLiu1/PowerSlim|
-|LyudmilaEpikhina/PowerSlim|
 |EvgenyGusev/PowerSlim|
 |EKibort/PowerSlim|
 |2xmax/PowerSlim|
@@ -16,7 +15,6 @@
 |maxbeard12/PowerSlim|
 |mikeplavsky/PowerSlim|
 |testdemo1001/PowerSlim|
-|DmitryKonev/PowerSlim|
 |lonestep/PowerSlim|
 |anbeel/PowerSlim|
 |Alexander-Vakushkin/PowerSlim|

@@ -1,5 +1,6 @@
 Demonstrate the different time attributes that can be evaluated
+''On Windows a 1 second sleep can measure slightly under 1s (timer granularity), so the lower bounds allow 10%''
 
-| sleep -seconds $arg1 |
+| Start-Sleep -Seconds $arg1 |
 | arg1 | Time.Seconds? | Time.Milliseconds? | Time.Days? | Time.Hours? | Time.Minutes? |
-|  1   |     > 1       |        > 1000      |    < 1     |    < 1      |     < 1       |
+|  1   |     > 0.9     |        > 900       |    < 1     |    < 1      |     < 1       |

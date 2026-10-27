@@ -1,4 +1,5 @@
-|script                                                                                              |
-|eval |Get-Service invalidservice                                                                    |
-|check|eval|Get-Service invalidservice|=~/Cannot find any service with service name 'invalidservice'/|
-|check|eval|"2+2=$(2+2)"              |=~/4/                                                         |
+''Get-Item on a missing path writes a non-terminating error on every platform''
+|script                                                                                     |
+|eval |Get-Item ./powerslim-missing-item                                                    |
+|check|eval|Get-Item ./powerslim-missing-item|=~/Cannot find path '.*powerslim-missing-item'/|
+|check|eval|"2+2=$(2+2)"                     |=~/4/                                          |

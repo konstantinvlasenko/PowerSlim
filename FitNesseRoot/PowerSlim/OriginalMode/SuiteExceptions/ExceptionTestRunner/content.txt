@@ -3,29 +3,26 @@ This page executes the Suite tests via !-FitNesse's RESTful-! services. This is 
 Note: The test pages themselves are disabled in the suite, which makes sure they don't run individually when the suite is run but are instead executed from this page only. To understand how the tests below actually work, the test pages can actually be run by themselves so one can see the exceptions that they produce.
 
 !*****> Define variables and scenario for the RESTful service invocation
-!define Server     {localhost}
-!define Inputs     {format=xml}
-!define RootUrl    (!-http://-!${Server}:${FITNESSE_PORT})
 
 
 |scenario|To prove test page continues after normal exceptions _|TESTPAGE, EXCEPTION_TEXT, PROOF_TESTS_CONTINUED               |
-|$URL=   |eval                                                  |'${RootUrl}/@TESTPAGE?test&${Inputs}'                         |
+|$URL=   |eval                                                  |'@TESTPAGE?test'                         |
 |eval    |$results = Run-Test '$URL'                                                                                           |
 |check   |eval                                                  |$results.testResults.result.content|=~/@EXCEPTION_TEXT/       |
 |check   |eval                                                  |$results.testResults.result.content|=~/@PROOF_TESTS_CONTINUED/|
 
 |scenario|To prove test page aborted after failure _|TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED|
-|$URL=   |eval                                      |'${RootUrl}/@TESTPAGE?@PAGETYPE&${Inputs}'                                |
+|$URL=   |eval                                      |'@TESTPAGE?@PAGETYPE'                                |
 |eval    |$results = Run-Test '$URL'                                                                                           |
 |check   |eval                                      |$results.testResults.result.content      |=~/@FIRST_EXCEPTION/            |
 |check   |eval                                      |$results.testResults.result.content      |=~/@NEXT_EXCEPTION/             |
 |check   |eval                                      |$results.testResults.result.content      |=~/@PROOF_TESTING_STOPPED/      |
 
 |scenario|To prove suite pages aborted after failure _|TESTPAGE, PAGETYPE, FIRST_EXCEPTION, NEXT_EXCEPTION, PROOF_TESTING_STOPPED|
-|$URL=   |eval                                        |'${RootUrl}/@TESTPAGE?@PAGETYPE&${Inputs}'                                |
+|$URL=   |eval                                        |'@TESTPAGE?@PAGETYPE'                                |
 |eval    |$results = Run-Test '$URL'                                                                                             |
-|eval    |$page1   = Run-Test "${RootUrl}/$($results.testresults.result[0].pagehistorylink)&format=xml"                          |
-|eval    |$page2   = Run-Test "${RootUrl}/$($results.testresults.result[1].pagehistorylink)&format=xml"                          |
+|eval    |$page1   = Run-Test "$($results.testresults.result[0].pagehistorylink)"                          |
+|eval    |$page2   = Run-Test "$($results.testresults.result[1].pagehistorylink)"                          |
 |check   |eval                                        |$page1.testResults.result.content       |=~/@FIRST_EXCEPTION/             |
 |check   |eval                                        |$page1.testResults.result.content       |=~/@NEXT_EXCEPTION/              |
 |check   |eval                                        |$page2.testResults.result.content       |=~/@PROOF_TESTING_STOPPED/       |
@@ -43,7 +40,7 @@ You can also enable $NonTerminatingIsException if you want to view all the error
 
 !| To prove test page continues after normal exceptions                                                                                                                      |
 |TESTPAGE                                                                  |EXCEPTION_TEXT                                                             |PROOF_TESTS_CONTINUED|
-|PowerSlim.OriginalMode.SuiteExceptions.TestCases.NonTerminatingIsException|__EXCEPTION__:[^<>]*Get-Service : Cannot find any service with service name|2\+2=4               |
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.NonTerminatingIsException|__EXCEPTION__:[^<>]*Cannot find path[^<>]*powerslim-missing-item              |2\+2=4               |
 
 Next, test that aborting works correctly. When a test aborts, it should not run any more tests in the table in which it encountered an error, and !-FitNesse-! should recognize the abort and then not run any more tests that follow.
 

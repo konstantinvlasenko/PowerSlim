@@ -17,6 +17,7 @@
 ''Test should be RED in case of missing scenario''
 ''Each missing scenario increments exceptions counter''
 ''We are going to run .PowerSlim.SuiteWrongFailedException.TestMissingScenario trough command line''
+''The nested run needs its own SLIM_PORT, otherwise it collides with the !-PowerSlim-! instance running this page''
 -!|script|
-|check|eval|java -jar fitnesse-standalone.jar -p 8023 -c "PowerSlim.SuiteWrongFailedException.TestMissingScenario?test&format=text"|=~/R:0.+W:0.+I:0.+E:2/|
+|check|eval|java -jar fitnesse-standalone.jar -o -p 8023 -c "PowerSlim.SuiteWrongFailedException.TestMissingScenario?test&format=text&SLIM_PORT=8091"|=~/R:0.+W:0.+I:0.+E:2/|
 *!

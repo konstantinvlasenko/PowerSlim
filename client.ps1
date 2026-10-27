@@ -18,6 +18,26 @@ function Is-Numeric ($Value) {
     return $Value -match "^\d+(\.\d+)?$"
 }
 
+# Port used for remote targets given without ":port". Override with $env:POWERSLIM_REMOTE_PORT,
+# e.g. to use an unprivileged port (ports below 1024 need root on Linux; on macOS they can only bind 0.0.0.0)
+function script:Get-RemoteDefaultPort { if($env:POWERSLIM_REMOTE_PORT){ [int]$env:POWERSLIM_REMOTE_PORT } else { 35 } }
+# How long to keep retrying a refused connection, e.g. while a just-started remote agent is still binding its port
+$REMOTE_SERVER_CONNECT_TIMEOUT = 15000
+function script:Connect-RemoteSlim($ps_computer, $ps_port)
+{
+  $deadline = [DateTime]::UtcNow.AddMilliseconds($REMOTE_SERVER_CONNECT_TIMEOUT)
+  while($true){
+    try {
+      return New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+    }
+    catch {
+      $socketError = $_.Exception.InnerException -as [System.Net.Sockets.SocketException]
+      $refused = $socketError -and $socketError.SocketErrorCode -eq [System.Net.Sockets.SocketError]::ConnectionRefused
+      if(!$refused -or [DateTime]::UtcNow -ge $deadline){ throw }
+      Start-Sleep -Milliseconds 250
+    }
+  }
+}
 function script:process_table_remotely($ps_table, $ps_fitnesse){
 
     try {
@@ -34,7 +54,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
               $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
           }
 
-          if($ps_port -eq $null){$ps_port = 35};
+          if($ps_port -eq $null){$ps_port = Get-RemoteDefaultPort};
 
           Write-Verbose "Connecting to $ps_computer, $ps_port"
           
@@ -42,7 +62,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 
               "Connecting to $ps_computer $ps_port" | Out-Default
 
-              $ps_sumbols_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+              $ps_sumbols_client = Connect-RemoteSlim $ps_computer $ps_port
               $remoteserver = $ps_sumbols_client.GetStream()
               $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
 
@@ -82,7 +102,7 @@ function script:process_table_remotely($ps_table, $ps_fitnesse){
 
           }
 
-         $ps_client = New-Object System.Net.Sockets.TcpClient($ps_computer, $ps_port)
+         $ps_client = Connect-RemoteSlim $ps_computer $ps_port
          $remoteserver = $ps_client.GetStream()
          $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
     
@@ -143,5 +163,5 @@ function script:Test-TcpPort($ps_remotehost, $ps_port)
 
 function script:Wait-RemoteServer($ps_remotehost)
 {
-    while(!(Test-TcpPort $ps_remotehost 35)){sleep 10}
+    while(!(Test-TcpPort $ps_remotehost 35)){Start-Sleep -Seconds 10}
 }
