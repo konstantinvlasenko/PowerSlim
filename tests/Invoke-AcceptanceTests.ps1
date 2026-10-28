@@ -74,11 +74,17 @@ try {
       Write-Host ("{0} {1}  R:{2} W:{3} I:{4} E:{5}" -f $status, $page.relativePageName, $c.right, $c.wrong, $c.ignores, $c.exceptions)
       if ($status -eq 'FAIL') {
         $failed++
-        $html = [System.Net.WebUtility]::HtmlDecode($page.content)
-        [regex]::Matches($html, '<span class="(?:fail|error)">(.*?)</span>', 'Singleline') |
+        # Suite reports only carry counts; the stored page result has the rendered tables
+        $detail = (& java -jar $jar -o -p $FitNessePort -c "$($page.pageHistoryLink)&format=xml" 2>&1 | ForEach-Object { "$_" }) -join "`n"
+        $detailStart = $detail.IndexOf([char]60 + '?xml')
+        if ($detailStart -lt 0) { continue }
+        $html = [System.Net.WebUtility]::HtmlDecode(([xml]$detail.Substring($detailStart)).testResults.result.content)
+        # Failed checks and exceptions are rendered as <span|td class="fail|error">; aborts as __EXCEPTION__ text
+        [regex]::Matches($html, '<(span|td)[^>]*class="(?:fail|error)"[^>]*>(?<text>.*?)</\1>|(?<text>__EXCEPTION__[^<]*)', 'Singleline') |
+          Where-Object { $_.Groups['text'].Value.Trim() } |
           Select-Object -First 3 |
           ForEach-Object {
-            $text = ($_.Groups[1].Value -replace '<[^>]+>', ' ' -replace '\s+', ' ').Trim()
+            $text = ($_.Groups['text'].Value -replace '<[^>]+>', ' ' -replace '\s+', ' ').Trim()
             Write-Host ('       ' + $text.Substring(0, [Math]::Min(300, $text.Length)))
           }
       }
