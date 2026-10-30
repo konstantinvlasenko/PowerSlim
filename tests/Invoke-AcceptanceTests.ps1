@@ -4,7 +4,8 @@
 
 .DESCRIPTION
   Downloads the pinned FitNesse release (checksum verified) if it is missing, runs each suite
-  through the FitNesse command line and prints one line per failing page.
+  through the FitNesse command line and prints one line per failing page. Remote agents get a
+  throwaway TLS certificate (see New-TestCertificates.ps1).
   Exit code is 0 when every page passes, 1 otherwise.
 
   PowerSlim.SuiteWrongFailedException is not run here: it fails on purpose and is verified
@@ -54,6 +55,14 @@ try {
     $commandPattern = '&COMMAND_PATTERN=' + [uri]::EscapeDataString('powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./slim.ps1')
   }
 
+  # Remote agents started by the pages only accept TLS with client certificates. The runner and the
+  # agents inherit these variables and share one throwaway certificate (valid as server and client).
+  $certificates = New-Item -ItemType Directory -Path (Join-Path ([IO.Path]::GetTempPath()) "powerslim-$([guid]::NewGuid())")
+  $tls = & (Join-Path $PSScriptRoot 'New-TestCertificates.ps1') -Path $certificates.FullName
+  $env:POWERSLIM_TLS_CERTIFICATE = $tls.Certificate
+  $env:POWERSLIM_TLS_PASSWORD = $tls.Password
+  $env:POWERSLIM_TLS_CA = $tls.CertificateAuthority
+
   $failed = 0
   foreach ($name in $Suite) {
     $command = "PowerSlim.${name}?suite&format=xml$commandPattern"
@@ -94,6 +103,8 @@ try {
   }
 }
 finally {
+  Remove-Item Env:POWERSLIM_TLS_CERTIFICATE, Env:POWERSLIM_TLS_PASSWORD, Env:POWERSLIM_TLS_CA -ErrorAction SilentlyContinue
+  if ($certificates) { Remove-Item -Recurse -Force $certificates.FullName -ErrorAction SilentlyContinue }
   # Newer FitNesse writes rerun pages and the test pages leave a few scratch files behind
   Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $repo 'FitNesseRoot/RerunLastFailures_*.wiki'),
     (Join-Path $repo 'file1.txt'), (Join-Path $repo 'file2.txt'), (Join-Path $repo 'ps-log.txt'), (Join-Path $repo 'ps-error.txt')

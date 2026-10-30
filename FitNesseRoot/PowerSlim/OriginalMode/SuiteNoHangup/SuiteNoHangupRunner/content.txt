@@ -14,6 +14,6 @@ This page executes the Suite tests via a nested !-FitNesse-! command line run. T
 !| test page results should contain                                                                                                 |
 |TESTPAGE                                            |EXCEPTION_TEXT                                                                |
 |PowerSlim.OriginalMode.SuiteNoHangup.TestBasicHangup|(target machine actively refused it!-|-!Connection refused)                  |
-|PowerSlim.OriginalMode.SuiteNoHangup.TestNonSlimData|Unable to read data from the transport connection                             |
+|PowerSlim.OriginalMode.SuiteNoHangup.TestNonSlimData|class="pass">3<                                                               |
 
 !note | PowerSlim.OriginalMode.SuiteNoHangup.TestConnectionInterrupted |                                                                                |

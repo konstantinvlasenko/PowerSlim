@@ -322,3 +322,147 @@ Describe 'stdin/stdout transport' {
     }
   }
 }
+
+Describe 'Remote agent authentication' {
+  BeforeAll {
+    $script:CertificateFolder = Join-Path ([IO.Path]::GetTempPath()) "powerslim-tests-$([guid]::NewGuid())"
+    $makeCertificates = Join-Path $PSScriptRoot 'New-TestCertificates.ps1'
+    $script:Trusted = & $makeCertificates -Path $script:CertificateFolder
+    $script:Stranger = & $makeCertificates -Path $script:CertificateFolder -Name 'stranger'
+    $script:OtherHost = & $makeCertificates -Path $script:CertificateFolder -Name 'otherhost' -DnsName 'example.invalid' -IPAddress '192.0.2.1'
+
+    # Use these certificate files on this side (the runner)
+    function Use-Tls($Identity, $Authority = $script:Trusted) {
+      $script:TlsSettings = $null
+      $script:TlsCertificatePath = $Identity.Certificate
+      $script:TlsAuthorityPath = $Authority.CertificateAuthority
+      $env:POWERSLIM_TLS_PASSWORD = $Identity.Password
+    }
+
+    # With TLS 1.3 an agent rejects a client certificate after the handshake, so a refusal is either
+    # a failed handshake or a connection closed without an answer
+    function Assert-Refused([scriptblock]$Call) {
+      $answer = try { & $Call } catch { $_.Exception.Message | Should -Match 'TLS handshake|closed the connection|IOException|Authentication'; $null }
+      $answer | Should -BeNullOrEmpty
+    }
+
+    function Get-FreePort {
+      $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+      $listener.Start()
+      try { $listener.LocalEndpoint.Port } finally { $listener.Stop() }
+    }
+
+    # Starts slim.ps1 with these arguments and TLS environment; returns the process
+    function Start-Slim([string]$Arguments, $Identity, $Authority = $script:Trusted) {
+      $psi = [System.Diagnostics.ProcessStartInfo]::new($script:Shell, "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$script:SlimPath`" $Arguments")
+      $psi.UseShellExecute = $false
+      $psi.RedirectStandardOutput = $true
+      $psi.RedirectStandardError = $true
+      foreach ($name in 'POWERSLIM_TLS_CERTIFICATE', 'POWERSLIM_TLS_PASSWORD', 'POWERSLIM_TLS_CA') { [void]$psi.EnvironmentVariables.Remove($name) }
+      if ($Identity) {
+        $psi.EnvironmentVariables['POWERSLIM_TLS_CERTIFICATE'] = $Identity.Certificate
+        $psi.EnvironmentVariables['POWERSLIM_TLS_PASSWORD'] = $Identity.Password
+        $psi.EnvironmentVariables['POWERSLIM_TLS_CA'] = $Authority.CertificateAuthority
+      }
+      $process = [System.Diagnostics.Process]::Start($psi)
+      $process | Add-Member -NotePropertyName Output -NotePropertyValue $process.StandardOutput.ReadToEndAsync()
+      $process | Add-Member -NotePropertyName Errors -NotePropertyValue $process.StandardError.ReadToEndAsync()
+      $process
+    }
+
+    $script:AgentPort = Get-FreePort
+    $script:Agent = Start-Slim "$script:AgentPort server" $script:Trusted
+    $script:Eval = ConvertTo-SlimList @(, @('id', 'call', 'scriptTableActor', 'eval', '1+1'))
+  }
+  AfterAll {
+    if ($script:Agent -and !$script:Agent.HasExited) { $script:Agent.Kill() }
+    $script:TlsSettings = $null
+    $script:TlsCertificatePath = $script:TlsAuthorityPath = $null
+    Remove-Item Env:POWERSLIM_TLS_PASSWORD -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force $script:CertificateFolder -ErrorAction SilentlyContinue
+  }
+
+  Context 'certificate checks' {
+    BeforeAll {
+      Use-Tls $script:Trusted
+      $load = { param($identity) [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($identity.Certificate, $identity.Password) }
+      $script:TrustedCertificate = & $load $script:Trusted
+      $script:StrangerCertificate = & $load $script:Stranger
+    }
+    It 'accepts a certificate from the authority' {
+      Test-SlimPeerCertificate $script:TrustedCertificate 'None' $TLS_CLIENT_AUTH | Should -BeTrue
+      Test-SlimPeerCertificate $script:TrustedCertificate 'None' $TLS_SERVER_AUTH | Should -BeTrue
+    }
+    It 'rejects <name>' -ForEach @(
+      @{ name = 'a certificate from another authority'; certificate = 'StrangerCertificate'; errors = 'None' }
+      @{ name = 'a host name mismatch'; certificate = 'TrustedCertificate'; errors = 'RemoteCertificateNameMismatch' }
+      @{ name = 'a missing certificate'; certificate = $null; errors = 'RemoteCertificateNotAvailable' }
+    ) {
+      $value = if ($certificate) { Get-Variable $certificate -Scope Script -ValueOnly } else { $null }
+      Test-SlimPeerCertificate $value $errors $TLS_CLIENT_AUTH | Should -BeFalse
+    }
+    It 'rejects the authority''s own certificate' {
+      $authority = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($script:Trusted.CertificateAuthority)
+      Test-SlimPeerCertificate $authority 'None' $TLS_CLIENT_AUTH | Should -BeFalse
+    }
+  }
+
+  Context 'an agent' {
+    It 'answers a runner with a certificate from the authority' {
+      Use-Tls $script:Trusted
+      $response = Send-RemoteMessage 'localhost' $script:AgentPort $script:Eval
+      (ConvertFrom-SlimList (ConvertFrom-SlimList $response)[0])[1] | Should -Be '2'
+    }
+    It 'refuses a runner with a certificate from another authority' {
+      Use-Tls $script:Stranger
+      Assert-Refused { Send-RemoteMessage 'localhost' $script:AgentPort $script:Eval }
+    }
+    It 'refuses a runner without a certificate' {
+      $client = [System.Net.Sockets.TcpClient]::new('localhost', $script:AgentPort)
+      try {
+        $tls = [System.Net.Security.SslStream]::new($client.GetStream(), $false, { $true })
+        Assert-Refused { $tls.AuthenticateAsClient('localhost'); Write-SlimMessage $tls $script:Eval; Read-SlimMessage $tls }
+      }
+      finally { $client.Close() }
+    }
+    It 'answers nothing without TLS' {
+      $client = [System.Net.Sockets.TcpClient]::new('localhost', $script:AgentPort)
+      try {
+        $stream = $client.GetStream()
+        Write-SlimMessage $stream $script:Eval
+        $stream.ReadTimeout = 15000
+        $reply = try { Read-SlimMessage $stream -FirstByteTimeout 15000 } catch [System.IO.IOException] { $null }
+        $reply | Should -BeNullOrEmpty
+      }
+      finally { $client.Close() }
+    }
+    It 'is not trusted by a runner that expects another authority' {
+      Use-Tls $script:Trusted $script:Stranger
+      { Send-RemoteMessage 'localhost' $script:AgentPort $script:Eval } | Should -Throw '*TLS handshake*'
+    }
+    It 'is not trusted under a name its certificate does not have' {
+      # Same authority on both sides; only the agent's names (example.invalid, 192.0.2.1) do not match localhost
+      $port = Get-FreePort
+      $other = Start-Slim "$port server" $script:OtherHost $script:OtherHost
+      try {
+        Use-Tls $script:OtherHost $script:OtherHost
+        { Send-RemoteMessage 'localhost' $port $script:Eval } | Should -Throw '*TLS handshake*'
+        Use-Tls $script:OtherHost $script:OtherHost
+        Test-SlimPeerCertificate ([System.Security.Cryptography.X509Certificates.X509Certificate2]::new($script:OtherHost.Certificate, $script:OtherHost.Password)) 'None' $TLS_SERVER_AUTH |
+          Should -BeTrue # so the name is what failed
+      }
+      finally { $other.Kill() }
+    }
+    It 'refuses to start without certificates' {
+      $process = Start-Slim "$(Get-FreePort) server" $null
+      $process.WaitForExit(60000) | Should -BeTrue
+      $process.Errors.Result + $process.Output.Result | Should -Match 'require TLS with client certificates'
+    }
+  }
+
+  It 'refuses to run a runner on a non-loopback address' {
+    $process = Start-Slim "$(Get-FreePort) runner -BindAddress 0.0.0.0" $null
+    $process.WaitForExit(60000) | Should -BeTrue
+    $process.Errors.Result + $process.Output.Result | Should -Match 'loopback only'
+  }
+}

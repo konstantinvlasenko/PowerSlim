@@ -10,7 +10,12 @@
 .EXAMPLE
   ./slim.ps1 1               # runner on stdin/stdout (what FitNesse starts when SLIM_PORT is not defined)
   ./slim.ps1 8090            # runner on a TCP port (SLIM_PORT defined)
-  ./slim.ps1 35 server       # remote agent
+  ./slim.ps1 35 server -Certificate agent.pfx -CertificateAuthority ca.cer   # remote agent
+
+  Remote agents only talk TLS with client certificates. Each side presents a certificate from a PFX
+  file (password in $env:POWERSLIM_TLS_PASSWORD) and accepts only peers whose certificate was issued
+  by the given certificate authority. Runners read the same settings from POWERSLIM_TLS_CERTIFICATE
+  and POWERSLIM_TLS_CA.
 #>
 [CmdletBinding()]
 Param(
@@ -21,11 +26,19 @@ Param(
    [Parameter(Mandatory=$False, Position=1)]
    [string]$Mode="runner",
 
-   # Interface to listen on. Defaults to loopback: the runner is only ever reached by the local
-   # FitNesse process. Remote "server" agents execute arbitrary PowerShell for any caller, so only
-   # widen this (e.g. -BindAddress 0.0.0.0) on a trusted, private network.
+   # Interface to listen on. Defaults to loopback. A runner only ever listens on loopback (FitNesse
+   # cannot authenticate to it); an agent may listen wider (e.g. -BindAddress 0.0.0.0) because it
+   # only accepts clients with a certificate from -CertificateAuthority.
    [Parameter(Mandatory=$False)]
-   [string]$BindAddress="127.0.0.1"
+   [string]$BindAddress="127.0.0.1",
+
+   # PFX file with this machine's certificate and private key; the password comes from $env:POWERSLIM_TLS_PASSWORD
+   [Parameter(Mandatory=$False)]
+   [string]$Certificate=$env:POWERSLIM_TLS_CERTIFICATE,
+
+   # Certificate (PEM or DER) of the authority that issues the agents' and runners' certificates
+   [Parameter(Mandatory=$False)]
+   [string]$CertificateAuthority=$env:POWERSLIM_TLS_CA
 )
 
 $slimver = "Slim -- V0.5`n"
@@ -47,6 +60,12 @@ $script:QueryFormat__ = '{0}'
 $script:EvalFormat__ = '{0}'
 $script:POWERSLIM_PATH = $MyInvocation.MyCommand.Path
 $script:POWERSLIM_HOME = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Remote agent TLS: see Get-TlsSettings
+$script:TlsCertificatePath = $Certificate
+$script:TlsAuthorityPath = $CertificateAuthority
+$script:TlsSettings = $null
+$TLS_SERVER_AUTH = '1.3.6.1.5.5.7.3.1'
+$TLS_CLIENT_AUTH = '1.3.6.1.5.5.7.3.2'
 # Test code runs in the global scope of its own runspace (see Get-UserRunspace)
 $script:UserRunspace = $null
 $script:UserErrors = $null
@@ -180,6 +199,80 @@ function Write-SlimMessage($Stream, [string]$Text) {
   $Stream.Write($head, 0, $head.Length)
   $Stream.Write($body, 0, $body.Length)
   $Stream.Flush()
+}
+
+# The certificate this side presents and the authority its peers' certificates must come from.
+# There is deliberately no way to run an agent, or to reach one, without them.
+function Get-TlsSettings {
+  if ($null -eq $script:TlsSettings) {
+    $certificatePath = if ($script:TlsCertificatePath) { $script:TlsCertificatePath } else { $env:POWERSLIM_TLS_CERTIFICATE }
+    $authorityPath = if ($script:TlsAuthorityPath) { $script:TlsAuthorityPath } else { $env:POWERSLIM_TLS_CA }
+    if (!$certificatePath -or !$authorityPath) {
+      throw ("Remote agents require TLS with client certificates. Set POWERSLIM_TLS_CERTIFICATE to a PFX file with this " +
+        "machine's certificate and key (password in POWERSLIM_TLS_PASSWORD) and POWERSLIM_TLS_CA to the certificate of " +
+        "the authority that issued the agent and runner certificates.")
+    }
+    $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
+      $certificatePath, [string]$env:POWERSLIM_TLS_PASSWORD, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
+    if (!$certificate.HasPrivateKey) { throw "$certificatePath has no private key" }
+    $authority = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $authorityPath
+    # TLS 1.2 or newer; Windows PowerShell 5.1 (.NET Framework) negotiates 1.2
+    $protocols = if ($PSVersionTable.PSEdition -eq 'Core') { [System.Security.Authentication.SslProtocols]'Tls12, Tls13' } else { [System.Security.Authentication.SslProtocols]::Tls12 }
+    $script:TlsSettings = @{ Certificate = $certificate; Authority = $authority; Protocols = $protocols }
+  }
+  $script:TlsSettings
+}
+
+# A peer is accepted when its certificate chains to our authority (and no other root), is valid now,
+# is allowed for $Usage, and - for agents, checked by SslStream - names the host we connected to.
+# The system trust store plays no part: a certificate from any other CA is rejected.
+function Test-SlimPeerCertificate($Certificate, [System.Net.Security.SslPolicyErrors]$PolicyErrors, [string]$Usage) {
+  if ($null -eq $Certificate) { return $false }
+  $notAccepted = [System.Net.Security.SslPolicyErrors]'RemoteCertificateNotAvailable, RemoteCertificateNameMismatch'
+  if ($PolicyErrors -band $notAccepted) { return $false }
+  $authority = (Get-TlsSettings).Authority
+  $peer = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $Certificate
+  $chain = New-Object System.Security.Cryptography.X509Certificates.X509Chain
+  # Certificates from a private authority have no revocation list to check
+  $chain.ChainPolicy.RevocationMode = [System.Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+  $chain.ChainPolicy.VerificationFlags = [System.Security.Cryptography.X509Certificates.X509VerificationFlags]::AllowUnknownCertificateAuthority
+  [void]$chain.ChainPolicy.ExtraStore.Add($authority)
+  [void]$chain.ChainPolicy.ApplicationPolicy.Add((New-Object System.Security.Cryptography.Oid $Usage))
+  [void]$chain.Build($peer)
+  foreach ($status in $chain.ChainStatus) {
+    # UntrustedRoot only means our authority is not in the system store; the root is compared below
+    if ($status.Status -ne [System.Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot) { return $false }
+  }
+  $elements = $chain.ChainElements
+  if ($elements.Count -lt 2) { return $false }
+  $root = $elements[$elements.Count - 1].Certificate
+  [Convert]::ToBase64String($root.RawData) -eq [Convert]::ToBase64String($authority.RawData)
+}
+
+# Agent side: requires a client certificate
+function New-SlimTlsServerStream($NetworkStream) {
+  $tls = Get-TlsSettings
+  $validate = [System.Net.Security.RemoteCertificateValidationCallback]{
+    # Arguments: sender, certificate, chain, policy errors. Chain errors are expected for a private
+    # authority; Test-SlimPeerCertificate builds the chain itself.
+    Test-SlimPeerCertificate $args[1] ($args[3] -band -bnot [System.Net.Security.SslPolicyErrors]::RemoteCertificateChainErrors) $TLS_CLIENT_AUTH
+  }
+  $stream = New-Object System.Net.Security.SslStream($NetworkStream, $false, $validate)
+  $stream.AuthenticateAsServer($tls.Certificate, $true, $tls.Protocols, $false)
+  , $stream
+}
+
+# Runner side: presents our certificate and checks the agent's, including its host name
+function New-SlimTlsClientStream($NetworkStream, [string]$HostName) {
+  $tls = Get-TlsSettings
+  $validate = [System.Net.Security.RemoteCertificateValidationCallback]{
+    Test-SlimPeerCertificate $args[1] ($args[3] -band -bnot [System.Net.Security.SslPolicyErrors]::RemoteCertificateChainErrors) $TLS_SERVER_AUTH
+  }
+  $certificates = New-Object System.Security.Cryptography.X509Certificates.X509CertificateCollection
+  [void]$certificates.Add($tls.Certificate)
+  $stream = New-Object System.Net.Security.SslStream($NetworkStream, $false, $validate)
+  $stream.AuthenticateAsClient($HostName, $certificates, $tls.Protocols, $false)
+  , $stream
 }
 
 # FitNesse reads SLIM responses from our stdout, so nothing else may write there. Keep private handles to
@@ -789,9 +882,13 @@ function Start-RemoteAgent($Listener) {
   while ($true) {
     Write-Log "waiting..."
     $client = $Listener.AcceptTcpClient()
-    Write-Log "accepted!"
+    Write-Log "accepted $($client.Client.RemoteEndPoint)"
     try {
-      $stream = $client.GetStream()
+      $network = $client.GetStream()
+      $network.ReadTimeout = $REQUEST_READ_TIMEOUT
+      $network.WriteTimeout = $REQUEST_READ_TIMEOUT
+      try { $stream = New-SlimTlsServerStream $network }
+      catch { throw "TLS handshake failed: $($_.Exception.GetBaseException().Message)" }
       $message = Read-SlimMessage $stream
       if ($null -ne $message) { Write-SlimMessage $stream (Invoke-SlimMessage $message -IgnoreRemote) }
     }
@@ -809,8 +906,16 @@ function Start-PowerSlim([int]$Port, [string]$Mode, [string]$BindAddress) {
     return
   }
 
+  $address = [System.Net.IPAddress]::Parse($BindAddress)
+  if ($Mode -eq 'runner') {
+    if (![System.Net.IPAddress]::IsLoopback($address)) { throw "A runner listens on loopback only: FitNesse has no way to authenticate to it" }
+  }
+  else {
+    [void](Get-TlsSettings) # fail now, not on the first connection
+  }
+
   Write-Log "========== Starting SLIM $Mode on ${BindAddress}:$Port =========="
-  $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Parse($BindAddress), $Port)
+  $listener = New-Object System.Net.Sockets.TcpListener($address, $Port)
   $listener.Start()
   try {
     if ($Mode -eq "runner") {
