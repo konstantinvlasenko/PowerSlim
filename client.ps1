@@ -120,10 +120,18 @@ function script:Receive-RemoteSymbols($Instructions, [string]$Response, [string]
 function script:Send-RemoteMessage($Computer, $Port, [string]$Message) {
   $client = Connect-RemoteSlim $Computer $Port
   try {
-    $stream = $client.GetStream()
-    Write-SlimMessage $stream $Message
-    $reply = Read-SlimMessage $stream -FirstByteTimeout $REMOTE_SERVER_READ_TIMEOUT -Timeout $REMOTE_SERVER_READ_TIMEOUT
-    if ($null -eq $reply) { throw "The remote agent ${Computer}:$Port closed the connection without answering" }
+    $network = $client.GetStream()
+    $network.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
+    try { $stream = New-SlimTlsClientStream $network $Computer }
+    catch { throw "TLS handshake with ${Computer}:$Port failed: $($_.Exception.GetBaseException().Message)" }
+    # With TLS 1.3 an agent that refuses our certificate does so after the handshake, so it shows up here
+    $refused = "The remote agent ${Computer}:$Port closed the connection without answering. It refuses runners whose certificate is not from its CA"
+    try {
+      Write-SlimMessage $stream $Message
+      $reply = Read-SlimMessage $stream -FirstByteTimeout $REMOTE_SERVER_READ_TIMEOUT -Timeout $REMOTE_SERVER_READ_TIMEOUT
+    }
+    catch { throw "${refused}: $($_.Exception.GetBaseException().Message)" }
+    if ($null -eq $reply) { throw $refused }
     $reply
   }
   finally { $client.Close() }
@@ -132,6 +140,7 @@ function script:Send-RemoteMessage($Computer, $Port, [string]$Message) {
 # Runs the table on every target and answers with the last target's response
 function script:Invoke-RemoteInstructions($Instructions, [string]$Message) {
   try {
+    [void](Get-TlsSettings) # agents only accept authenticated runners
     $response = $null
     foreach ($target in $script:targets) {
       $ps_computer, $ps_port = $target.Split(':')

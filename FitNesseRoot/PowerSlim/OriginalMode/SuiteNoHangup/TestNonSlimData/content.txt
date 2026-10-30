@@ -1,24 +1,20 @@
 NOTE: This test page is intentionally disabled so that it doesn't run automatically via the Suite test but is instead run from SuiteNoHangupRunner page.
 
+''An agent drops a connection that does not open with a TLS handshake (here: a bare SLIM length), and keeps serving''
 |script|
-|check|eval|!-$sut= Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru -Verbose -!||
-#|check|eval|!-$sut= Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru  -Debug -RedirectStandardOutput ps-log.txt -RedirectStandardError ps-error.txt -!||
-
-!|script|Remote|localhost:8041|
-|eval|$VerbosePreference="Continue"|
+|check|eval|!-$sut= Start-Process ([Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "-NoProfile -ExecutionPolicy Bypass -File ./slim.ps1 8041 server" -PassThru -!||
 
 |script|
 |check|eval|$client = New-Object System.Net.Sockets.TcpClient localhost, 8041||
 |check|eval|$data = [System.Text.Encoding]::ASCII.GetBytes("200000");  ||
 |check|eval|$stream = $client.GetStream()||
 |check|eval|$stream.Write($data,0,$data.Length)||
+|check|eval|$stream.ReadTimeout = 15000||
+|check|eval|try { $stream.Read($data,0,1) } catch [System.IO.IOException] { if ($_.Exception.InnerException -is [System.Net.Sockets.SocketException] -and $_.Exception.InnerException.SocketErrorCode -eq 'TimedOut') { 'timed out' } else { 0 } }|0|
+|eval|$client.Close()|
 
-|script|
-|check|eval|$stream.ReadTimeout = 1000||
-|show|eval|$stream.Read($data,0,1)||
-
-#!|script|Remote|localhost:8041|
-#|check|eval|1+2|3|
+!|script|Remote|localhost:8041|
+|check|eval|1+2|3|
 
 |script|
 |check|eval|$sut.Kill()||

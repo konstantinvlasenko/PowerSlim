@@ -30,8 +30,32 @@ CI runs all of these on Linux, macOS and Windows (PowerShell 7 and 5.1).
 `PowerSlim.SuiteWrongFailedException` fails on purpose; it is checked from `SuiteCommon.TestScenario`.
 
 ### Remote agents
-`./slim.ps1 <port> server` starts a remote agent. It listens on `127.0.0.1` by default.
-An agent runs any PowerShell it receives, unauthenticated, so only expose it on a trusted private network: `./slim.ps1 35 server -BindAddress 0.0.0.0`.
+`./slim.ps1 <port> server` starts a remote agent. An agent runs any PowerShell it receives, so it only talks TLS (1.2 or newer) with client certificates:
+* the agent presents its certificate, and the runner checks that it was issued by your CA and names the target host;
+* the runner presents its certificate, and the agent refuses any client without one issued by the same CA.
+
+Certificates from other authorities, including those the system trusts, are rejected. Both sides read the same settings:
+
+| Variable | Value |
+|---|---|
+| `POWERSLIM_TLS_CERTIFICATE` | PFX file with this machine's certificate and private key |
+| `POWERSLIM_TLS_PASSWORD` | Password of that PFX file |
+| `POWERSLIM_TLS_CA` | Certificate (PEM or DER) of the CA that issues agent and runner certificates |
+
+Set them where FitNesse runs (the runner inherits them) and on each agent machine, or pass `-Certificate` and `-CertificateAuthority` to the agent. Agent certificates need the server authentication usage and the agent's host name or IP address. Runner certificates need client authentication. An agent without these settings does not start. Revocation is not checked, so keep certificates short-lived.
+
+With OpenSSL, for example:
+```
+openssl req -x509 -newkey rsa:3072 -nodes -days 365 -subj "/CN=PowerSlim CA" -keyout ca.key -out ca.pem \
+  -addext basicConstraints=critical,CA:true -addext keyUsage=critical,keyCertSign,cRLSign
+openssl req -newkey rsa:3072 -nodes -subj "/CN=agent1" -keyout agent1.key -out agent1.csr
+openssl x509 -req -in agent1.csr -CA ca.pem -CAkey ca.key -CAcreateserial -days 30 -out agent1.pem \
+  -extfile <(printf "subjectAltName=DNS:agent1.example.com\nextendedKeyUsage=serverAuth")
+openssl pkcs12 -export -in agent1.pem -inkey agent1.key -out agent1.pfx   # asks for the PFX password
+```
+Make the runner certificate the same way, with `extendedKeyUsage=clientAuth` and no `subjectAltName`.
+
+An agent listens on `127.0.0.1` by default. To reach it from other machines: `./slim.ps1 35 server -BindAddress 0.0.0.0`. A runner listens on loopback only.
 Targets without an explicit port (`|script|Remote|myhost|`) use port 35, or `$env:POWERSLIM_REMOTE_PORT` if set.
 
 Examples are available in the acceptance tests [FitNesseRoot/PowerSlim](https://github.com/konstantinvlasenko/PowerSlim/tree/master/FitNesseRoot/PowerSlim).
