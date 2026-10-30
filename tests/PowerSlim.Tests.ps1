@@ -98,6 +98,10 @@ Describe 'Reading and writing messages' {
   It 'returns $null when the connection closes before a message' {
     Read-SlimMessage (New-SlimStream '') | Should -BeNullOrEmpty
   }
+  It 'skips a UTF-8 byte order mark before the length' {
+    $stream = [System.IO.MemoryStream]::new([byte[]](@(0xEF, 0xBB, 0xBF) + [text.encoding]::ASCII.GetBytes('000003:bye')))
+    Read-SlimMessage $stream | Should -Be 'bye'
+  }
   It 'rejects <name>' -ForEach @(
     @{ name = 'a length that is not a number'; text = 'abcdef:' }
     @{ name = 'a short length'; text = '00003:bye' }
@@ -301,6 +305,10 @@ Describe 'stdin/stdout transport' {
       $message = ConvertTo-SlimList @(, @('id', 'call', 'scriptTableActor', 'eval', "Write-Host host; [Console]::WriteLine('console'); $child; 'result'"))
       Write-SlimMessage $process.StandardInput.BaseStream $message
       $response = Read-SlimMessage $out -FirstByteTimeout 60000 -Timeout 60000
+      if ($null -eq $response) {
+        [void]$stderr.Wait(10000)
+        throw "The runner closed stdout without answering. Its stderr:`n$($stderr.Result)"
+      }
       (ConvertFrom-SlimList (ConvertFrom-SlimList $response)[0])[1] | Should -Be 'result'
 
       Write-SlimMessage $process.StandardInput.BaseStream 'bye'

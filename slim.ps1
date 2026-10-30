@@ -157,6 +157,12 @@ function Read-SlimMessage($Stream, [int]$FirstByteTimeout = $REQUEST_READ_TIMEOU
       throw (New-Object System.IO.EndOfStreamException "Connection closed while reading the message length")
     }
     if ($digits.Length -eq 0) { Set-ReadTimeout $Stream $Timeout }
+    # A .NET Framework client writes a UTF-8 BOM first when its console encoding is UTF-8
+    if ($digits.Length -eq 0 -and $one[0] -eq 0xEF) {
+      $rest = Read-SlimBytes $Stream 2
+      if ($rest[0] -eq 0xBB -and $rest[1] -eq 0xBF) { continue }
+      throw (New-Object System.IO.InvalidDataException "Not a SLIM message: the length prefix contains byte 239")
+    }
     if ($one[0] -eq 58) { break } # ':'
     if ($one[0] -lt 48 -or $one[0] -gt 57 -or $digits.Length -ge 10) {
       throw (New-Object System.IO.InvalidDataException "Not a SLIM message: the length prefix contains byte $($one[0])")
