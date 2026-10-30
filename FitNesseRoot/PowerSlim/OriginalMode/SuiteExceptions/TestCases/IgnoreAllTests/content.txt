@@ -1,0 +1,10 @@
+This test verifies that {{{throw 'IgnoreAllTests'}}} ignores the rest of the page.
+
+Note: This test page is intentionally disabled and run from the ExceptionTestRunner page.
+
+| script |
+| eval | throw 'IgnoreAllTests:Nothing to test here' |
+| show | eval | "This row is ignored" |
+
+| script |
+| show | eval | "This table is ignored" |

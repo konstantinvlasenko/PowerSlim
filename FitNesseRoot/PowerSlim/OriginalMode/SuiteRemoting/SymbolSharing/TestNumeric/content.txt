@@ -6,7 +6,7 @@
 
 !|script|Remote|${REMOTE_SERVER}|
 |check|eval|$NUM.GetType()|System.Int32|
-|check|eval|$DECIMAL.GetType()|System.Int32|
+|check|eval|$DECIMAL.GetType()|System.Double|
 *!
 !* String should be string
 !|script|Remote|${REMOTE_SERVER}|
