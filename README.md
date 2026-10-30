@@ -6,17 +6,24 @@ https://powerslim.slack.com
 
 ```
 !define TEST_SYSTEM {slim}
-!define SLIM_PORT (8090)
 !define COMMAND_PATTERN (pwsh -NoProfile -NonInteractive -File ./slim.ps1)
 ```
 Requires PowerShell 7+ (`pwsh`) on any platform, or Windows PowerShell 5.1 (use `powershell` instead of `pwsh` in `COMMAND_PATTERN`). PowerShell 2.0–5.0 are no longer supported.
+
+PowerSlim implements [SLIM protocol](https://fitnesse.org/FitNesse/UserGuide/WritingAcceptanceTests/SliM/SlimProtocol.html) version 0.5. FitNesse talks to it over stdin/stdout by default, so no port is needed. Defining `SLIM_PORT` (e.g. `!define SLIM_PORT (8090)`) switches to a TCP port on `127.0.0.1`, as before.
+
+### Symbols
+A symbol (`|$name=|eval|...|`) is also a PowerShell variable, so `$name` in code gets its value with its type, and the value is never pasted into the code. FitNesse's text rules still apply where PowerShell would not expand a variable: inside single-quoted strings (`'$name'`), for a name followed by more letters (`"$name_suffix"`) and in command names (`te$name`).
+
+### Aborting and ignoring
+`throw 'StopTest'` stops the page and `throw 'StopSuite'` the suite. `throw 'IgnoreScriptTest'` ignores the rest of the script table and `throw 'IgnoreAllTests'` the rest of the page.
 
 ### Running the tests
 Requires Java 11+ and [Pester](https://pester.dev) 5+.
 ```
 ./tests/Invoke-AcceptanceTests.ps1                     # FitNesse suites (downloads the pinned FitNesse jar)
 ./tests/Invoke-AcceptanceTests.ps1 -Shell powershell   # same, with Windows PowerShell 5.1 running slim.ps1
-Invoke-Pester ./tests                                  # unit tests for the SLIM protocol helpers
+Invoke-Pester ./tests                                  # unit tests for slim.ps1 and client.ps1
 Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
 ```
 CI runs all of these on Linux, macOS and Windows (PowerShell 7 and 5.1).
@@ -40,7 +47,7 @@ Examples are available in the acceptance tests [FitNesseRoot/PowerSlim](https://
 ### March 1, 2017
 
  * [Fitnesse 20161106](http://fitnesse.org/.FrontPage.FitNesseDevelopment.FitNesseRelease20161106) introduced bracking change. _FitNesse and Slim can now communicate over stdin/stdout. This removes the hassle with network ports [977](https://github.com/unclebob/fitnesse/pull/977)_
- You need to set [SLIM_PORT](https://github.com/konstantinvlasenko/PowerSlim/blob/02dc82325d639123874beebbeb5229ba202f867b/FitNesseRoot/PowerSlim/OriginalMode/content.txt#L2) variable to make PowerSlim work again
+ PowerSlim now supports stdin/stdout, so `SLIM_PORT` is no longer needed.
    
 
 ### October 7, 2016

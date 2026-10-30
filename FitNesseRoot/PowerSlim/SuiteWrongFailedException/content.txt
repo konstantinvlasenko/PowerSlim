@@ -1,5 +1,4 @@
 !define TEST_SYSTEM {slim}
-!define SLIM_PORT (8090)
 !define COMMAND_PATTERN (pwsh -NoProfile -NonInteractive -File ./slim.ps1)
 '''Each test in this suite should fail by purpose'''
 !contents -R2 -g -p -f -h

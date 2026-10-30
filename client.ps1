@@ -4,19 +4,11 @@
 # you can do whatever you want with this stuff. If we meet some day, and you
 # think this stuff is worth it, you can buy me a beer in return.
 #
+# Remote tables: |script|Remote|host[:port],...| and |Query:Remote|host|code| forward their
+# instructions to PowerSlim agents (slim.ps1 <port> server) and share symbols in both directions.
 
 # the timeout for the Remote server is 1 hour
 $REMOTE_SERVER_READ_TIMEOUT = 60*60*1000
-
-function Get-RemoteSlimSymbols($inputTable)
-{
-  $__pattern__ = '(?<id>scriptTable_\d+_\d+):\d{6}:callAndAssign:\d{6}:(?<name>\w+):\d{6}:'
-  $inputTable | select-string $__pattern__ -allmatches | ForEach-Object {$_.matches} | ForEach-Object {@{id=$_.Groups[1].Value;name=$_.Groups[2].Value}}
-}
-
-function Is-Numeric ($Value) {
-    return $Value -match "^\d+(\.\d+)?$"
-}
 
 # Port used for remote targets given without ":port". Override with $env:POWERSLIM_REMOTE_PORT,
 # e.g. to use an unprivileged port (ports below 1024 need root on Linux; on macOS they can only bind 0.0.0.0)
@@ -38,115 +30,129 @@ function script:Connect-RemoteSlim($ps_computer, $ps_port)
     }
   }
 }
-function script:process_table_remotely($ps_table, $ps_fitnesse){
 
-    try {
+# The first instruction of a script or query table says where the table runs. Other tables
+# (decision tables, scenarios) keep the current context.
+function script:Update-RemoteContext($Instructions) {
+  if (!$Instructions.Count -or $Instructions[0] -is [hashtable] -or !$Instructions[0].Count) { return }
+  $first = $Instructions[0]
+  if ($first[0].StartsWith("scriptTable_") -or $first[0].StartsWith("queryTable_")) {
+    if ($first.Count -ge 5 -and "Remote" -eq $first[3]) { Set-RemoteTargets $first[4] }
+    else { $script:Remote = $false }
+  }
+}
 
-      $originalslimbuffer = $ps_buf1 + $ps_buf2
+# Targets are a comma-separated host[:port] list or, for anything else, an expression that returns them
+function script:Set-RemoteTargets([string]$Cell) {
+  $script:Remote = $true
+  $targets = $null
+  if ($Cell -notmatch '^\s*[\w.\-]+(:\d+)?(\s*,\s*[\w.\-]+(:\d+)?)*\s*$') {
+    try { $targets = Invoke-UserCode (Expand-SlimSymbols $Cell) }
+    catch { Write-Verbose "Remote targets are not an expression: $($_.Exception.Message)" }
+    (Get-UserErrors).Clear()
+  }
+  if ($null -eq $targets) { $targets = $Cell.Split(",") | ForEach-Object { $_.Trim(", ") } | Where-Object { $_ } }
+  $script:targets = @($targets | ForEach-Object { "$_".Trim() })
+}
 
-      $result = new-Object 'system.collections.generic.dictionary[string,object]'
+# PowerShell code that recreates a symbol value on an agent, or $null for values that cannot be sent.
+# Strings travel as base64 so no quote, $ or symbol name in them is ever read as code.
+function script:ConvertTo-PowerShellLiteral($Value) {
+  $invariant = [Globalization.CultureInfo]::InvariantCulture
+  if ($Value -is [string]) {
+    return "[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{0}'))" -f [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Value))
+  }
+  if ($Value -is [bool]) { if ($Value) { return '$true' } else { return '$false' } }
+  if ($Value -is [int] -or $Value -is [long]) { return $Value.ToString($invariant) }
+  if ($Value -is [double]) { return "[double]'{0}'" -f $Value.ToString('R', $invariant) }
+  $null
+}
 
-      foreach($t in $targets){ 
+# Remote results arrive as text; numbers become numbers again
+function script:ConvertFrom-RemoteValue([string]$Text) {
+  $invariant = [Globalization.CultureInfo]::InvariantCulture
+  $int = 0; $long = 0L; $double = 0.0
+  if ($Text -match '^\d+$') {
+    if ([int]::TryParse($Text, [Globalization.NumberStyles]::None, $invariant, [ref]$int)) { return $int }
+    if ([long]::TryParse($Text, [Globalization.NumberStyles]::None, $invariant, [ref]$long)) { return $long }
+  }
+  elseif ($Text -match '^\d+\.\d+$' -and [double]::TryParse($Text, [Globalization.NumberStyles]::AllowDecimalPoint, $invariant, [ref]$double)) {
+    return $double
+  }
+  $Text
+}
 
-          $ps_computer, $ps_port = $t.split(':')
+# Instructions that recreate our symbols on an agent, except those that came from it: it still has
+# the original objects, and their text form would replace them
+function script:Get-SymbolSyncMessage([string]$Origin) {
+  $instructions = New-Object System.Collections.Generic.List[object]
+  foreach ($entry in @($slimsymbols.GetEnumerator())) {
+    if ($script:SymbolOrigins.ContainsKey($entry.Key) -and $script:SymbolOrigins[$entry.Key] -eq $Origin) { continue }
+    $literal = ConvertTo-PowerShellLiteral $entry.Value
+    if ($null -eq $literal) { continue }
+    $instructions.Add([object[]]@("symbol_$($instructions.Count)", 'callAndAssign', $entry.Key, 'scriptTableActor', 'eval', $literal))
+  }
+  if ($instructions.Count) { ConvertTo-SlimString $instructions }
+}
 
-          if($ps_computer.StartsWith('$')){
-              $ps_computer = $slimsymbols[$ps_computer.Substring(1)]
-          }
+# Symbols assigned on the agent (callAndAssign) are copied back from its response
+function script:Receive-RemoteSymbols($Instructions, [string]$Response, [string]$Origin) {
+  $assigned = @{}
+  foreach ($ins in $Instructions) {
+    if ($ins -isnot [hashtable] -and $ins.Count -ge 3 -and $ins[1] -eq 'callAndAssign') { $assigned[$ins[0]] = $ins[2] }
+  }
+  if (!$assigned.Count) { return }
+  foreach ($item in (ConvertFrom-SlimList $Response)) {
+    try { $pair = ConvertFrom-SlimList $item } catch { continue }
+    if ($pair.Count -ne 2 -or !$assigned.ContainsKey($pair[0])) { continue }
+    $name = $assigned[$pair[0]]
+    # An agent sends nothing back for complex values; forget the symbol rather than store an empty value,
+    # so it is not sent over the agent's own variable later (issue #83)
+    if ([string]::IsNullOrEmpty($pair[1]) -or $pair[1].StartsWith($slimexception)) {
+      [void]$slimsymbols.Remove($name)
+      [void]$script:SymbolOrigins.Remove($name)
+      continue
+    }
+    Set-SlimSymbol $name (ConvertFrom-RemoteValue $pair[1]) -Origin $Origin
+  }
+}
 
-          if($null -eq $ps_port){$ps_port = Get-RemoteDefaultPort};
+function script:Send-RemoteMessage($Computer, $Port, [string]$Message) {
+  $client = Connect-RemoteSlim $Computer $Port
+  try {
+    $stream = $client.GetStream()
+    Write-SlimMessage $stream $Message
+    $reply = Read-SlimMessage $stream -FirstByteTimeout $REMOTE_SERVER_READ_TIMEOUT -Timeout $REMOTE_SERVER_READ_TIMEOUT
+    if ($null -eq $reply) { throw "The remote agent ${Computer}:$Port closed the connection without answering" }
+    $reply
+  }
+  finally { $client.Close() }
+}
 
-          Write-Verbose "Connecting to $ps_computer, $ps_port"
-          
-          if($slimsymbols.Count -ne 0){
+# Runs the table on every target and answers with the last target's response
+function script:Invoke-RemoteInstructions($Instructions, [string]$Message) {
+  try {
+    $response = $null
+    foreach ($target in $script:targets) {
+      $ps_computer, $ps_port = $target.Split(':')
+      if ($ps_computer.StartsWith('$')) { $ps_computer = $slimsymbols[$ps_computer.Substring(1)] }
+      if ($null -eq $ps_port) { $ps_port = Get-RemoteDefaultPort }
+      $origin = "${ps_computer}:$ps_port"
 
-              "Connecting to $ps_computer $ps_port" | Out-Default
-
-              $ps_sumbols_client = Connect-RemoteSlim $ps_computer $ps_port
-              $remoteserver = $ps_sumbols_client.GetStream()
-              $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
-
-              "Connected" | Out-Default
-                      
-              $list = @($slimsymbols.GetEnumerator() | ForEach-Object {$_})
-              $tr = "[" + (slimlen $list) + ":"
-
-              foreach ($obj in $list){
-                                  
-                  $itemstr = "[" +  (6).ToString("d6") + ":"
-
-                  $itemstr += (slimlen 'scriptTable_0_0') + ":scriptTable_0_0:" + (slimlen 'callAndAssign') + ":callAndAssign:"
-                  $itemstr += (slimlen $obj.Key) + ":$($obj.Key):" + (slimlen 'scriptTableActor') + ":scriptTableActor:"
-                  $itemstr += (slimlen 'eval') + ":eval:"
-
-                  if($obj.Value -is [string]){
-                    $itemstr +=  (($obj.Value.Length + 2).ToString("d6")) + ":'$($obj.Value)':"
-                  }elseif($obj.Value -is [int]){
-                    $itemstr +=  ((([string]$obj.Value).Length).ToString("d6")) + ":$($obj.Value):"
-                  }else{
-                    $itemstr +=  ((3 + 2).ToString("d6")) + ":'NOT':"
-                  }
-    
-                  $itemstr += "]"
-          
-                  $tr += (slimlen $itemstr) + ":" + $itemstr + ":"
-              } 
-
-              $tr += "]"
-              
-              $s2 = [text.encoding]::utf8.getbytes($tr).Length.ToString("d6") + ":" + $tr                     
-              $s2 = [text.encoding]::utf8.getbytes($s2)
-
-              $remoteserver.Write($s2, 0, $s2.Length)
-              get_message($remoteserver)
-
-          }
-
-         $ps_client = Connect-RemoteSlim $ps_computer $ps_port
-         $remoteserver = $ps_client.GetStream()
-         $remoteserver.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
-    
-         $remoteserver.Write($originalslimbuffer, 0, $originalslimbuffer.Length)
-         $result[$ps_computer] = get_message($remoteserver)
-    
-         #$result[$ps_computer] | out-default
-         
-         #backward symbols sharing
-         foreach($symbol in Get-RemoteSlimSymbols([text.encoding]::utf8.getstring($originalslimbuffer, 0, $originalslimbuffer.Length))) {
-            $__pattern__ = "$($symbol.id):\d{6}:(?<value>.*?):\]"
-            $slimsymbols[$symbol.name] = $result[$ps_computer] | select-string $__pattern__ | ForEach-Object {$_.matches} | ForEach-Object {
-              if(Is-Numeric $_.Groups[1].Value){
-                try { [int]$_.Groups[1].Value } catch { Write-Verbose "Not an Int32, symbol dropped: $($_.Exception.Message)" }
-              }else{
-                $_.Groups[1].Value
-              }
-            }
-            # remove symbol if it get's empty value from remote agent
-            # this will fix the issue #83
-            # but in general this is incorrect as the issue with sharing back the complex objects. remote agent sends nothing
-            # the issue #83 would be fixed because we woudn't override a Powershell variable at the original agent.
-            if(!$slimsymbols[$symbol.name]){ $slimsymbols.Remove($symbol.name) }
-         }
-      
-         $remoteserver.Close()         
-         $ps_client.Close() 
-
+      $sync = Get-SymbolSyncMessage $origin
+      if ($sync) {
+        Write-Log "Sending symbols to $origin"
+        [void](Send-RemoteMessage $ps_computer $ps_port $sync)
       }
-
-      #if($result.Count -eq 1){
-
-      $res = $ps_buf1 + $ps_buf2
-      $ps_fitnesse.Write($res, 0, $res.Length)
-
-      #}
-
+      $response = Send-RemoteMessage $ps_computer $ps_port $Message
+      Receive-RemoteSymbols $Instructions $response $origin
     }
-    catch [System.Exception] {
-        $send = '[000002:' + (slimlen $ps_table[0][0]) + ':' + $ps_table[0][0] + ':' + (slimlen "$slimexception$($_.Exception.Message)") + ':' + "$slimexception$($_.Exception.Message)" + ':]'
-        $send = (slimlen $send) + ":" + $send + ":"
-        $send = [text.encoding]::utf8.getbytes((pack_results $send))
-        $ps_fitnesse.Write($send, 0, $send.Length)
-    }
+    $response
+  }
+  catch {
+    $id = if ($Instructions.Count -and $Instructions[0] -isnot [hashtable] -and $Instructions[0].Count) { $Instructions[0][0] } else { '' }
+    ConvertTo-SlimString @(, [object[]]@($id, "$slimexception$($_.Exception.Message)"))
+  }
 }
 
 function script:Test-TcpPort($ps_remotehost, $ps_port)

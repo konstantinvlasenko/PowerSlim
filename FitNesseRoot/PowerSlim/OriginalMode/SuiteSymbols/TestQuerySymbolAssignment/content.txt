@@ -1,0 +1,8 @@
+''A query table cell can store the value it finds in a symbol (SLIM assign instruction)''
+!|Query:Local|@{Name = 'Bob'; Id = 7}|
+|Name|Id       |
+|Bob |$QueryId=|
+
+!|script|
+|check|eval|$QueryId|7|
+|check|eval|"Id $QueryId"|Id 7|

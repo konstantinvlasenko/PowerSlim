@@ -27,6 +27,12 @@ Note: The test pages themselves are disabled in the suite, which makes sure they
 |check   |eval                                        |$page1.testResults.result.content       |=~/@NEXT_EXCEPTION/              |
 |check   |eval                                        |$page2.testResults.result.content       |=~/@PROOF_TESTING_STOPPED/       |
 
+|scenario|To prove test page ignored after _|TESTPAGE, IGNORED, PROOF                                                   |
+|$URL=   |eval                              |'@TESTPAGE?test'                                                          |
+|eval    |$results = Run-Test '$URL'                                                                                   |
+|check   |eval                              |$results.testResults.result.content -match '@IGNORED'|True                |
+|check   |eval                              |$results.testResults.result.content -match '@PROOF'  |True                |
+
 ******!
 
 The following tests show how normal exceptions are now handled. The error details are returned to !-FitNesse-! and displayed as an exception - neither a success or failure - and testing continues.
@@ -50,6 +56,16 @@ To abort a test or a suite the developer can issue a {{{ throw "StopTest" }}} Th
 |TESTPAGE                                                               |PAGETYPE|FIRST_EXCEPTION                                  |NEXT_EXCEPTION                          |PROOF_TESTING_STOPPED|
 |PowerSlim.OriginalMode.SuiteExceptions.TestCases.AbortExceptionStopTest|test    |"fail">__EXCEPTION__:ABORT_SLIM_TEST:Test aborted|"fail">ABORT_TEST_INDICATED:Test not run|"ignore">Test not run|
 
-!| To prove suite pages aborted after failure                                                                                                                                                                                       |
-|TESTPAGE                                                                                                |PAGETYPE|FIRST_EXCEPTION                                   |NEXT_EXCEPTION                          |PROOF_TESTING_STOPPED|
-|PowerSlim.OriginalMode.SuiteExceptions.TestCases.AbortExceptionStopSuiteTestPage.AbortExceptionStopSuite|suite   |"fail">__EXCEPTION__:ABORT_SLIM_TEST:Suite aborted|"fail">ABORT_TEST_INDICATED:Test not run|"ignore">Test not run|
+{{{ throw "StopSuite" }}} answers with ABORT_SLIM_SUITE, so !-FitNesse-! itself skips the rest of the suite (and still runs its tear down).
+
+!| To prove suite pages aborted after failure                                                                                                                                                                                         |
+|TESTPAGE                                                                                                |PAGETYPE|FIRST_EXCEPTION                                     |NEXT_EXCEPTION                           |PROOF_TESTING_STOPPED|
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.AbortExceptionStopSuiteTestPage.AbortExceptionStopSuite|suite   |"error">__EXCEPTION__:ABORT_SLIM_SUITE:Suite aborted|"error">ABORT_TEST_INDICATED:Test not run|"ignore">Test not run|
+
+{{{ throw "IgnoreScriptTest" }}} ignores the rest of the script table and {{{ throw "IgnoreAllTests" }}} the rest of the page. The text after a colon, as in {{{ throw "IgnoreScriptTest:reason" }}}, goes to the execution log.
+''These checks return True or False: a result that contains an IGNORE tag would make !-FitNesse-! ignore this page as well''
+
+!| To prove test page ignored after                                                                                                                         |
+|TESTPAGE                                                         |IGNORED                                    |PROOF                                       |
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.IgnoreScriptTest|"ignore">__EXCEPTION__:IGNORE_SCRIPT_TEST:|"ignore">Test not run[\s\S]*2\+2=4            |
+|PowerSlim.OriginalMode.SuiteExceptions.TestCases.IgnoreAllTests  |"ignore">__EXCEPTION__:IGNORE_ALL_TESTS:  |"This table is ignored"\W+td\W+tr          |

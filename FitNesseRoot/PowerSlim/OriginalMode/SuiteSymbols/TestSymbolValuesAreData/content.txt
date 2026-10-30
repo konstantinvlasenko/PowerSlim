@@ -1,0 +1,14 @@
+''A symbol is also a !-PowerShell-! variable. Its value is never pasted into the code: quotes, $ and ; in it stay text''
+!|script|
+|$Quoted=|eval|"it's a ""quote"" and `$notAVariable; exit"|
+|check|eval|$Quoted|it's a "quote" and $notAVariable; exit|
+|check|eval|"[$Quoted]"|[it's a "quote" and $notAVariable; exit]|
+|check|eval|'[$Quoted]'|[it's a "quote" and $notAVariable; exit]|
+|check|eval|$Quoted.Length|38|
+
+''Symbols keep their type''
+!|script|
+|$Number=|eval|41|
+|check|eval|$Number + 1|42|
+|$List=|eval|@(1, 2, 3)|
+|check|eval|$List.Count|3|
