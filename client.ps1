@@ -124,9 +124,14 @@ function script:Send-RemoteMessage($Computer, $Port, [string]$Message) {
     $network.ReadTimeout = $REMOTE_SERVER_READ_TIMEOUT
     try { $stream = New-SlimTlsClientStream $network $Computer }
     catch { throw "TLS handshake with ${Computer}:$Port failed: $($_.Exception.GetBaseException().Message)" }
-    Write-SlimMessage $stream $Message
-    $reply = Read-SlimMessage $stream -FirstByteTimeout $REMOTE_SERVER_READ_TIMEOUT -Timeout $REMOTE_SERVER_READ_TIMEOUT
-    if ($null -eq $reply) { throw "The remote agent ${Computer}:$Port closed the connection without answering" }
+    # With TLS 1.3 an agent that refuses our certificate does so after the handshake, so it shows up here
+    $refused = "The remote agent ${Computer}:$Port closed the connection without answering. It refuses runners whose certificate is not from its CA"
+    try {
+      Write-SlimMessage $stream $Message
+      $reply = Read-SlimMessage $stream -FirstByteTimeout $REMOTE_SERVER_READ_TIMEOUT -Timeout $REMOTE_SERVER_READ_TIMEOUT
+    }
+    catch { throw "${refused}: $($_.Exception.GetBaseException().Message)" }
+    if ($null -eq $reply) { throw $refused }
     $reply
   }
   finally { $client.Close() }
